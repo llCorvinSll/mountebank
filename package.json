@@ -118,6 +118,7 @@
     "snyk": "^1.230.5"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^2.3.0",
     "firebase-tools": "^7.0.0",
     "fs-extra": "8.1.0",
     "glob": "^7.1.4",
