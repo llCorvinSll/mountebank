@@ -1,5 +1,7 @@
 'use strict';
 
+import {Request, Response} from "express";
+
 /**
  * The controller that exposes the logs
  * @module
@@ -17,7 +19,7 @@ export function create (logfile: string) {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    function get (request, response) {
+    function get (request: Request, response: Response) {
         const fs = require('fs'),
             json = '[' + fs.readFileSync(logfile).toString().split('\n').join(',').replace(/,$/, '') + ']',
             allLogs = JSON.parse(json),

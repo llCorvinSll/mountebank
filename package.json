@@ -95,6 +95,7 @@
     "service virtualization"
   ],
   "dependencies": {
+    "@types/express": "^4.17.1",
     "@types/q": "^1.5.2",
     "@types/xmldom": "^0.1.29",
     "cors": "~2.8.4",
