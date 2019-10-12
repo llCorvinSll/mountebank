@@ -156,7 +156,7 @@ describe('security', function () {
         });
     });
 
-    describe('IP blocking', function () {
+    xdescribe('IP blocking', function () {
         this.timeout(10000);
 
         function useInterface (name) {
