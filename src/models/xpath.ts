@@ -1,11 +1,14 @@
 'use strict';
 
+import {ILogger} from "../util/scopedLogger";
+import {SelectedValue} from "xpath";
+
 /**
  * Shared logic for xpath selector
  * @module
  */
 
-function xpathSelect (selectFn, selector, doc) {
+function xpathSelect (selectFn: (selector: string, doc: Document) => SelectedValue[], selector: string, doc: Document): SelectedValue[] {
     const errors = require('../util/errors'),
         helpers = require('../util/helpers');
 
@@ -24,7 +27,7 @@ function xpathSelect (selectFn, selector, doc) {
     }
 }
 
-function nodeValue (node) {
+function nodeValue (node: any) {
     if (node.nodeType === node.TEXT_NODE) {
         return node.nodeValue;
     }
@@ -49,11 +52,11 @@ function nodeValue (node) {
  * @param {Object} logger - Optional, used to log XML parsing errors
  * @returns {Object}
  */
-function select (selector, ns, possibleXML, logger) {
+export function select (selector:string, ns: {}, possibleXML: string, logger: ILogger) {
     const xpath = require('xpath'),
         DOMParser = require('xmldom').DOMParser,
         parser = new DOMParser({
-            errorHandler: (level, message) => {
+            errorHandler: (level: string, message: any) => {
                 const warn = (logger || {}).warn || (() => {});
                 warn('%s (source: %s)', message, JSON.stringify(possibleXML));
             }
@@ -76,5 +79,3 @@ function select (selector, ns, possibleXML, logger) {
         return nodeValues;
     }
 }
-
-module.exports = { select };

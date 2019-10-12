@@ -5,7 +5,7 @@
 export interface ILogger {
     baseLogger:ILogger;
     [key:string]:Function|ILogger;
-    (message:string):void;
+    (message:string, ...args:any[]):void;
 }
 
 function wrap (wrappedLogger:ILogger, logger:ILogger) {
