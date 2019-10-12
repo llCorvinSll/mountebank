@@ -1,33 +1,55 @@
 'use strict';
 
+interface ITypeValidationDescriptors {
+    [key:string]:ITypeValidationDescriptor;
+}
+
+export interface IValidationMap {
+    _required?: boolean;
+    _allowedTypes?:ITypeValidationDescriptors;
+    _additionalContext?: string;
+    [key: string]: IValidationMap | IValidationMap[] | boolean | { [key:string]:ITypeValidationDescriptor } | undefined | string;
+}
+
+export interface ITypeValidationDescriptor {
+    enum?: string[];
+    nonNegativeInteger?: boolean;
+    positiveInteger?: boolean;
+    singleKeyOnly?: boolean;
+}
+
 interface IValidator {
-    validate(config: IMap, validationSpec: IMap):Error[];
+    validate(config: IMap, validationSpec: IValidationMap):Error[];
 }
 
 interface IMap {
-    [key: string]: string;
+    [key: string]: string | number | IMap;
 }
+
+type FiledType = IMap | string | number
+
+type ErrorAppender = (field: IMap | string, message?: string, subConfig?: IValidationMap) => void;
 
 export function create (): IValidator {
     const exceptions = require('../util/errors');
 
-    function hasExactlyOneKey (obj: object) {
+    function hasExactlyOneKey (obj: FiledType) {
         const keys = Object.keys(obj);
         return keys.length === 1;
     }
 
-    function navigate (config: any, path: string) {
+    function navigate (config: FiledType, path: string): FiledType {
         if (path === '') {
             return config;
         }
         else {
             return path.split('.').reduce(function (field, fieldName) {
-                return field[fieldName];
+                return (field as IMap)[fieldName];
             }, config);
         }
     }
 
-    function typeErrorMessageFor (allowedTypes: string[], additionalContext: string) {
+    function typeErrorMessageFor (allowedTypes: string[], additionalContext?: string): string {
         const util = require('util'),
             spellings: IMap = { number: 'a', object: 'an', string: 'a' };
         let message = util.format('must be %s %s', spellings[allowedTypes[0]], allowedTypes[0]);
@@ -54,7 +76,7 @@ export function create (): IValidator {
         return fieldName.indexOf('_') !== 0;
     }
 
-    function enumFieldFor (field) {
+    function enumFieldFor (field: FiledType): FiledType {
         const isObject = require('../util/helpers').isObject;
 
         // Can be the string value or the object key
@@ -66,41 +88,41 @@ export function create (): IValidator {
         }
     }
 
-    function matchesEnum (field, enumSpec) {
-        return enumSpec.indexOf(enumFieldFor(field)) >= 0;
+    function matchesEnum (field: FiledType, enumSpec: string[]) {
+        return enumSpec.indexOf(enumFieldFor(field) as string) >= 0;
     }
 
-    function addMissingFieldError (fieldSpec, path, addErrorFn) {
+    function addMissingFieldError (fieldSpec: IValidationMap, path: string, addErrorFn: ErrorAppender) {
         // eslint-disable-next-line no-underscore-dangle
         if (fieldSpec._required) {
             addErrorFn(path, 'required');
         }
     }
 
-    function addArrayErrors (fieldSpec, path, field, addErrorFn) {
-        const util = require('util');
-
-        if (!util.isArray(field)) {
+    function addArrayErrors (fieldSpec: IValidationMap[], path: string, field: Array<FiledType>, addErrorFn: ErrorAppender) {
+        if (!Array.isArray(field)) {
             addErrorFn(path, 'must be an array');
         }
         else {
-            field.forEach(function (subConfig) {
+            field.forEach(function (subConfig: FiledType) {
                 // Scope error message to array element instead of entire array
-                const newAddErrorFn = function (fieldName, message) {
-                    return addErrorFn(fieldName, message, subConfig);
+                const newAddErrorFn = function (fieldName: string, message: string) {
+                    return addErrorFn(fieldName, message, fieldSpec[0]);
                 };
                 addErrorsFor(subConfig, '', fieldSpec[0], newAddErrorFn);
             });
         }
     }
 
-    function addTypeErrors (fieldSpec, path: string, field, config: IMap, addErrorFn) {
+    function addTypeErrors (fieldSpec: IValidationMap, path: string, field: FiledType, config: FiledType, addErrorFn: ErrorAppender) {
         /* eslint complexity: 0 */
         const util = require('util'),
             helpers = require('../util/helpers'),
-            fieldType = typeof field,
-            allowedTypes = Object.keys(fieldSpec._allowedTypes), // eslint-disable-line no-underscore-dangle
-            typeSpec = fieldSpec._allowedTypes[fieldType]; // eslint-disable-line no-underscore-dangle
+            fieldType: string = typeof field,
+            allowedTypes = Object.keys(fieldSpec._allowedTypes as ITypeValidationDescriptors) // eslint-disable-line no-underscore-dangle
+
+        // @ts-ignore
+        const typeSpec = fieldSpec._allowedTypes[fieldType]; // eslint-disable-line no-underscore-dangle
 
         if (!helpers.defined(typeSpec)) {
             addErrorFn(path, typeErrorMessageFor(allowedTypes, fieldSpec._additionalContext)); // eslint-disable-line no-underscore-dangle
@@ -123,22 +145,21 @@ export function create (): IValidator {
         }
     }
 
-    function addErrorsFor (config, pathPrefix: string, spec, addErrorFn) {
+    function addErrorsFor (config: FiledType, pathPrefix: string, spec: IValidationMap, addErrorFn: ErrorAppender) {
         Object.keys(spec).filter(nonMetadata).forEach(fieldName => {
-            const util = require('util'),
-                helpers = require('../util/helpers'),
+            const helpers = require('../util/helpers'),
                 fieldSpec = spec[fieldName],
                 path = pathFor(pathPrefix, fieldName),
                 field = navigate(config, path);
 
             if (!helpers.defined(field)) {
-                addMissingFieldError(fieldSpec, path, addErrorFn);
+                addMissingFieldError(fieldSpec as IValidationMap, path, addErrorFn);
             }
-            else if (util.isArray(fieldSpec)) {
-                addArrayErrors(fieldSpec, path, field, addErrorFn);
+            else if (Array.isArray(fieldSpec)) {
+                addArrayErrors(fieldSpec as IValidationMap[], path, field as any as Array<FiledType>, addErrorFn);
             }
             else {
-                addTypeErrors(fieldSpec, path, field, config, addErrorFn);
+                addTypeErrors(fieldSpec as any, path, field, config, addErrorFn);
             }
         });
     }
@@ -149,17 +170,17 @@ export function create (): IValidator {
      * @param {Object} validationSpec - the specification to validate against
      * @returns {Object} The array of errors
      */
-    function validate (config: IMap, validationSpec: IMap): Error[] {
+    function validate (config: IMap, validationSpec: IValidationMap): Error[] {
         const errors:Error[] = [];
 
         Object.keys(config || {}).forEach(key => {
-            const util = require('util'),
-                addErrorFn = function (field, message, subConfig) {
+            const util = require('util');
+            const addErrorFn: ErrorAppender = function (field: IMap, message: string, subConfig?: IValidationMap): void {
                     errors.push(exceptions.ValidationError(
                         util.format('%s behavior "%s" field %s', key, field, message),
                         { source: subConfig || config }));
-                },
-                spec = {};
+                };
+            const spec: IValidationMap = {};
 
             if (validationSpec[key]) {
                 spec[key] = validationSpec[key];
