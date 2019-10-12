@@ -5,18 +5,47 @@ export interface IRequest {
     method: string;
     data: never;
     stubs:IStub[];
-    [key: string]: IStub[] | string;
+    isDryRun?:boolean;
+    [key: string]: IStub[] | string | boolean | undefined;
 }
 
 export interface IStub {
     responses:IResponse[];
 }
 
+export interface ICopyDescriptor {
+    from:string;
+    using: {};
+    into: {};
+}
+
+export interface ILookupDescriptor {
+    into: string
+    key: {
+        from: string;
+        index:number;
+        using: {
+            method: string;
+        }
+    };
+    fromDataSource: {
+        csv:string;
+    };
+}
+
+
+export interface IBehaviors {
+    shellTransform:never[];
+    wait:(() => number) | string;
+    copy: ICopyDescriptor[];
+    lookup:ILookupDescriptor[];
+    decorate:never;
+}
+
 export interface IResponse {
     proxy:IProxy;
-    _behaviors: {
-        shellTransform:never[];
-    }
+    _behaviors: IBehaviors
+    [key: string]:IProxy | IBehaviors;
 }
 
 export interface IProxy {

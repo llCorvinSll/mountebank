@@ -1,14 +1,22 @@
 'use strict';
 
-function create () {
+interface IValidator {
+    validate(config: IMap, validationSpec: IMap):Error[];
+}
+
+interface IMap {
+    [key: string]: string;
+}
+
+export function create (): IValidator {
     const exceptions = require('../util/errors');
 
-    function hasExactlyOneKey (obj) {
+    function hasExactlyOneKey (obj: object) {
         const keys = Object.keys(obj);
         return keys.length === 1;
     }
 
-    function navigate (config, path) {
+    function navigate (config: any, path: string) {
         if (path === '') {
             return config;
         }
@@ -19,9 +27,9 @@ function create () {
         }
     }
 
-    function typeErrorMessageFor (allowedTypes, additionalContext) {
+    function typeErrorMessageFor (allowedTypes: string[], additionalContext: string) {
         const util = require('util'),
-            spellings = { number: 'a', object: 'an', string: 'a' };
+            spellings: IMap = { number: 'a', object: 'an', string: 'a' };
         let message = util.format('must be %s %s', spellings[allowedTypes[0]], allowedTypes[0]);
 
         for (let i = 1; i < allowedTypes.length; i += 1) {
@@ -33,7 +41,7 @@ function create () {
         return message;
     }
 
-    function pathFor (pathPrefix, fieldName) {
+    function pathFor (pathPrefix: string, fieldName: string): string {
         if (pathPrefix === '') {
             return fieldName;
         }
@@ -42,7 +50,7 @@ function create () {
         }
     }
 
-    function nonMetadata (fieldName) {
+    function nonMetadata (fieldName: string): boolean {
         return fieldName.indexOf('_') !== 0;
     }
 
@@ -86,7 +94,7 @@ function create () {
         }
     }
 
-    function addTypeErrors (fieldSpec, path, field, config, addErrorFn) {
+    function addTypeErrors (fieldSpec, path: string, field, config: IMap, addErrorFn) {
         /* eslint complexity: 0 */
         const util = require('util'),
             helpers = require('../util/helpers'),
@@ -115,7 +123,7 @@ function create () {
         }
     }
 
-    function addErrorsFor (config, pathPrefix, spec, addErrorFn) {
+    function addErrorsFor (config, pathPrefix: string, spec, addErrorFn) {
         Object.keys(spec).filter(nonMetadata).forEach(fieldName => {
             const util = require('util'),
                 helpers = require('../util/helpers'),
@@ -141,8 +149,8 @@ function create () {
      * @param {Object} validationSpec - the specification to validate against
      * @returns {Object} The array of errors
      */
-    function validate (config, validationSpec) {
-        const errors = [];
+    function validate (config: IMap, validationSpec: IMap): Error[] {
+        const errors:Error[] = [];
 
         Object.keys(config || {}).forEach(key => {
             const util = require('util'),
@@ -166,7 +174,3 @@ function create () {
         validate
     };
 }
-
-module.exports = {
-    create
-};
