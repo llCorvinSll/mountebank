@@ -22,7 +22,7 @@ export function defined (obj:Object):Boolean {
  * @param {Object} obj - the value to test
  * @returns {boolean}
  */
-export function isObject (obj:Object|null):boolean {
+export function isObject (obj:Object|null): obj is object {
     return typeof obj === 'object' && obj !== null;
 }
 

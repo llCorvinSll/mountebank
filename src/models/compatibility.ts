@@ -1,4 +1,6 @@
+import { IRequest, toDeclaration, IStub } from "./IRequest";
 'use strict';
+
 
 /**
  * mountebank aims to evolve without requiring users to have to worry about versioning,
@@ -13,7 +15,7 @@
  * The new syntax expects an array, creating a shell pipeline
  * @param {Object} request - the request to upcast
  */
-function upcastShellTransformToArray (request) {
+function upcastShellTransformToArray (request: IRequest) {
     (request.stubs || []).forEach(stub => {
         (stub.responses || []).forEach(response => {
             if (response._behaviors && response._behaviors.shellTransform &&
@@ -29,7 +31,7 @@ function upcastShellTransformToArray (request) {
  * The new syntax uses a tcp:// url for symmetry with http/s
  * @param {Object} request - the request to upcast
  */
-function upcastTcpProxyDestinationToUrl (request) {
+function upcastTcpProxyDestinationToUrl (request: IRequest) {
     if (request.protocol !== 'tcp') {
         return;
     }
@@ -40,7 +42,7 @@ function upcastTcpProxyDestinationToUrl (request) {
         (stub.responses || []).forEach(response => {
             const proxy = response.proxy;
             if (proxy && isObject(proxy.to) && proxy.to.host && proxy.to.port) {
-                proxy.to = `tcp://${proxy.to.host}:${proxy.to.port}`;
+                proxy.to = `tcp://${proxy.to.host}:${proxy.to.port}` as toDeclaration;
             }
         });
     });
@@ -50,9 +52,16 @@ function upcastTcpProxyDestinationToUrl (request) {
  * Upcast the request to the current version
  * @param {Object} request - the request to upcast
  */
-function upcast (request) {
+export function upcast (request: IRequest) {
     upcastShellTransformToArray(request);
     upcastTcpProxyDestinationToUrl(request);
+}
+
+
+interface IConfig {
+    request: IRequest;
+    [key: string]: IRequest|string|IStub;
+
 }
 
 /**
@@ -62,16 +71,11 @@ function upcast (request) {
  * request fields to the config object
  * @param {Object} config - the injection parameter
  */
-function downcastInjectionConfig (config) {
+export function downcastInjectionConfig (config: IConfig) {
     // Only possible to use older format for http/s and tcp protocols
     if (config.request.method || config.request.data) {
         Object.keys(config.request).forEach(key => {
-            config[key] = config.request[key];
+            config[key] = config.request[key] as any;
         });
     }
 }
-
-module.exports = {
-    upcast,
-    downcastInjectionConfig
-};
