@@ -1,5 +1,7 @@
 'use strict';
 
+import { ILogger } from "../util/scopedLogger";
+
 /**
  * Shared logic for xpath selector
  * @module
@@ -12,7 +14,7 @@
  * @param {Logger} logger - Optional, used to log JSON parsing errors
  * @returns {Object}
  */
-function select (selector, possibleJSON, logger) {
+export function select (selector: string, possibleJSON: string, logger: ILogger): string | undefined {
     const { JSONPath } = require('jsonpath-plus'),
         isObject = require('../util/helpers').isObject;
 
@@ -36,5 +38,3 @@ function select (selector, possibleJSON, logger) {
         return undefined;
     }
 }
-
-module.exports = { select };
