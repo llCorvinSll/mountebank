@@ -3,6 +3,8 @@
 import {IRequest, IResponse, IBehaviors, ICopyDescriptor, ILookupDescriptor} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
 import * as Q from "q";
+import {IValidationMap} from "./behaviorsValidator";
+import {exec} from "child_process";
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -10,7 +12,7 @@ import * as Q from "q";
  */
 
 // The following schemas are used by both the lookup and copy behaviors and should be kept consistent
-const fromSchema = {
+const fromSchema: IValidationMap = {
         _required: true,
         _allowedTypes: {
             string: {},
@@ -19,13 +21,13 @@ const fromSchema = {
         _additionalContext: 'the request field to select from'
     };
 
-const intoSchema = {
+const intoSchema: IValidationMap = {
         _required: true,
         _allowedTypes: { string: {} },
         _additionalContext: 'the token to replace in response fields'
     };
 
-const usingSchema = {
+const usingSchema: IValidationMap = {
         _required: true,
         _allowedTypes: { object: {} },
         method: {
@@ -38,7 +40,7 @@ const usingSchema = {
         }
     };
 
-const validations = {
+const VALIDATIONS: IValidationMap = {
         wait: {
             _required: true,
             _allowedTypes: { string: {}, number: { nonNegativeInteger: true } }
@@ -103,7 +105,7 @@ const validations = {
  */
 export function validate (config) {
     const validator = require('./behaviorsValidator').create();
-    return validator.validate(config, validations);
+    return validator.validate(config, VALIDATIONS);
 }
 
 /**
@@ -156,10 +158,9 @@ function quoteForShell (obj: object): string {
     }
 }
 
-function execShell (command, request: IRequest, response: IResponse, logger: ILogger) {
-    const deferred = Q.defer(),
+function execShell (command, request: IRequest, response: IResponse, logger: ILogger):Q.Promise<IResponse> {
+    const deferred = Q.defer<IResponse>(),
         util = require('util'),
-        exec = require('child_process').exec,
         fullCommand = util.format('%s %s %s', command, quoteForShell(request), quoteForShell(response)),
         env = require('../util/helpers').clone(process.env);
     logger.debug('Shelling out to %s', command);
@@ -201,7 +202,7 @@ function execShell (command, request: IRequest, response: IResponse, logger: ILo
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function shellTransform (request: IRequest, responsePromise: Q.Promise<IResponse>, commandArray, logger: ILogger) {
+function shellTransform (request: IRequest, responsePromise: Q.Promise<IResponse>, commandArray: string[], logger: ILogger) {
     if (request.isDryRun) {
         return responsePromise;
     }
@@ -228,8 +229,7 @@ function decorate (originalRequest: IRequest, responsePromise: Q.Promise<IRespon
     }
 
     return responsePromise.then(response => {
-        const Q = require('q'),
-            helpers = require('../util/helpers'),
+        const helpers = require('../util/helpers'),
             config = {
                 request: helpers.clone(originalRequest),
                 response,

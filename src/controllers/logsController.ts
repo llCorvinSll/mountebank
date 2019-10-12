@@ -10,7 +10,7 @@
  * @param {string} logfile - the path to the logfile
  * @returns {{get: get}}
  */
-function create (logfile) {
+export function create (logfile: string) {
     /**
      * The function that responds to GET /logs
      * @memberOf module:controllers/logsController#
@@ -35,5 +35,3 @@ function create (logfile) {
 
     return { get };
 }
-
-module.exports = { create };
