@@ -1,5 +1,14 @@
 'use strict';
 
+import {ILogger} from "../util/scopedLogger";
+import {IImposter, IImposterConfig} from "../models/IImposter";
+import {details, IMontebankError, ValidationError} from "../util/errors";
+import {Request, Response} from "express";
+import {IProtocol, IValidation} from "../models/IProtocol";
+import {ParsedUrlQuery} from "querystring";
+import * as Q from 'q';
+
+
 /**
  * The controller that manages the list of imposters
  * @module
@@ -13,44 +22,42 @@
  * @param {Boolean} allowInjection - Whether injection is allowed or not
  * @returns {{get, post, del, put}}
  */
-function create (protocols, imposters, logger, allowInjection) {
-    const exceptions = require('../util/errors'),
-        helpers = require('../util/helpers');
+export function create(protocols: { [key: string]: IProtocol }, imposters: { [key: string]: IImposter }, logger: ILogger, allowInjection: boolean) {
+    const helpers = require('../util/helpers');
 
-    const queryIsFalse = (query, key) => !helpers.defined(query[key]) || query[key].toLowerCase() !== 'false';
-    const queryBoolean = (query, key) => helpers.defined(query[key]) && query[key].toLowerCase() === 'true';
+    const queryIsFalse = (query: ParsedUrlQuery, key: string) => !helpers.defined(query[key]) || (query[key] as string).toLowerCase() !== 'false';
+    const queryBoolean = (query: ParsedUrlQuery, key: string) => helpers.defined(query[key]) && (query[key] as string).toLowerCase() === 'true';
 
-    function deleteAllImposters () {
-        const Q = require('q'),
-            ids = Object.keys(imposters),
+    function deleteAllImposters() {
+        const ids = Object.keys(imposters),
             promises = ids.map(id => imposters[id].stop());
 
-        ids.forEach(id => { delete imposters[id]; });
+        ids.forEach(id => {
+            delete imposters[id];
+        });
         return Q.all(promises);
     }
 
-    function validatePort (port, errors) {
+    function validatePort(port: number, errors: IMontebankError[]) {
         const portIsValid = !helpers.defined(port) || (port.toString().indexOf('.') === -1 && port > 0 && port < 65536);
 
         if (!portIsValid) {
-            errors.push(exceptions.ValidationError("invalid value for 'port'"));
+            errors.push(ValidationError("invalid value for 'port'"));
         }
     }
 
-    function validateProtocol (protocol, errors) {
+    function validateProtocol(protocol: string, errors: IMontebankError[]) {
         const Protocol = protocols[protocol];
 
         if (!helpers.defined(protocol)) {
-            errors.push(exceptions.ValidationError("'protocol' is a required field"));
-        }
-        else if (!Protocol) {
-            errors.push(exceptions.ValidationError(`the ${protocol} protocol is not yet supported`));
+            errors.push(ValidationError("'protocol' is a required field"));
+        } else if (!Protocol) {
+            errors.push(ValidationError(`the ${protocol} protocol is not yet supported`));
         }
     }
 
-    function validate (request) {
-        const Q = require('q'),
-            errors = [],
+    function validate(request: IImposterConfig): Q.Promise<IValidation> {
+        const errors: IMontebankError[] = [],
             compatibility = require('../models/compatibility');
 
         compatibility.upcast(request);
@@ -59,9 +66,8 @@ function create (protocols, imposters, logger, allowInjection) {
         validateProtocol(request.protocol, errors);
 
         if (errors.length > 0) {
-            return Q({ isValid: false, errors });
-        }
-        else {
+            return Q({isValid: false, errors});
+        } else {
             const Protocol = protocols[request.protocol],
                 validator = require('../models/dryRunValidator').create({
                     testRequest: Protocol.testRequest,
@@ -73,23 +79,24 @@ function create (protocols, imposters, logger, allowInjection) {
         }
     }
 
-    function respondWithValidationErrors (response, validationErrors) {
-        logger.error(`error creating imposter: ${JSON.stringify(exceptions.details(validationErrors))}`);
+    function respondWithValidationErrors(response: Response, validationErrors: IMontebankError[]) {
+        // TODO: wrong typing for details()
+        logger.error(`error creating imposter: ${JSON.stringify(details(validationErrors as any))}`);
         response.statusCode = 400;
-        response.send({ errors: validationErrors });
+        response.send({errors: validationErrors});
     }
 
-    function respondWithCreationError (response, error) {
-        logger.error(`error creating imposter: ${JSON.stringify(exceptions.details(error))}`);
+    function respondWithCreationError(response: Response, error: IMontebankError) {
+        logger.error(`error creating imposter: ${JSON.stringify(details(error))}`);
         response.statusCode = (error.code === 'insufficient access') ? 403 : 400;
-        response.send({ errors: [error] });
+        response.send({errors: [error]});
     }
 
-    function getJSON (options) {
-        return Object.keys(imposters).reduce((accumulator, id) => accumulator.concat(imposters[id].toJSON(options)), []);
+    function getJSON(options?: any) {
+        return Object.keys(imposters).reduce((accumulator, id) => accumulator.concat(imposters[id].toJSON(options)), [] as string[]);
     }
 
-    function requestDetails (request) {
+    function requestDetails(request: Request) {
         return `${helpers.socketName(request.socket)} => ${JSON.stringify(request.body)}`;
     }
 
@@ -99,7 +106,7 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    function get (request, response) {
+    function get(request: Request, response: Response) {
         response.format({
             json: () => {
                 const url = require('url'),
@@ -110,10 +117,10 @@ function create (protocols, imposters, logger, allowInjection) {
                         list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
                     };
 
-                response.send({ imposters: getJSON(options) });
+                response.send({imposters: getJSON(options)});
             },
             html: () => {
-                response.render('imposters', { imposters: getJSON() });
+                response.render('imposters', {imposters: getJSON()});
             }
         });
     }
@@ -125,15 +132,13 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing purposes
      */
-    function post (request, response) {
+    function post(request: Request, response: Response) {
         const protocol = request.body.protocol,
             validationPromise = validate(request.body);
 
         logger.debug(requestDetails(request));
 
         return validationPromise.then(validation => {
-            const Q = require('q');
-
             if (validation.isValid) {
                 return protocols[protocol].createImposterFrom(request.body).then(imposter => {
                     imposters[imposter.port] = imposter;
@@ -143,10 +148,9 @@ function create (protocols, imposters, logger, allowInjection) {
                 }, error => {
                     respondWithCreationError(response, error);
                 });
-            }
-            else {
+            } else {
                 respondWithValidationErrors(response, validation.errors);
-                return Q(false);
+                return Q<void>(false as any);
             }
         });
     }
@@ -158,7 +162,7 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing purposes
      */
-    function del (request, response) {
+    function del(request: Request, response: Response) {
         const url = require('url'),
             query = url.parse(request.url, true).query,
             options = {
@@ -169,7 +173,7 @@ function create (protocols, imposters, logger, allowInjection) {
             json = getJSON(options);
 
         return deleteAllImposters().then(() => {
-            response.send({ imposters: json });
+            response.send({imposters: json});
         });
     }
 
@@ -180,48 +184,44 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing purposes
      */
-    function put (request, response) {
-        const Q = require('q'),
-            requestImposters = request.body.imposters || [],
-            validationPromises = requestImposters.map(imposter => validate(imposter));
+    function put(request: Request, response: Response) {
+        const requestImposters: IImposterConfig[] = request.body.imposters || [],
+            validationPromises: Q.Promise<IValidation>[] = requestImposters.map((imposter: IImposterConfig) => validate(imposter));
 
         logger.debug(requestDetails(request));
 
         if (!('imposters' in request.body)) {
             respondWithValidationErrors(response, [
-                exceptions.ValidationError("'imposters' is a required field")
+                ValidationError("'imposters' is a required field")
             ]);
             return Q(false);
         }
 
-        return Q.all(validationPromises).then(validations => {
+        return Q.all(validationPromises).then((validations) => {
             const isValid = validations.every(validation => validation.isValid);
 
             if (isValid) {
                 return deleteAllImposters().then(() => {
-                    const creationPromises = requestImposters.map(imposter =>
+                    const creationPromises = requestImposters.map((imposter) =>
                         protocols[imposter.protocol].createImposterFrom(imposter)
                     );
                     return Q.all(creationPromises);
-                }).then(allImposters => {
-                    const json = allImposters.map(imposter => imposter.toJSON({ list: true }));
+                }).then((allImposters: IImposter[]) => {
+                    const json = allImposters.map(imposter => imposter.toJSON({list: true}));
                     allImposters.forEach(imposter => {
                         imposters[imposter.port] = imposter;
                     });
-                    response.send({ imposters: json });
+                    response.send({imposters: json});
                 }, error => {
                     respondWithCreationError(response, error);
                 });
-            }
-            else {
-                const validationErrors = validations.reduce((accumulator, validation) => accumulator.concat(validation.errors), []);
+            } else {
+                const validationErrors = validations.reduce((accumulator, validation) => accumulator.concat(validation.errors), [] as IMontebankError[]);
                 respondWithValidationErrors(response, validationErrors);
-                return Q(false);
+                return Q<void>(false as any);
             }
         });
     }
 
-    return { get, post, del, put };
+    return {get, post, del, put};
 }
-
-module.exports = { create };

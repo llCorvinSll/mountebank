@@ -9,11 +9,11 @@ interface IErrorOptions {
     [key:string]:unknown
 }
 
-interface IMontebankError {
+export interface IMontebankError {
     [key:string]:unknown
 }
 
-function createError (code:string, message:string, options?:IErrorOptions):{ new ():unknown } {
+function createError (code:string, message:string, options?:IErrorOptions):IMontebankError {
     const inherit = require('./inherit'),
         result = inherit.from(Error, { code, message });
 
@@ -25,7 +25,7 @@ function createError (code:string, message:string, options?:IErrorOptions):{ new
     return result;
 }
 
-function create (code:string) {
+function create (code:string): (message: string, opts?:IErrorOptions) => IMontebankError {
     return (message:string, options?:IErrorOptions) => createError(code, message, options);
 }
 

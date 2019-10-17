@@ -1,5 +1,8 @@
 'use strict';
 
+import {IRequest, IResponse, IStub} from "./IRequest";
+import {ILogger} from "../util/scopedLogger";
+
 /**
  * Determines the response for a stub based on the user-provided response configuration
  * @module
@@ -12,14 +15,14 @@
  * @param {String} callbackURL - The protocol callback URL for response resolution
  * @returns {Object}
  */
-function create (stubs, proxy, callbackURL) {
+export function create (stubs: IStub[], proxy: any, callbackURL: string) {
     // imjectState is deprecated in favor of imposterState, but kept for backwards compatibility
     const injectState = {}, // eslint-disable-line no-unused-vars
         pendingProxyResolutions = {},
         inProcessProxy = Boolean(proxy);
     let nextProxyResolutionKey = 0;
 
-    function inject (request, fn, logger, imposterState) {
+    function inject (request: IRequest, fn, logger: ILogger, imposterState) {
         const Q = require('q'),
             helpers = require('../util/helpers'),
             deferred = Q.defer(),
@@ -87,7 +90,7 @@ function create (stubs, proxy, callbackURL) {
         return selectionValue(nodes);
     }
 
-    function buildEquals (request, matchers, valueOf) {
+    function buildEquals (request: IRequest, matchers, valueOf) {
         const result = {},
             isObject = require('../util/helpers').isObject;
 
@@ -102,12 +105,15 @@ function create (stubs, proxy, callbackURL) {
         return result;
     }
 
-    const path = [];
+    const path:string[] = [];
 
-    function buildExists (request, fieldName, matchers, initialRequest) {
+    function buildExists (request: IRequest | undefined, fieldName: string, matchers, initialRequest) {
         const isObject = require('../util/helpers').isObject,
             setDeep = require('../util/helpers').setDeep;
-        Object.keys(request).forEach(key => {
+
+        request = request || {} as IRequest;
+
+        Object.keys(request || {}).forEach(key => {
             path.push(key);
             if (isObject(request[key])) {
                 buildExists(request[key], fieldName, matchers[key], initialRequest);
@@ -271,9 +277,9 @@ function create (stubs, proxy, callbackURL) {
         }
     }
 
-    function proxyAndRecord (responseConfig, request, logger, requestDetails) {
+    function proxyAndRecord (responseConfig, request, logger: ILogger, requestDetails) {
         const Q = require('q'),
-            startTime = new Date(),
+            startTime = new Date().getTime(),
             behaviors = require('./behaviors');
 
         if (['proxyOnce', 'proxyAlways', 'proxyTransparent'].indexOf(responseConfig.proxy.mode) < 0) {
@@ -283,11 +289,11 @@ function create (stubs, proxy, callbackURL) {
         if (inProcessProxy) {
             return proxy.to(responseConfig.proxy.to, request, responseConfig.proxy, requestDetails).then(response => {
                 // eslint-disable-next-line no-underscore-dangle
-                response._proxyResponseTime = new Date() - startTime;
+                response._proxyResponseTime = new Date().getTime() - startTime;
 
                 // Run behaviors here to persist decorated response
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
-            }).then(response => {
+            }).then((response: IResponse) => {
                 recordProxyResponse(responseConfig, request, response, logger);
                 return Q(response);
             });
@@ -308,7 +314,7 @@ function create (stubs, proxy, callbackURL) {
         }
     }
 
-    function processResponse (responseConfig, request, logger, imposterState, requestDetails) {
+    function processResponse (responseConfig, request, logger: ILogger, imposterState, requestDetails) {
         const Q = require('q'),
             helpers = require('../util/helpers'),
             exceptions = require('../util/errors');
@@ -345,7 +351,7 @@ function create (stubs, proxy, callbackURL) {
      * @param {Object} options - Additional options not carried with the request
      * @returns {Object} - Promise resolving to the response
      */
-    function resolve (responseConfig, request, logger, imposterState, options) {
+    function resolve (responseConfig, request: any, logger: ILogger, imposterState, options) {
         const Q = require('q'),
             exceptions = require('../util/errors'),
             helpers = require('../util/helpers'),
@@ -365,7 +371,7 @@ function create (stubs, proxy, callbackURL) {
             else {
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
             }
-        }).then(response => {
+        }).then((response: IResponse) => {
             if (inProcessProxy) {
                 return Q(response);
             }
@@ -386,14 +392,14 @@ function create (stubs, proxy, callbackURL) {
      * @param {Object} logger - the logger
      * @returns {Object} - Promise resolving to the response
      */
-    function resolveProxy (proxyResponse, proxyResolutionKey, logger) {
+    function resolveProxy (proxyResponse, proxyResolutionKey, logger: ILogger) {
         const pendingProxyConfig = pendingProxyResolutions[proxyResolutionKey],
             behaviors = require('./behaviors'),
             Q = require('q');
 
         if (pendingProxyConfig) {
             // eslint-disable-next-line no-underscore-dangle
-            proxyResponse._proxyResponseTime = new Date() - pendingProxyConfig.startTime;
+            proxyResponse._proxyResponseTime = new Date().getTime() - pendingProxyConfig.startTime;
 
             return behaviors.execute(pendingProxyConfig.request, proxyResponse, pendingProxyConfig.responseConfig._behaviors, logger)
                 .then(response => {
@@ -414,5 +420,3 @@ function create (stubs, proxy, callbackURL) {
 
     return { resolve, resolveProxy };
 }
-
-module.exports = { create };

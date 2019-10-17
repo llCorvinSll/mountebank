@@ -1,11 +1,15 @@
 'use strict';
 
+import {IRequest} from "./IRequest";
+import {ILogger} from "../util/scopedLogger";
+import {IPredicate} from "./IPredicate";
+
 /**
  * All the predicates that determine whether a stub matches a request
  * @module
  */
 
-function sortObjects (a, b) {
+function sortObjects (a: any, b: any): number {
     const stringify = require('json-stable-stringify'),
         isObject = require('../util/helpers').isObject;
 
@@ -22,7 +26,7 @@ function sortObjects (a, b) {
     }
 }
 
-function forceStrings (value) {
+function forceStrings (value: any) {
     const isObject = require('../util/helpers').isObject;
 
     if (value === null) {
@@ -45,7 +49,7 @@ function forceStrings (value) {
     }
 }
 
-function select (type, selectFn, encoding) {
+function select (type, selectFn, encoding: string) {
     if (encoding === 'base64') {
         const errors = require('../util/errors');
         throw errors.ValidationError(`the ${type} predicate parameter is not allowed in binary mode`);
@@ -66,10 +70,8 @@ function select (type, selectFn, encoding) {
     }
 }
 
-function orderIndependent (possibleArray) {
-    const util = require('util');
-
-    if (util.isArray(possibleArray)) {
+function orderIndependent (possibleArray: object) {
+    if (Array.isArray(possibleArray)) {
         return possibleArray.sort(sortObjects);
     }
     else {
@@ -84,7 +86,7 @@ function transformObject (obj, transform) {
     return obj;
 }
 
-function selectXPath (config, encoding, text) {
+function selectXPath (config, encoding: string, text: string) {
     const xpath = require('./xpath'),
         combinators = require('../util/combinators'),
         selectFn = combinators.curry(xpath.select, config.selector, config.ns, text);
@@ -120,7 +122,7 @@ function selectTransform (config, options) {
     }
 }
 
-function lowercase (text) {
+function lowercase (text: string): string {
     return text.toLowerCase();
 }
 
@@ -301,7 +303,7 @@ function predicateSatisfied (expected, actual, predicateConfig, predicateFn) {
     });
 }
 
-function create (operator, predicateFn) {
+function create (operator: string, predicateFn: (expected: string, actual: string) => boolean): PredicateFunction {
     return (predicate, request, encoding) => {
         const expected = normalize(predicate[operator], predicate, { encoding: encoding }),
             actual = normalize(request, predicate, { encoding: encoding, withSelectors: true });
@@ -310,7 +312,7 @@ function create (operator, predicateFn) {
     };
 }
 
-function deepEquals (predicate, request, encoding) {
+function deepEquals (predicate: IPredicate, request, encoding) {
     const expected = normalize(forceStrings(predicate.deepEquals), predicate, { encoding: encoding }),
         actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true }),
         stringify = require('json-stable-stringify'),
@@ -326,7 +328,7 @@ function deepEquals (predicate, request, encoding) {
     });
 }
 
-function matches (predicate, request, encoding) {
+function matches (predicate: IPredicate, request: IRequest, encoding: string) {
     // We want to avoid the lowerCase transform on values so we don't accidentally butcher
     // a regular expression with upper case metacharacters like \W and \S
     // However, we need to maintain the case transform for keys like http header names (issue #169)
@@ -347,7 +349,7 @@ function matches (predicate, request, encoding) {
     return predicateSatisfied(expected, actual, clone, (a, b) => new RegExp(a, options).test(b));
 }
 
-function not (predicate, request, encoding, logger, imposterState) {
+function not (predicate: IPredicate, request, encoding, logger, imposterState) {
     return !evaluate(predicate.not, request, encoding, logger, imposterState);
 }
 
@@ -355,15 +357,15 @@ function evaluateFn (request, encoding, logger, imposterState) {
     return subPredicate => evaluate(subPredicate, request, encoding, logger, imposterState);
 }
 
-function or (predicate, request, encoding, logger, imposterState) {
+function or (predicate: IPredicate, request, encoding, logger, imposterState) {
     return predicate.or.some(evaluateFn(request, encoding, logger, imposterState));
 }
 
-function and (predicate, request, encoding, logger, imposterState) {
+function and (predicate: IPredicate, request, encoding, logger, imposterState) {
     return predicate.and.every(evaluateFn(request, encoding, logger, imposterState));
 }
 
-function inject (predicate, request, encoding, logger, imposterState) {
+function inject (predicate: IPredicate, request, encoding, logger, imposterState) {
     if (request.isDryRun === true) {
         return true;
     }
@@ -392,7 +394,7 @@ function inject (predicate, request, encoding, logger, imposterState) {
     }
 }
 
-function toString (value) {
+function toString (value: any): string {
     if (value !== null && typeof value !== 'undefined' && typeof value.toString === 'function') {
         return value.toString();
     }
@@ -401,7 +403,10 @@ function toString (value) {
     }
 }
 
-const predicates = {
+type PredicateFunction = (clone: IPredicate, request: IRequest, encoding: string, logger: ILogger, imposter: object) => boolean;
+
+
+const predicates: { [key: string]: PredicateFunction } = {
     equals: create('equals', (expected, actual) => toString(expected) === toString(actual)),
     deepEquals,
     contains: create('contains', (expected, actual) => actual.indexOf(expected) >= 0),
@@ -426,7 +431,7 @@ const predicates = {
  * @param {Object} imposterState - The current state for the imposter
  * @returns {boolean}
  */
-function evaluate (predicate, request, encoding, logger, imposterState) {
+export function evaluate (predicate: IPredicate, request: IRequest, encoding: string, logger: ILogger, imposterState): boolean {
     const predicateFn = Object.keys(predicate).find(key => Object.keys(predicates).indexOf(key) >= 0),
         errors = require('../util/errors'),
         helpers = require('../util/helpers'),
@@ -439,5 +444,3 @@ function evaluate (predicate, request, encoding, logger, imposterState) {
         throw errors.ValidationError('missing predicate', { source: predicate });
     }
 }
-
-module.exports = { evaluate };

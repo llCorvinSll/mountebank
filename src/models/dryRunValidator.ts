@@ -7,6 +7,23 @@
  * @module
  */
 
+import {ILogger} from "../util/scopedLogger";
+import {IResponse, IStub} from "./IRequest";
+import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
+import * as Q from "q";
+import {IStubRepository} from "./stubRepository";
+import {IImposterConfig} from "./IImposter";
+import {IValidation} from "./IProtocol";
+
+
+
+interface IDryRunValidatorOptions {
+    allowInjection:boolean;
+    testRequest:any;
+    testProxyResponse:any;
+    additionalValidation:(cfg:IImposterConfig) => Q.Promise<IValidation>
+}
+
 /**
  * Creates the validator
  * @param {Object} options - Configuration for the validator
@@ -16,10 +33,8 @@
  * @param {function} options.additionalValidation - A function that performs protocol-specific validation
  * @returns {Object}
  */
-function create (options) {
-    const exceptions = require('../util/errors');
-
-    function stubForResponse (originalStub, response, withPredicates) {
+export function create (options: IDryRunValidatorOptions) {
+    function stubForResponse (originalStub: IStub, response: IResponse, withPredicates: boolean) {
         // Each dry run only validates the first response, so we
         // explode the number of stubs to dry run each response separately
         const helpers = require('../util/helpers'),
@@ -37,22 +52,21 @@ function create (options) {
         return clonedStub;
     }
 
-    function reposToTestFor (stub, encoding) {
+    function reposToTestFor (stub: IStub, encoding: string) {
         // Test with predicates (likely won't match) to make sure predicates don't blow up
         // Test without predicates (always matches) to make sure response doesn't blow up
-        const stubsToValidateWithPredicates = stub.responses.map(response => stubForResponse(stub, response, true)),
-            stubsToValidateWithoutPredicates = stub.responses.map(response => stubForResponse(stub, response, false)),
+        const stubsToValidateWithPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, true)) : [],
+            stubsToValidateWithoutPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, false)) : [],
             stubsToValidate = stubsToValidateWithPredicates.concat(stubsToValidateWithoutPredicates);
 
         return stubsToValidate.map(stubToValidate => {
-            const stubRepository = require('./stubRepository').create(encoding);
+            const stubRepository: IStubRepository = require('./stubRepository').create(encoding);
             stubRepository.addStub(stubToValidate);
             return stubRepository;
         });
     }
 
-    function resolverFor (stubRepository) {
-        const Q = require('q');
+    function resolverFor (stubRepository: IStubRepository) {
 
         // We can get a better test (running behaviors on proxied result) if the protocol gives
         // us a testProxyResult
@@ -65,15 +79,14 @@ function create (options) {
         }
     }
 
-    function dryRun (stub, encoding, logger) {
-        const Q = require('q'),
-            combinators = require('../util/combinators'),
-            dryRunLogger = {
+    function dryRun (stub: IStub, encoding: string, logger: ILogger) {
+        const combinators = require('../util/combinators'),
+            dryRunLogger: ILogger = {
                 debug: combinators.noop,
                 info: combinators.noop,
                 warn: combinators.noop,
                 error: logger.error
-            },
+            } as any as ILogger,
             dryRunRepositories = reposToTestFor(stub, encoding);
 
         options.testRequest = options.testRequest || {};
@@ -85,9 +98,8 @@ function create (options) {
         }));
     }
 
-    function addDryRunErrors (stub, encoding, errors, logger) {
-        const Q = require('q'),
-            deferred = Q.defer();
+    function addDryRunErrors (stub: IStub, encoding: string, errors: IMontebankError[], logger: ILogger) {
+        const deferred = Q.defer();
 
         try {
             dryRun(stub, encoding, logger).done(deferred.resolve, reason => {
@@ -97,7 +109,7 @@ function create (options) {
             });
         }
         catch (error) {
-            errors.push(exceptions.ValidationError('malformed stub request', {
+            errors.push(ValidationError('malformed stub request', {
                 data: error.message,
                 source: error.source || stub
             }));
@@ -107,63 +119,61 @@ function create (options) {
         return deferred.promise;
     }
 
-    function hasPredicateGeneratorInjection (response) {
+    function hasPredicateGeneratorInjection (response: IResponse) {
         return response.proxy && response.proxy.predicateGenerators &&
             response.proxy.predicateGenerators.some(generator => generator.inject);
     }
 
-    function hasStubInjection (stub) {
-        const hasResponseInjections = stub.responses.some(response => {
+    function hasStubInjection (stub: IStub) {
+        const hasResponseInjections = stub.responses && stub.responses.some((response: IResponse) => {
                 const hasDecorator = response._behaviors && response._behaviors.decorate,
                     hasWaitFunction = response._behaviors && typeof response._behaviors.wait === 'string';
 
                 return response.inject || hasDecorator || hasWaitFunction || hasPredicateGeneratorInjection(response);
             }),
-            hasPredicateInjections = Object.keys(stub.predicates || {}).some(predicate => stub.predicates[predicate].inject),
-            hasAddDecorateBehaviorInProxy = stub.responses.some(response => response.proxy && response.proxy.addDecorateBehavior);
+            hasPredicateInjections = Object.keys(stub.predicates || {}).some(predicate => stub.predicates && stub.predicates[predicate].inject),
+            hasAddDecorateBehaviorInProxy = stub.responses && stub.responses.some(response => response.proxy && response.proxy.addDecorateBehavior);
         return hasResponseInjections || hasPredicateInjections || hasAddDecorateBehaviorInProxy;
     }
 
-    function hasShellExecution (stub) {
-        return stub.responses.some(response => response._behaviors && response._behaviors.shellTransform);
+    function hasShellExecution (stub: IStub) {
+        return stub.responses && stub.responses.some(response => response._behaviors && response._behaviors.shellTransform);
     }
 
-    function addStubInjectionErrors (stub, errors) {
+    function addStubInjectionErrors (stub: IStub, errors: IMontebankError[]) {
         if (options.allowInjection) {
             return;
         }
 
         if (hasStubInjection(stub)) {
-            errors.push(exceptions.InjectionError(
+            errors.push(InjectionError(
                 'JavaScript injection is not allowed unless mb is run with the --allowInjection flag', { source: stub }));
         }
         if (hasShellExecution(stub)) {
-            errors.push(exceptions.InjectionError(
+            errors.push(InjectionError(
                 'Shell execution is not allowed unless mb is run with the --allowInjection flag', { source: stub }));
         }
     }
 
-    function addAllTo (values, additionalValues) {
+    function addAllTo (values: any[], additionalValues: any[]) {
         additionalValues.forEach(value => {
             values.push(value);
         });
     }
 
-    function addBehaviorErrors (stub, errors) {
-        stub.responses.forEach(response => {
+    function addBehaviorErrors (stub: IStub, errors: IMontebankError[]) {
+        stub.responses && stub.responses.forEach(response => {
             const behaviors = require('./behaviors');
             addAllTo(errors, behaviors.validate(response._behaviors));
         });
     }
 
-    function errorsForStub (stub, encoding, logger) {
-        const errors = [],
-            Q = require('q'),
-            util = require('util'),
+    function errorsForStub (stub: IStub, encoding: string, logger: ILogger) {
+        const errors: IMontebankError[] = [],
             deferred = Q.defer();
 
-        if (!util.isArray(stub.responses) || stub.responses.length === 0) {
-            errors.push(exceptions.ValidationError("'responses' must be a non-empty array", {
+        if (!Array.isArray(stub.responses) || stub.responses.length === 0) {
+            errors.push(ValidationError("'responses' must be a non-empty array", {
                 source: stub
             }));
         }
@@ -186,12 +196,12 @@ function create (options) {
         return deferred.promise;
     }
 
-    function errorsForRequest (request) {
+    function errorsForRequest (request: IImposterConfig) {
         const errors = [],
             hasRequestInjection = request.endOfRequestResolver && request.endOfRequestResolver.inject;
 
         if (!options.allowInjection && hasRequestInjection) {
-            errors.push(exceptions.InjectionError(
+            errors.push(InjectionError(
                 'JavaScript injection is not allowed unless mb is run with the --allowInjection flag',
                 { source: request.endOfRequestResolver }));
         }
@@ -205,20 +215,19 @@ function create (options) {
      * @param {Object} logger - The logger
      * @returns {Object} Promise resolving to an object containing isValid and an errors array
      */
-    function validate (request, logger) {
+    function validate (request: IImposterConfig, logger: ILogger):Q.Promise<IValidation> {
         const stubs = request.stubs || [],
             encoding = request.mode === 'binary' ? 'base64' : 'utf8',
             validationPromises = stubs.map(stub => errorsForStub(stub, encoding, logger)),
-            Q = require('q'),
-            deferred = Q.defer();
+            deferred = Q.defer<IValidation>();
 
         validationPromises.push(Q(errorsForRequest(request)));
         if (typeof options.additionalValidation === 'function') {
             validationPromises.push(Q(options.additionalValidation(request)));
         }
 
-        Q.all(validationPromises).done(errorsForAllStubs => {
-            const allErrors = errorsForAllStubs.reduce((stubErrors, accumulator) => accumulator.concat(stubErrors), []);
+        Q.all(validationPromises).done((errorsForAllStubs: IMontebankError[]) => {
+            const allErrors = errorsForAllStubs.reduce((accumulator, stubErrors) => accumulator.concat(stubErrors), [] as IMontebankError[]);
             deferred.resolve({ isValid: allErrors.length === 0, errors: allErrors });
         });
 
@@ -227,5 +236,3 @@ function create (options) {
 
     return { validate };
 }
-
-module.exports = { create };

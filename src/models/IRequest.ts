@@ -1,16 +1,23 @@
 'use strict';
 
+import {IPredicate} from "./IPredicate";
+
 export interface IRequest {
     protocol: string;
     method: string;
     data: never;
     stubs:IStub[];
     isDryRun?:boolean;
+    endOfRequestResolver?:any;
     [key: string]: IStub[] | string | boolean | undefined;
 }
 
 export interface IStub {
-    responses:IResponse[];
+    responses?:IResponse[];
+    predicates?: {[key: string]:IPredicate};
+    statefulResponses: IResponse[];
+    addResponse?: (resp: IResponse) => void;
+    matches?:unknown[];
 }
 
 export interface ICopyDescriptor {
@@ -50,6 +57,12 @@ export interface IResponse {
 
 export interface IProxy {
     to: toDeclaration;
+    addDecorateBehavior?: boolean;
+    predicateGenerators?: IPredicateGenerator[];
+}
+
+export interface IPredicateGenerator {
+    inject?:boolean;
 }
 
 export type toDeclaration = {

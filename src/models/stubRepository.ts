@@ -1,30 +1,46 @@
 'use strict';
 
+import {ILogger} from "../util/scopedLogger";
+import {IRequest, IResponse, IStub} from "./IRequest";
+import {IPredicate} from "./IPredicate";
+
+
 /**
  * Maintains all stubs for an imposter
  * @module
  */
+
+export interface IStubRepository {
+    stubs: () => IStub[];
+    addStub(stub: IStub):void;
+    addStubAtIndex(index: number, newStub: IStub): void;
+    overwriteStubs(newStubs: IStub[]): void;
+    overwriteStubAtIndex(index: number, newStub: IStub):void;
+    deleteStubAtIndex(index: number):void;
+    getResponseFor(request: IRequest, logger: ILogger, imposterState):void;
+    resetProxies():void;
+}
 
 /**
  * Creates the repository
  * @param {string} encoding - utf8 or base64
  * @returns {Object}
  */
-function create (encoding) {
+export function create (encoding: string): IStubRepository {
     /**
      * The list of stubs within this repository
      * @memberOf module:models/stubRepository#
      * @type {Array}
      */
-    const stubs = [];
+    const stubs: IStub[] = [];
 
     // We call map before calling every so we make sure to call every
     // predicate during dry run validation rather than short-circuiting
-    function trueForAll (list, predicate) {
+    function trueForAll (list: any[], predicate) {
         return list.map(predicate).every(result => result);
     }
 
-    function findFirstMatch (request, logger, imposterState) {
+    function findFirstMatch (request: IRequest, logger: ILogger, imposterState): IStub | undefined {
         if (stubs.length === 0) {
             return undefined;
         }
@@ -36,7 +52,7 @@ function create (encoding) {
                     predicates = require('./predicates');
 
                 return trueForAll(stubPredicates,
-                    predicate => predicates.evaluate(predicate, request, encoding, logger, readOnlyState));
+                    (predicate: IPredicate) => predicates.evaluate(predicate, request, encoding, logger, readOnlyState));
             });
 
         if (matches.length === 0) {
@@ -72,8 +88,9 @@ function create (encoding) {
         return result;
     }
 
-    function stubIndexFor (responseToMatch) {
-        for (var i = 0; i < stubs.length; i += 1) {
+    function stubIndexFor (responseToMatch: object) {
+        let i = 0;
+        for (i; i < stubs.length; i += 1) {
             if (stubs[i].responses.some(response => JSON.stringify(response) === JSON.stringify(responseToMatch))) {
                 break;
             }
@@ -81,9 +98,9 @@ function create (encoding) {
         return i;
     }
 
-    function decorate (stub) {
+    function decorate (stub: IStub) {
         stub.statefulResponses = repeatTransform(stub.responses);
-        stub.addResponse = response => { stub.responses.push(response); };
+        stub.addResponse = response => { stub.responses && stub.responses.push(response); };
         return stub;
     }
 
@@ -93,7 +110,7 @@ function create (encoding) {
      * @param {Object} stub - The stub to add
      * @param {Object} beforeResponse - If provided, the new stub will be added before the stub containing the response (used for proxyOnce)
      */
-    function addStub (stub, beforeResponse) {
+    function addStub (stub: IStub, beforeResponse?: object): void {
         if (beforeResponse) {
             stubs.splice(stubIndexFor(beforeResponse), 0, decorate(stub));
         }
@@ -108,7 +125,7 @@ function create (encoding) {
      * @param {Number} index - the index of the stub to change
      * @param {Object} newStub - the new stub
      */
-    function addStubAtIndex (index, newStub) {
+    function addStubAtIndex (index: number, newStub: IStub): void {
         stubs.splice(index, 0, decorate(newStub));
     }
 
@@ -117,7 +134,7 @@ function create (encoding) {
      * @memberOf module:models/stubRepository#
      * @param {Object} newStubs - the new list of stubs
      */
-    function overwriteStubs (newStubs) {
+    function overwriteStubs (newStubs: IStub[]): void {
         while (stubs.length > 0) {
             stubs.pop();
         }
@@ -130,7 +147,7 @@ function create (encoding) {
      * @param {Number} index - the index of the stub to change
      * @param {Object} newStub - the new stub
      */
-    function overwriteStubAtIndex (index, newStub) {
+    function overwriteStubAtIndex (index: number, newStub: IStub): void {
         stubs[index] = decorate(newStub);
     }
 
@@ -139,7 +156,7 @@ function create (encoding) {
      * @memberOf module:models/stubRepository#
      * @param {Number} index - the index of the stub to remove
      */
-    function deleteStubAtIndex (index) {
+    function deleteStubAtIndex (index: number): void {
         stubs.splice(index, 1);
     }
 
@@ -148,14 +165,14 @@ function create (encoding) {
      * @memberOf module:models/stubRepository#
      * @returns {Object} - The stubs
      */
-    function getStubs () {
+    function getStubs (): IStub[] {
         const helpers = require('../util/helpers'),
             result = helpers.clone(stubs);
 
-        for (var i = 0; i < stubs.length; i += 1) {
+        for (let i = 0; i < stubs.length; i += 1) {
             delete result[i].statefulResponses;
             const stub = stubs[i];
-            result[i].addResponse = response => { stub.responses.push(response); };
+            result[i].addResponse = (response: IResponse) => { stub.responses.push(response); };
         }
         return result;
     }
@@ -168,9 +185,9 @@ function create (encoding) {
      * @param {Object} imposterState - The current state for the imposter
      * @returns {Object} - Promise resolving to the response
      */
-    function getResponseFor (request, logger, imposterState) {
-        const helpers = require('../util/helpers'),
-            stub = findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
+    function getResponseFor (request: IRequest, logger: ILogger, imposterState): void {
+        const helpers = require('../util/helpers');
+        const stub: IStub = findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
             responseConfig = stub.statefulResponses.shift(),
             cloned = helpers.clone(responseConfig);
 
@@ -178,7 +195,7 @@ function create (encoding) {
 
         stub.statefulResponses.push(responseConfig);
 
-        cloned.recordMatch = response => {
+        cloned.recordMatch = (response: IResponse) => {
             const clonedResponse = helpers.clone(response),
                 match = {
                     timestamp: new Date().toJSON(),
@@ -205,15 +222,16 @@ function create (encoding) {
     /**
     * Removes the saved proxy responses
     */
-    function resetProxies () {
+    function resetProxies (): void {
         for (let i = stubs.length - 1; i >= 0; i -= 1) {
-            stubs[i].responses = stubs[i].responses.filter(response => {
+            let current_stub = stubs[i];
+            current_stub.responses = current_stub.responses.filter(response => {
                 if (!response.is) {
                     return true;
                 }
                 return typeof response.is._proxyResponseTime === 'undefined'; // eslint-disable-line no-underscore-dangle
             });
-            if (stubs[i].responses.length === 0) {
+            if (current_stub.responses.length === 0) {
                 stubs.splice(i, 1);
             }
         }
@@ -230,5 +248,3 @@ function create (encoding) {
         resetProxies
     };
 }
-
-module.exports = { create };

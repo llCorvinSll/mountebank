@@ -1,5 +1,7 @@
 'use strict';
 
+import {Socket} from "net";
+
 interface IIndexed {
     [key: string]:any
 }
@@ -26,16 +28,12 @@ export function isObject (obj:Object|null): obj is object {
     return typeof obj === 'object' && obj !== null;
 }
 
-interface ISocket {
-    remoteAddress:string;
-    remotePort:string;
-}
 /**
  * Returns the text used for logging purposes related to this socket
  * @param {Object} socket - the socket
  * @returns {string}
  */
-export function socketName (socket:ISocket):string {
+export function socketName (socket:Socket):string|undefined {
     let result = socket.remoteAddress;
     if (socket.remotePort) {
         result += `:${socket.remotePort}`;
@@ -48,7 +46,7 @@ export function socketName (socket:ISocket):string {
  * @param {Object} obj - the object to clone
  * @returns {Object}
  */
-export function clone (obj:Object):Object {
+export function clone<T> (obj:T):T {
     return JSON.parse(JSON.stringify(obj));
 }
 
