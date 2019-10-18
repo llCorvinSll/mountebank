@@ -522,7 +522,7 @@ function lookup (originalRequest: IRequest, responsePromise: Q.Promise<IResponse
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object}
  */
-export function execute (request: IRequest, response: IResponse, behaviors: IBehaviors, logger: ILogger) {
+export function execute (request: IRequest, response: IResponse, behaviors: IBehaviors, logger: ILogger):Q.Promise<IResponse> {
     if (!behaviors) {
         return require('q')(response);
     }

@@ -11,7 +11,7 @@ httpServer.create(config, mbConnection.logger(), mbConnection.getResponse).done(
     const metadata = server.metadata;
     metadata.port = server.port;
     console.log(JSON.stringify(metadata));
-}, error => {
+}, (error: any) => {
     console.error(JSON.stringify(error));
     process.exit(1);
 });

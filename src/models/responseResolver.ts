@@ -1,12 +1,22 @@
 'use strict';
 
-import {IRequest, IResponse, IStub} from "./IRequest";
+import {IProxy, IRequest, IResponse, IStub} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
+import {IStubRepository} from "./stubRepository";
+import * as Q from "q";
+import {InjectionError, ValidationError} from "../util/errors";
+import {IProxyImplementation, IResolver} from "./IProtocol";
+import {IStubConfig} from "./IStubConfig";
 
 /**
  * Determines the response for a stub based on the user-provided response configuration
  * @module
  */
+
+
+export interface IResponseResolver {
+
+}
 
 /**
  * Creates the resolver
@@ -15,16 +25,15 @@ import {ILogger} from "../util/scopedLogger";
  * @param {String} callbackURL - The protocol callback URL for response resolution
  * @returns {Object}
  */
-export function create (stubs: IStub[], proxy: any, callbackURL: string) {
+export function create (stubs: IStubRepository, proxy: IProxyImplementation, callbackURL?: string):IResolver {
     // imjectState is deprecated in favor of imposterState, but kept for backwards compatibility
     const injectState = {}, // eslint-disable-line no-unused-vars
-        pendingProxyResolutions = {},
+        pendingProxyResolutions: {[key: number]:unknown } = {},
         inProcessProxy = Boolean(proxy);
     let nextProxyResolutionKey = 0;
 
-    function inject (request: IRequest, fn, logger: ILogger, imposterState) {
-        const Q = require('q'),
-            helpers = require('../util/helpers'),
+    function inject (request: IRequest, fn: unknown, logger: ILogger, imposterState: unknown) {
+        const helpers = require('../util/helpers'),
             deferred = Q.defer(),
             config = {
                 request: helpers.clone(request),
@@ -37,8 +46,7 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         compatibility.downcastInjectionConfig(config);
 
         // Leave parameters for older interface
-        const injected = `(${fn})(config, injectState, logger, deferred.resolve, imposterState);`,
-            exceptions = require('../util/errors');
+        const injected = `(${fn})(config, injectState, logger, deferred.resolve, imposterState);`;
 
         if (request.isDryRun === true) {
             Q.delay(1).then(() => {
@@ -56,7 +64,7 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
                 logger.error(`injection X=> ${error}`);
                 logger.error(`    full source: ${JSON.stringify(injected)}`);
                 logger.error(`    config: ${JSON.stringify(config)}`);
-                deferred.reject(exceptions.InjectionError('invalid response injection', {
+                deferred.reject(InjectionError('invalid response injection', {
                     source: injected,
                     data: error.message
                 }));
@@ -78,13 +86,13 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         }
     }
 
-    function xpathValue (xpathConfig, possibleXML, logger) {
+    function xpathValue (xpathConfig, possibleXML: string, logger: ILogger) {
         const xpath = require('./xpath'),
             nodes = xpath.select(xpathConfig.selector, xpathConfig.ns, possibleXML, logger);
         return selectionValue(nodes);
     }
 
-    function jsonpathValue (jsonpathConfig, possibleJSON, logger) {
+    function jsonpathValue (jsonpathConfig, possibleJSON: string, logger: ILogger) {
         const jsonpath = require('./jsonpath'),
             nodes = jsonpath.select(jsonpathConfig.selector, possibleJSON, logger);
         return selectionValue(nodes);
@@ -126,7 +134,7 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         return initialRequest;
     }
 
-    function predicatesFor (request, matchers, logger) {
+    function predicatesFor (request, matchers, logger: ILogger) {
         const predicates = [];
 
         matchers.forEach(matcher => {
@@ -195,7 +203,7 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         return predicates;
     }
 
-    function deepEqual (obj1, obj2) {
+    function deepEqual (obj1: object, obj2: object) {
         const stringify = require('json-stable-stringify');
         return stringify(obj1) === stringify(obj2);
     }
@@ -203,7 +211,8 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
     function stubIndexFor (responseConfig) {
         const stubList = stubs.stubs();
         for (var i = 0; i < stubList.length; i += 1) {
-            if (stubList[i].responses.some(response => deepEqual(response, responseConfig))) {
+            let current_stub = stubList[i];
+            if (current_stub.responses && current_stub.responses.some(response => deepEqual(response, responseConfig))) {
                 break;
             }
         }
@@ -247,13 +256,14 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         const stubResponse = newIsResponse(response, responseConfig.proxy),
             responseIndex = indexOfStubToAddResponseTo(responseConfig, request, logger);
 
-        stubs.stubs()[responseIndex].addResponse(stubResponse);
+        let i_stub = stubs.stubs()[responseIndex];
+        i_stub.addResponse && i_stub.addResponse(stubResponse);
     }
 
     function addNewStub (responseConfig, request, response, logger) {
         const predicates = predicatesFor(request, responseConfig.proxy.predicateGenerators || [], logger),
             stubResponse = newIsResponse(response, responseConfig.proxy),
-            newStub = { predicates: predicates, responses: [stubResponse] };
+            newStub:IStub = { predicates: predicates, responses: [stubResponse] };
 
         if (responseConfig.proxy.mode === 'proxyAlways') {
             stubs.addStub(newStub);
@@ -277,10 +287,14 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         }
     }
 
-    function proxyAndRecord (responseConfig, request, logger: ILogger, requestDetails) {
+    function proxyAndRecord (responseConfig: IStubConfig, request: IRequest, logger: ILogger, requestDetails: unknown) {
         const Q = require('q'),
             startTime = new Date().getTime(),
             behaviors = require('./behaviors');
+
+        if (!responseConfig.proxy) {
+            throw ValidationError("try proxy without actual config")
+        }
 
         if (['proxyOnce', 'proxyAlways', 'proxyTransparent'].indexOf(responseConfig.proxy.mode) < 0) {
             responseConfig.setMetadata('proxy', { mode: 'proxyOnce' });
@@ -314,10 +328,8 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         }
     }
 
-    function processResponse (responseConfig, request, logger: ILogger, imposterState, requestDetails) {
-        const Q = require('q'),
-            helpers = require('../util/helpers'),
-            exceptions = require('../util/errors');
+    function processResponse (responseConfig: IStubConfig, request: IRequest, logger: ILogger, imposterState: unknown, requestDetails: unknown) {
+        const helpers = require('../util/helpers');
 
         if (responseConfig.is) {
             // Clone to prevent accidental state changes downstream
@@ -330,15 +342,15 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
             return inject(request, responseConfig.inject, logger, imposterState).then(Q);
         }
         else {
-            return Q.reject(exceptions.ValidationError('unrecognized response type',
+            return Q.reject(ValidationError('unrecognized response type',
                 { source: helpers.clone(responseConfig) }));
         }
     }
 
-    function hasMultipleTypes (responseConfig) {
-        return (responseConfig.is && responseConfig.proxy) ||
-               (responseConfig.is && responseConfig.inject) ||
-               (responseConfig.proxy && responseConfig.inject);
+    function hasMultipleTypes (responseConfig: IStubConfig):boolean {
+        return !!((responseConfig.is && responseConfig.proxy) ||
+            (responseConfig.is && responseConfig.inject) ||
+            (responseConfig.proxy && responseConfig.inject));
     }
 
     /**
@@ -351,14 +363,12 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
      * @param {Object} options - Additional options not carried with the request
      * @returns {Object} - Promise resolving to the response
      */
-    function resolve (responseConfig, request: any, logger: ILogger, imposterState, options) {
-        const Q = require('q'),
-            exceptions = require('../util/errors'),
-            helpers = require('../util/helpers'),
+    function resolve (responseConfig: IStubConfig, request: IRequest, logger: ILogger, imposterState: unknown, options: unknown) {
+        const helpers = require('../util/helpers'),
             behaviors = require('./behaviors');
 
         if (hasMultipleTypes(responseConfig)) {
-            return Q.reject(exceptions.ValidationError('each response object must have only one response type',
+            return Q.reject(ValidationError('each response object must have only one response type',
                 { source: responseConfig }));
         }
 
@@ -392,10 +402,9 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
      * @param {Object} logger - the logger
      * @returns {Object} - Promise resolving to the response
      */
-    function resolveProxy (proxyResponse, proxyResolutionKey, logger: ILogger) {
+    function resolveProxy (proxyResponse, proxyResolutionKey, logger: ILogger): Q.Promise<IResponse> {
         const pendingProxyConfig = pendingProxyResolutions[proxyResolutionKey],
-            behaviors = require('./behaviors'),
-            Q = require('q');
+            behaviors = require('./behaviors');
 
         if (pendingProxyConfig) {
             // eslint-disable-next-line no-underscore-dangle
@@ -418,5 +427,8 @@ export function create (stubs: IStub[], proxy: any, callbackURL: string) {
         }
     }
 
-    return { resolve, resolveProxy };
+    return {
+        resolve,
+        resolveProxy
+    };
 }

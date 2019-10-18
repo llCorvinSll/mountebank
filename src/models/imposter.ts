@@ -3,8 +3,9 @@
 import {IProtocol, IResolver} from "./IProtocol";
 import {IImposter} from "./IImposter";
 import * as Q from "q";
-import {IStub} from "./IRequest";
 import {IStubRepository} from "./stubRepository";
+import {ILogger} from "../util/scopedLogger";
+import {IRequest} from "./IRequest";
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -15,7 +16,7 @@ import {IStubRepository} from "./stubRepository";
  */
 
 function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
-    return error => {
+    return (error: any) => {
         const errors = require('../util/errors');
 
         if (error.errno === 'EADDRINUSE') {
@@ -39,7 +40,7 @@ function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
  * @param {Function} isAllowedConnection - function to determine if the IP address of the requestor is allowed
  * @returns {Object}
  */
-export function create (Protocol: IProtocol, creationRequest, baseLogger, config, isAllowedConnection): Q.Promise<IImposter> {
+export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogger, config, isAllowedConnection): Q.Promise<IImposter> {
     function scopeFor (port: string): string {
         let scope = `${creationRequest.protocol}:${port}`;
 
@@ -53,7 +54,7 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger, config
         domain = require('domain').create(),
         errorHandler = createErrorHandler(deferred, creationRequest.port),
         compatibility = require('./compatibility'),
-        requests = [],
+        requests:IRequest[] = [],
         logger = require('../util/scopedLogger').create(baseLogger, scopeFor(creationRequest.port)),
         helpers = require('../util/helpers'),
         imposterState = {};
@@ -87,11 +88,11 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger, config
             if (config.recordMatches && !response.proxy) {
                 if (response.response) {
                     // Out of process responses wrap the result in an outer response object
-                    responseConfig.recordMatch(response.response);
+                    responseConfig.recordMatch && responseConfig.recordMatch(response.response);
                 }
                 else {
                     // In process resolution
-                    responseConfig.recordMatch(response);
+                    responseConfig.recordMatch && responseConfig.recordMatch(response);
                 }
             }
             return Q(response);

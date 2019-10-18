@@ -1,5 +1,14 @@
 'use strict';
 
+import {ILogger} from "../../util/scopedLogger";
+import {IRequest, IResponse} from "../IRequest";
+import * as Q from "q";
+import {UrlWithStringQuery} from "url";
+import {ClientRequest, IncomingHttpHeaders} from "http";
+import {InvalidProxyError} from "../../util/errors";
+import {IProxyImplementation} from "../IProtocol";
+import {IProxyConfig} from "../IStubConfig";
+
 /**
  * The proxy implementation for http/s imposters
  * @module
@@ -12,14 +21,14 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
  * @param {Object} logger - The logger
  * @returns {Object}
  */
-function create (logger) {
+export function create (logger: ILogger): IProxyImplementation {
     function addInjectedHeadersTo (request, headersToInject) {
         Object.keys(headersToInject || {}).forEach(key => {
             request.headers[key] = headersToInject[key];
         });
     }
 
-    function toUrl (path, query, requestDetails) {
+    function toUrl (path: string | undefined, query, requestDetails: any) {
         if (requestDetails) {
             // Not passed in outOfProcess mode
             return requestDetails.rawUrl;
@@ -34,7 +43,7 @@ function create (logger) {
         return `${path}?${tail}`;
     }
 
-    function hostnameFor (protocol, host, port) {
+    function hostnameFor (protocol: string, host: string, port: number): string {
         let result = host;
         if ((protocol === 'http:' && port !== 80) || (protocol === 'https:' && port !== 443)) {
             result += `:${port}`;
@@ -42,7 +51,7 @@ function create (logger) {
         return result;
     }
 
-    function setProxyAgent (parts, options) {
+    function setProxyAgent (parts: UrlWithStringQuery, options: any) {
         const HttpProxyAgent = require('http-proxy-agent'),
             HttpsProxyAgent = require('https-proxy-agent');
 
@@ -54,7 +63,7 @@ function create (logger) {
         }
     }
 
-    function getProxyRequest (baseUrl, originalRequest, proxyOptions, requestDetails) {
+    function getProxyRequest (baseUrl: string, originalRequest: IRequest, proxyOptions: IProxyConfig, requestDetails?: unknown):ClientRequest {
         /* eslint complexity: 0 */
         const helpers = require('../../util/helpers'),
             headersHelper = require('./headersHelper'),
@@ -97,7 +106,7 @@ function create (logger) {
         return proxiedRequest;
     }
 
-    function isBinaryResponse (headers) {
+    function isBinaryResponse (headers: IncomingHttpHeaders) {
         const contentEncoding = headers['content-encoding'] || '',
             contentType = headers['content-type'] || '';
 
@@ -112,14 +121,13 @@ function create (logger) {
         return ['audio', 'image', 'video'].some(typeName => contentType.indexOf(typeName) === 0);
     }
 
-    function proxy (proxiedRequest) {
-        const Q = require('q'),
-            deferred = Q.defer();
+    function proxy (proxiedRequest: ClientRequest): Q.Promise<IResponse> {
+        const deferred = Q.defer<IResponse>();
 
         proxiedRequest.end();
 
         proxiedRequest.once('response', response => {
-            const packets = [];
+            const packets: any[] = [];
 
             response.on('data', chunk => {
                 packets.push(chunk);
@@ -130,7 +138,7 @@ function create (logger) {
                     mode = isBinaryResponse(response.headers) ? 'binary' : 'text',
                     encoding = mode === 'binary' ? 'base64' : 'utf8',
                     headersHelper = require('./headersHelper'),
-                    stubResponse = {
+                    stubResponse: IResponse = {
                         statusCode: response.statusCode,
                         headers: headersHelper.headersFor(response.rawHeaders),
                         body: body.toString(encoding),
@@ -156,17 +164,16 @@ function create (logger) {
      * @param {Object} requestDetails - Additional details about the request not stored in the simplified JSON
      * @returns {Object} - Promise resolving to the response
      */
-    function to (proxyDestination, originalRequest, options, requestDetails) {
+    function to (proxyDestination: string, originalRequest: IRequest, options: IProxyConfig, requestDetails?: unknown): Q.Promise<IResponse> {
 
         addInjectedHeadersTo(originalRequest, options.injectHeaders);
 
-        function log (direction, what) {
+        function log (direction: string, what: object) {
             logger.debug('Proxy %s %s %s %s %s',
                 originalRequest.requestFrom, direction, JSON.stringify(what), direction, proxyDestination);
         }
 
-        const Q = require('q'),
-            deferred = Q.defer(),
+        const deferred = Q.defer<IResponse>(),
             proxiedRequest = getProxyRequest(proxyDestination, originalRequest, options, requestDetails);
 
         log('=>', originalRequest);
@@ -176,14 +183,12 @@ function create (logger) {
             deferred.resolve(response);
         });
 
-        proxiedRequest.once('error', error => {
-            const errors = require('../../util/errors');
-
+        proxiedRequest.once('error', (error:any) => {
             if (error.code === 'ENOTFOUND') {
-                deferred.reject(errors.InvalidProxyError(`Cannot resolve ${JSON.stringify(proxyDestination)}`));
+                deferred.reject(InvalidProxyError(`Cannot resolve ${JSON.stringify(proxyDestination)}`));
             }
             else if (error.code === 'ECONNREFUSED' || error.code === 'ECONNRESET') {
-                deferred.reject(errors.InvalidProxyError(`Unable to connect to ${JSON.stringify(proxyDestination)}`));
+                deferred.reject(InvalidProxyError(`Unable to connect to ${JSON.stringify(proxyDestination)}`));
             }
             else {
                 deferred.reject(error);
@@ -193,7 +198,7 @@ function create (logger) {
         return deferred.promise;
     }
 
-    return { to };
+    return {
+        to
+    };
 }
-
-module.exports = { create };

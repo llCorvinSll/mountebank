@@ -5,6 +5,8 @@ import {IMontebankError} from "../util/errors";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
 import {IStubRepository} from "./stubRepository";
+import {IProxyConfig, IStubConfig} from "./IStubConfig";
+import {IRequest, IResponse} from "./IRequest";
 
 export interface IProtocol {
     testRequest():void;
@@ -19,10 +21,17 @@ export interface IServer {
     port: string
     stubs: IStubRepository;
     resolver: IResolver;
+    close(cb: () => void): void;
 }
 
 export interface IResolver {
-    resolve():void;
+    resolve(responseConfig: IStubConfig, request: IRequest, logger: ILogger, imposterState: unknown, options: unknown): Q.Promise<unknown>;
+    resolveProxy(proxyResponse, proxyResolutionKey, logger: ILogger): Q.Promise<IResponse>;
+}
+
+
+export interface IProxyImplementation {
+    to(to: string, request: unknown, cfg: IProxyConfig, requestDetails?: unknown): Q.Promise<IResponse>
 }
 
 export interface IValidation {

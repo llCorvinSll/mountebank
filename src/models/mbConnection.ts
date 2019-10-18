@@ -1,13 +1,19 @@
 'use strict';
 
+import {ILogger} from "../util/scopedLogger";
+import * as Q from "q";
+import {IProxyImplementation} from "./IProtocol";
+import {IProxyConfig} from "./IStubConfig";
+import {IRequest, IResponse} from "./IRequest";
+
 /**
  * Helper functions to navigate the mountebank API for out of process implementations.
  * Used to adapt the built-in (in-process) protocols to out of process.
  * @module
  */
 
-function createLogger (loglevel) {
-    const result = {},
+function createLogger (loglevel: string): ILogger {
+    const result: ILogger = {} as any,
         levels = ['debug', 'info', 'warn', 'error'];
 
     levels.forEach((level, index) => {
@@ -26,9 +32,8 @@ function createLogger (loglevel) {
     return result;
 }
 
-function postJSON (what, where) {
-    const Q = require('q'),
-        deferred = Q.defer(),
+function postJSON (what: object, where: string):Q.Promise<any> {
+    const deferred = Q.defer(),
         url = require('url'),
         parts = url.parse(where),
         driver = require(parts.protocol.replace(':', '')),
@@ -66,15 +71,28 @@ function postJSON (what, where) {
     return deferred.promise;
 }
 
-function create (config) {
-    let callbackURL,
-        proxy;
 
-    function setPort (port) {
+export interface IMbConnection {
+    getResponse(request: IRequest, requestDetails: unknown):Q.Promise<IResponse>;
+    setPort(port: string): void;
+    setProxy(value: IProxyImplementation): void;
+    logger():ILogger;
+}
+
+interface IMbConnectionConfig {
+    callbackURLTemplate: string;
+    loglevel: string;
+}
+
+export function create (config: IMbConnectionConfig): IMbConnection {
+    let callbackURL: string,
+        proxy: IProxyImplementation;
+
+    function setPort (port: string):void {
         callbackURL = config.callbackURLTemplate.replace(':port', port);
     }
 
-    function setProxy (value) {
+    function setProxy (value: IProxyImplementation) {
         proxy = value;
     }
 
@@ -82,14 +100,12 @@ function create (config) {
         return createLogger(config.loglevel);
     }
 
-    function getProxyResponse (proxyConfig, request, proxyCallbackURL) {
+    function getProxyResponse (proxyConfig: IProxyConfig, request: IRequest, proxyCallbackURL: string): Q.Promise<IResponse> {
         return proxy.to(proxyConfig.to, request, proxyConfig)
-            .then(response => postJSON({ proxyResponse: response }, proxyCallbackURL));
+            .then((response:IResponse) => postJSON({ proxyResponse: response }, proxyCallbackURL));
     }
 
-    function getResponse (request, requestDetails) {
-        const Q = require('q');
-
+    function getResponse (request: IRequest, requestDetails: unknown) {
         return postJSON({ request, requestDetails }, callbackURL).then(mbResponse => {
             if (mbResponse.proxy) {
                 return getProxyResponse(mbResponse.proxy, mbResponse.request, mbResponse.callbackURL);
@@ -103,7 +119,10 @@ function create (config) {
         });
     }
 
-    return { getResponse, setPort, setProxy, logger };
+    return {
+        getResponse,
+        setPort,
+        setProxy,
+        logger
+    };
 }
-
-module.exports = { create };

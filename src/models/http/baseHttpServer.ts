@@ -1,19 +1,24 @@
 'use strict';
 
+import {ILogger} from "../../util/scopedLogger";
+import * as Q from "q";
+import {IRequest, IResponse} from "../IRequest";
+import {Server} from "http";
+import {AddressInfo, Socket} from "net";
+
 /**
  * The base implementation of http/s servers
  * @module
  */
 
-module.exports = function (createBaseServer) {
+export function create(createBaseServer: (options:any) => { createNodeServer():Server; metadata: unknown }) {
 
-    function create (options, logger, responseFn) {
-        const Q = require('q'),
-            deferred = Q.defer(),
-            connections = {},
+    function create (options, logger: ILogger, responseFn) {
+        const deferred = Q.defer(),
+            connections:{[key: string]:Socket} = {},
             defaultResponse = options.defaultResponse || {};
 
-        function postProcess (stubResponse, request) {
+        function postProcess (stubResponse: IResponse, request: IRequest) {
             /* eslint complexity: 0 */
             const headersHelper = require('./headersHelper'),
                 defaultHeaders = defaultResponse.headers || {},
@@ -104,7 +109,7 @@ module.exports = function (createBaseServer) {
             const domain = require('domain').create(),
                 helpers = require('../../util/helpers'),
                 clientName = helpers.socketName(request.socket),
-                errorHandler = error => {
+                errorHandler = (error:any) => {
                     const exceptions = require('../../util/errors');
                     logger.error('%s X=> %s', clientName, JSON.stringify(exceptions.details(error)));
                     response.writeHead(500, { 'content-type': 'application/json' });
@@ -115,7 +120,7 @@ module.exports = function (createBaseServer) {
 
             domain.on('error', errorHandler);
             domain.run(() => {
-                let simplifiedRequest;
+                let simplifiedRequest:any;
                 require('./httpRequest').createFrom(request).then(simpleRequest => {
                     logger.debug('%s => %s', clientName, JSON.stringify(simpleRequest));
                     simplifiedRequest = simpleRequest;
@@ -141,10 +146,11 @@ module.exports = function (createBaseServer) {
 
         // Bind the socket to a port (the || 0 bit auto-selects a port if one isn't provided)
         server.listen(options.port || 0, options.host, () => {
+            const address:AddressInfo = server.address() as AddressInfo;
             deferred.resolve({
-                port: server.address().port,
+                port: address.port,
                 metadata: baseServer.metadata,
-                close: callback => {
+                close: (callback: (err?: Error) => void) => {
                     server.close(callback);
                     Object.keys(connections).forEach(socket => {
                         connections[socket].destroy();
@@ -176,4 +182,4 @@ module.exports = function (createBaseServer) {
         create: create,
         validate: undefined
     };
-};
+}

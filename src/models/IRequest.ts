@@ -10,6 +10,8 @@ export interface IRequest {
     isDryRun?:boolean;
     endOfRequestResolver?:any;
     [key: string]: IStub[] | string | boolean | undefined;
+    body?: string;
+    path?: string;
 }
 
 export interface IStub {
@@ -17,6 +19,7 @@ export interface IStub {
     predicates?: {[key: string]:IPredicate};
     statefulResponses: IResponse[];
     addResponse?: (resp: IResponse) => void;
+    recordMatch?: (responce?: any) => void;
     matches?:unknown[];
 }
 
@@ -46,19 +49,29 @@ export interface IBehaviors {
     wait:(() => number) | string;
     copy: ICopyDescriptor[];
     lookup:ILookupDescriptor[];
+    repeat: boolean;
     decorate:never;
 }
 
+type SetMetadataFunction = (responseType: any, metadata: any) => void;
+
 export interface IResponse {
-    proxy:IProxy;
-    _behaviors: IBehaviors
-    [key: string]:IProxy | IBehaviors;
+    proxy?:IProxy;
+    _behaviors?: IBehaviors;
+    setMetadata?: SetMetadataFunction;
+    is?: {
+        _proxyResponseTime: string;
+    };
+
+    _proxyResponseTime?: number;
+    [key: string]:IProxy | IBehaviors | undefined | SetMetadataFunction | unknown;
 }
 
 export interface IProxy {
     to: toDeclaration;
     addDecorateBehavior?: boolean;
     predicateGenerators?: IPredicateGenerator[];
+    _proxyResponseTime?: string;
 }
 
 export interface IPredicateGenerator {

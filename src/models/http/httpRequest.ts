@@ -1,16 +1,18 @@
 'use strict';
 
+import * as Q from "q";
+
 /**
  * Transforms a node http/s request to a simplified mountebank http/s request
  * that will be shown in the API
  * @module
  */
 
-function transform (request) {
+function transform (request: any) {
     const helpers = require('../../util/helpers'),
         url = require('url'),
         queryString = require('query-string'),
-        parts = url.parse(request.url, true),
+        parts = url.parse(request.url as string),
         headersHelper = require('./headersHelper');
 
     const headers = headersHelper.headersFor(request.rawHeaders);
@@ -51,14 +53,11 @@ function isUrlEncodedForm (contentType) {
  * @param {Object} request - The raw http/s request
  * @returns {Object} - Promise resolving to the simplified request
  */
-function createFrom (request) {
-    const Q = require('q'),
-        deferred = Q.defer();
+export function createFrom (request:any): Q.Promise<any> {
+    const deferred = Q.defer();
     request.body = '';
     request.setEncoding('binary');
-    request.on('data', chunk => { request.body += chunk; });
+    request.on('data', (chunk:any) => { request.body += chunk; });
     request.on('end', () => { deferred.resolve(transform(request)); });
     return deferred.promise;
 }
-
-module.exports = { createFrom };
