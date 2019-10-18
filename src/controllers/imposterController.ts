@@ -1,5 +1,14 @@
 'use strict';
 
+import {Request, Response} from "express";
+import {ILogger} from "../util/scopedLogger";
+import {IProtocol, IValidation} from "../models/IProtocol";
+import {IImposter} from "../models/IImposter";
+import {ParsedUrlQuery} from "querystring";
+import * as Q from "q";
+import {IMontebankError, ValidationError} from "../util/errors";
+import {IStub} from "../models/IRequest";
+
 /**
  * The controller that gets and deletes single imposters
  * @module
@@ -13,15 +22,15 @@
  * @param {Boolean} allowInjection - Whether injection is allowed or not
  * @returns {{get, del}}
  */
-function create (protocols, imposters, logger, allowInjection) {
+export function create (protocols: { [key: string]: IProtocol }, imposters: { [key: string]: IImposter }, logger:ILogger, allowInjection:boolean) {
     const exceptions = require('../util/errors'),
         helpers = require('../util/helpers');
 
-    function queryBoolean (query, key) {
+    function queryBoolean (query: ParsedUrlQuery, key: string) {
         if (!helpers.defined(query[key])) {
             return false;
         }
-        return query[key].toLowerCase() === 'true';
+        return (query[key] as string).toLowerCase() === 'true';
     }
 
     /**
@@ -30,7 +39,7 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    function get (request, response) {
+    function get (request: Request, response: Response) {
         const url = require('url'),
             query = url.parse(request.url, true).query,
             options = { replayable: queryBoolean(query, 'replayable'), removeProxies: queryBoolean(query, 'removeProxies') },
@@ -57,24 +66,23 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing
      */
-    function resetProxies (request, response) {
-        const Q = require('q'),
-            json = {},
+    function resetProxies (request: Request, response: Response) {
+        const json = {},
             options = { replayable: false, removeProxies: false };
-        let imposter = imposters[request.params.id];
+        const imposter = imposters[request.params.id];
 
         if (imposter) {
             imposter.resetProxies();
-            imposter = imposter.toJSON(options);
+            const imposter_json = imposter.toJSON(options);
 
             response.format({
-                json: () => { response.send(imposter); },
+                json: () => { response.send(imposter_json); },
                 html: () => {
                     if (request.headers['x-requested-with']) {
-                        response.render('_imposter', { imposter: imposter });
+                        response.render('_imposter', { imposter: imposter_json });
                     }
                     else {
-                        response.render('imposter', { imposter: imposter });
+                        response.render('imposter', { imposter: imposter_json });
                     }
                 }
             });
@@ -93,9 +101,8 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing
      */
-    function del (request, response) {
-        const Q = require('q'),
-            imposter = imposters[request.params.id],
+    function del (request: Request, response: Response) {
+        const imposter: IImposter = imposters[request.params.id],
             url = require('url'),
             query = url.parse(request.url, true).query,
             options = { replayable: queryBoolean(query, 'replayable'), removeProxies: queryBoolean(query, 'removeProxies') };
@@ -122,7 +129,7 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    function postRequest (request, response) {
+    function postRequest (request: Request, response: Response) {
         const imposter = imposters[request.params.id],
             protoRequest = request.body.request;
 
@@ -139,7 +146,7 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    function postProxyResponse (request, response) {
+    function postProxyResponse (request: Request, response: Response) {
         const imposter = imposters[request.params.id],
             proxyResolutionKey = request.params.proxyResolutionKey,
             proxyResponse = request.body.proxyResponse;
@@ -149,16 +156,16 @@ function create (protocols, imposters, logger, allowInjection) {
         });
     }
 
-    function validateStubs (stubs, errors) {
+    function validateStubs (stubs:IStub[], errors: IMontebankError[]) {
         if (!helpers.defined(stubs)) {
-            errors.push(exceptions.ValidationError("'stubs' is a required field"));
+            errors.push(ValidationError("'stubs' is a required field"));
         }
-        else if (!require('util').isArray(stubs)) {
-            errors.push(exceptions.ValidationError("'stubs' must be an array"));
+        else if (!Array.isArray(stubs)) {
+            errors.push(ValidationError("'stubs' must be an array"));
         }
     }
 
-    function validate (imposter, newStubs) {
+    function validate (imposter:IImposter, newStubs:IStub[]):Q.Promise<IValidation> {
         const compatibility = require('../models/compatibility'),
             request = helpers.clone(imposter);
 
@@ -176,11 +183,11 @@ function create (protocols, imposters, logger, allowInjection) {
         return validator.validate(request, logger);
     }
 
-    function respondWithValidationErrors (response, validationErrors, statusCode = 400) {
+    function respondWithValidationErrors (response:Response, validationErrors:IMontebankError[], statusCode = 400) {
         logger.error(`error changing stubs: ${JSON.stringify(exceptions.details(validationErrors))}`);
         response.statusCode = statusCode;
         response.send({ errors: validationErrors });
-        return require('q')();
+        return Q();
     }
 
     /**
@@ -191,10 +198,10 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} - promise for testing
      */
-    function putStubs (request, response) {
+    function putStubs (request: Request, response: Response) {
         const imposter = imposters[request.params.id],
             newStubs = request.body.stubs,
-            errors = [];
+            errors:IMontebankError[] = [];
 
         validateStubs(newStubs, errors);
         if (errors.length > 0) {
@@ -213,8 +220,8 @@ function create (protocols, imposters, logger, allowInjection) {
         }
     }
 
-    function validateStubIndex (index, imposter, errors) {
-        if (typeof imposter.stubs()[index] === 'undefined') {
+    function validateStubIndex (index:string, imposter:IImposter, errors:IMontebankError[]) {
+        if (typeof imposter.stubs()[parseInt(index)] === 'undefined') {
             errors.push(exceptions.ValidationError("'stubIndex' must be a valid integer, representing the array index position of the stub to replace"));
         }
     }
@@ -227,10 +234,10 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} - promise for testing
      */
-    function putStub (request, response) {
+    function putStub (request: Request, response: Response) {
         const imposter = imposters[request.params.id],
             newStub = request.body,
-            errors = [];
+            errors:IMontebankError[] = [];
 
         validateStubIndex(request.params.stubIndex, imposter, errors);
         if (errors.length > 0) {
@@ -257,7 +264,7 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} - promise for testing
      */
-    function postStub (request, response) {
+    function postStub (request: Request, response: Response) {
         const imposter = imposters[request.params.id],
             newStub = request.body.stub,
             index = typeof request.body.index === 'undefined' ? imposter.stubs().length : request.body.index,
@@ -290,9 +297,9 @@ function create (protocols, imposters, logger, allowInjection) {
      * @param {Object} response - the HTTP response
      * @returns {Object} - promise for testing
      */
-    function deleteStub (request, response) {
-        const imposter = imposters[request.params.id],
-            errors = [];
+    function deleteStub (request: Request, response: Response) {
+        const imposter:IImposter = imposters[request.params.id],
+            errors:IMontebankError[] = [];
 
         validateStubIndex(request.params.stubIndex, imposter, errors);
         if (errors.length > 0) {
@@ -318,5 +325,3 @@ function create (protocols, imposters, logger, allowInjection) {
         deleteStub
     };
 }
-
-module.exports = { create };

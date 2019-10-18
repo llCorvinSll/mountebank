@@ -13,10 +13,10 @@ import {IPredicate} from "./IPredicate";
 export interface IStubRepository {
     stubs: () => IStub[];
     addStub(stub: IStub):void;
-    addStubAtIndex(index: number, newStub: IStub): void;
+    addStubAtIndex(index: string, newStub: IStub): void;
     overwriteStubs(newStubs: IStub[]): void;
-    overwriteStubAtIndex(index: number, newStub: IStub):void;
-    deleteStubAtIndex(index: number):void;
+    overwriteStubAtIndex(index: string, newStub: IStub):void;
+    deleteStubAtIndex(index: string):void;
     getResponseFor(request: IRequest, logger: ILogger, imposterState):void;
     resetProxies():void;
 }
@@ -125,8 +125,8 @@ export function create (encoding: string): IStubRepository {
      * @param {Number} index - the index of the stub to change
      * @param {Object} newStub - the new stub
      */
-    function addStubAtIndex (index: number, newStub: IStub): void {
-        stubs.splice(index, 0, decorate(newStub));
+    function addStubAtIndex (index: string, newStub: IStub): void {
+        stubs.splice(parseInt(index), 0, decorate(newStub));
     }
 
     /**
@@ -147,8 +147,8 @@ export function create (encoding: string): IStubRepository {
      * @param {Number} index - the index of the stub to change
      * @param {Object} newStub - the new stub
      */
-    function overwriteStubAtIndex (index: number, newStub: IStub): void {
-        stubs[index] = decorate(newStub);
+    function overwriteStubAtIndex (index: string, newStub: IStub): void {
+        stubs[parseInt(index)] = decorate(newStub);
     }
 
     /**
@@ -156,8 +156,8 @@ export function create (encoding: string): IStubRepository {
      * @memberOf module:models/stubRepository#
      * @param {Number} index - the index of the stub to remove
      */
-    function deleteStubAtIndex (index: number): void {
-        stubs.splice(index, 1);
+    function deleteStubAtIndex (index: string): void {
+        stubs.splice(parseInt(index), 1);
     }
 
     /**
