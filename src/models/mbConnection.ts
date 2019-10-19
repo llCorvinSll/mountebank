@@ -5,6 +5,7 @@ import * as Q from "q";
 import {IProxyImplementation} from "./IProtocol";
 import {IProxyConfig} from "./IStubConfig";
 import {IRequest, IResponse} from "./IRequest";
+import {IncomingMessage, RequestOptions} from "http";
 
 /**
  * Helper functions to navigate the mountebank API for out of process implementations.
@@ -36,16 +37,16 @@ function postJSON (what: object, where: string):Q.Promise<any> {
     const deferred = Q.defer(),
         url = require('url'),
         parts = url.parse(where),
-        driver = require(parts.protocol.replace(':', '')),
-        options = {
+        driver = require(parts.protocol.replace(':', '')), // http or https
+        options:RequestOptions = {
             hostname: parts.hostname,
             port: parts.port,
             path: parts.pathname,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         },
-        request = driver.request(options, response => {
-            const packets = [];
+        request = driver.request(options, (response:IncomingMessage) => {
+            const packets: any[] = [];
 
             response.on('data', chunk => packets.push(chunk));
 

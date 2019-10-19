@@ -20,7 +20,12 @@ interface IProtocolMap {
 }
 
 
-export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocolMap, options:IProtocolLoadOptions, isAllowedConnection: IpValidator, mbLogger: ILogger) {
+export function load (
+    builtInProtocols: IProtocolMap,
+    customProtocols: IProtocolMap,
+    options:IProtocolLoadOptions,
+    isAllowedConnection: IpValidator,
+    mbLogger: ILogger): {[key: string]: IProtocolFactory} {
     function inProcessCreate (createProtocol: ServerCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn).then(server => {

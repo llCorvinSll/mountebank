@@ -27,6 +27,7 @@ export interface IResponseResolver {
  */
 export function create (stubs: IStubRepository, proxy: IProxyImplementation, callbackURL?: string):IResolver {
     // imjectState is deprecated in favor of imposterState, but kept for backwards compatibility
+    // @ts-ignore
     const injectState = {}, // eslint-disable-line no-unused-vars
         pendingProxyResolutions: {[key: number]:unknown } = {},
         inProcessProxy = Boolean(proxy);
@@ -134,7 +135,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return initialRequest;
     }
 
-    function predicatesFor (request, matchers, logger: ILogger) {
+    function predicatesFor (request: IRequest, matchers, logger: ILogger) {
         const predicates = [];
 
         matchers.forEach(matcher => {
@@ -219,7 +220,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return i;
     }
 
-    function indexOfStubToAddResponseTo (responseConfig, request, logger) {
+    function indexOfStubToAddResponseTo (responseConfig, request, logger: ILogger) {
         const predicates = predicatesFor(request, responseConfig.proxy.predicateGenerators || [], logger),
             stubList = stubs.stubs();
 
@@ -231,7 +232,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return -1;
     }
 
-    function canAddResponseToExistingStub (responseConfig, request, logger) {
+    function canAddResponseToExistingStub (responseConfig, request, logger: ILogger) {
         return indexOfStubToAddResponseTo(responseConfig, request, logger) >= 0;
     }
 
@@ -260,7 +261,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         i_stub.addResponse && i_stub.addResponse(stubResponse);
     }
 
-    function addNewStub (responseConfig, request, response, logger) {
+    function addNewStub (responseConfig, request, response, logger: ILogger) {
         const predicates = predicatesFor(request, responseConfig.proxy.predicateGenerators || [], logger),
             stubResponse = newIsResponse(response, responseConfig.proxy),
             newStub:IStub = { predicates: predicates, responses: [stubResponse] };
@@ -273,7 +274,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
     }
 
-    function recordProxyResponse (responseConfig, request, response, logger) {
+    function recordProxyResponse (responseConfig, request, response, logger: ILogger) {
         // proxyTransparent prevents the request from being recorded, and always transparently issues the request.
         if (responseConfig.proxy.mode === 'proxyTransparent') {
             return;

@@ -4,7 +4,7 @@ import {ILogger} from "../util/scopedLogger";
 import {IImposter, IImposterConfig} from "../models/IImposter";
 import {details, IMontebankError, ValidationError} from "../util/errors";
 import {Request, Response} from "express";
-import {IProtocol, IValidation} from "../models/IProtocol";
+import {IProtocolFactory, IValidation} from "../models/IProtocol";
 import {ParsedUrlQuery} from "querystring";
 import * as Q from 'q';
 
@@ -22,7 +22,7 @@ import * as Q from 'q';
  * @param {Boolean} allowInjection - Whether injection is allowed or not
  * @returns {{get, post, del, put}}
  */
-export function create(protocols: { [key: string]: IProtocol }, imposters: { [key: string]: IImposter }, logger: ILogger, allowInjection: boolean) {
+export function create(protocols: {[key: string]: IProtocolFactory}, imposters: { [key: string]: IImposter }, logger: ILogger, allowInjection: boolean) {
     const helpers = require('../util/helpers');
 
     const queryIsFalse = (query: ParsedUrlQuery, key: string) => !helpers.defined(query[key]) || (query[key] as string).toLowerCase() !== 'false';
@@ -140,14 +140,19 @@ export function create(protocols: { [key: string]: IProtocol }, imposters: { [ke
 
         return validationPromise.then(validation => {
             if (validation.isValid) {
-                return protocols[protocol].createImposterFrom(request.body).then(imposter => {
-                    imposters[imposter.port] = imposter;
-                    response.setHeader('Location', imposter.url);
-                    response.statusCode = 201;
-                    response.send(imposter.toJSON());
-                }, error => {
-                    respondWithCreationError(response, error);
-                });
+                let protocol_factory = protocols[protocol];
+                if (protocol_factory && protocol_factory.createImposterFrom) {
+                    return protocol_factory.createImposterFrom(request.body).then(imposter => {
+                        imposters[imposter.port] = imposter;
+                        response.setHeader('Location', imposter.url);
+                        response.statusCode = 201;
+                        response.send(imposter.toJSON());
+                    }, error => {
+                        respondWithCreationError(response, error);
+                    });
+                } else {
+                    respondWithCreationError(response, ValidationError("protocol has no creators"))
+                }
             } else {
                 respondWithValidationErrors(response, validation.errors);
                 return Q<void>(false as any);
@@ -202,8 +207,13 @@ export function create(protocols: { [key: string]: IProtocol }, imposters: { [ke
 
             if (isValid) {
                 return deleteAllImposters().then(() => {
-                    const creationPromises = requestImposters.map((imposter) =>
-                        protocols[imposter.protocol].createImposterFrom(imposter)
+                    const creationPromises = requestImposters.map((imposter) => {
+                            let protocol_factory = protocols[imposter.protocol];
+                            if (protocol_factory && protocol_factory.createImposterFrom) {
+                                return protocol_factory.createImposterFrom(imposter);
+                            }
+                            return undefined;
+                        }
                     );
                     return Q.all(creationPromises);
                 }).then((allImposters: IImposter[]) => {

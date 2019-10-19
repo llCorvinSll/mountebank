@@ -2,12 +2,13 @@
 
 import {Request, Response} from "express";
 import {ILogger} from "../util/scopedLogger";
-import {IProtocol, IValidation} from "../models/IProtocol";
+import {IProtocolFactory, IValidation} from "../models/IProtocol";
 import {IImposter} from "../models/IImposter";
 import {ParsedUrlQuery} from "querystring";
 import * as Q from "q";
 import {IMontebankError, ValidationError} from "../util/errors";
 import {IStub} from "../models/IRequest";
+import url from "url";
 
 /**
  * The controller that gets and deletes single imposters
@@ -22,7 +23,7 @@ import {IStub} from "../models/IRequest";
  * @param {Boolean} allowInjection - Whether injection is allowed or not
  * @returns {{get, del}}
  */
-export function create (protocols: { [key: string]: IProtocol }, imposters: { [key: string]: IImposter }, logger:ILogger, allowInjection:boolean) {
+export function create (protocols: {[key: string]: IProtocolFactory}, imposters: { [key: string]: IImposter }, logger:ILogger, allowInjection:boolean) {
     const exceptions = require('../util/errors'),
         helpers = require('../util/helpers');
 
@@ -40,8 +41,7 @@ export function create (protocols: { [key: string]: IProtocol }, imposters: { [k
      * @param {Object} response - the HTTP response
      */
     function get (request: Request, response: Response) {
-        const url = require('url'),
-            query = url.parse(request.url, true).query,
+        const query = url.parse(request.url, true).query,
             options = { replayable: queryBoolean(query, 'replayable'), removeProxies: queryBoolean(query, 'removeProxies') },
             imposter = imposters[request.params.id].toJSON(options);
 
@@ -103,7 +103,6 @@ export function create (protocols: { [key: string]: IProtocol }, imposters: { [k
      */
     function del (request: Request, response: Response) {
         const imposter: IImposter = imposters[request.params.id],
-            url = require('url'),
             query = url.parse(request.url, true).query,
             options = { replayable: queryBoolean(query, 'replayable'), removeProxies: queryBoolean(query, 'removeProxies') };
         let json = {};
@@ -309,7 +308,7 @@ export function create (protocols: { [key: string]: IProtocol }, imposters: { [k
 
             imposter.deleteStubAtIndex(request.params.stubIndex);
             response.send(imposter.toJSON());
-            return require('q')();
+            return Q();
         }
     }
 

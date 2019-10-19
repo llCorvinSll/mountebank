@@ -17,6 +17,7 @@ import {NetworkInterfaceInfo} from "os";
 import {Socket} from "net";
 import {IProtocolLoadOptions} from "./models/protocols";
 import {IpValidator} from "./models/IImposter";
+import {IProtocolFactory} from "./models/IProtocol";
 
 /**
  * The entry point for mountebank.  This module creates the mountebank server,
@@ -137,7 +138,7 @@ function loadCustomProtocols (protofile: string, logger: ILogger) {
     }
 }
 
-function loadProtocols (options: IMountebankOptions, baseURL: string, logger: ILogger, isAllowedConnection: IpValidator) {
+function loadProtocols (options: IMountebankOptions, baseURL: string, logger: ILogger, isAllowedConnection: IpValidator): {[key: string]: IProtocolFactory} {
     const builtInProtocols = {
             tcp: require('./models/tcp/tcpServer'),
             http: require('./models/http/httpServer'),
