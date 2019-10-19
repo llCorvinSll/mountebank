@@ -1,11 +1,7 @@
 'use strict';
 
 import { Request, Response } from 'express';
-
-interface IRelease {
-    version: string;
-    date: string;
-}
+import {IRelease} from "../models/IMountebankOptions";
 
 /**
  * The controller that returns the base mountebank hypermedia

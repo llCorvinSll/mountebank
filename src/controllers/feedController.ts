@@ -1,25 +1,33 @@
 'use strict';
 
+import { Request, Response } from 'express';
+import {IMountebankOptions, IRelease} from "../models/IMountebankOptions";
+
 /**
  * The controller that exposes information about releases
  * @module
  */
+
+
+interface IReleaseView extends IRelease {
+    view?:string;
+}
 
 /**
  * @param {Object} releases - The object represented in the releases.json file
  * @param {Object} options - The command line options used to start mountebank
  * @returns {Object} The controller
  */
-function create (releases, options) {
+export function create (releases: IRelease[], options: IMountebankOptions) {
     const helpers = require('../util/helpers'),
-        feedReleases = helpers.clone(releases);
+        feedReleases:IReleaseView[] = helpers.clone(releases);
 
     // Init once since we hope many consumers poll the heroku feed and we don't have monitoring
     feedReleases.reverse();
 
-    const releaseViewFor = version => `releases/${version}.ejs`;
+    const releaseViewFor = (version: string) => `releases/${version}.ejs`;
 
-    const releaseFilenameFor = version => {
+    const releaseFilenameFor = (version: string) => {
         const path = require('path');
         return path.join(__dirname, '/../views/', releaseViewFor(version));
     };
@@ -30,7 +38,7 @@ function create (releases, options) {
      * @param {Object} request - The HTTP request
      * @param {Object} response - The HTTP response
      */
-    function getFeed (request, response) {
+    function getFeed (request: Request, response: Response) {
         const fs = require('fs'),
             ejs = require('ejs'),
             page = parseInt(request.query.page || '1'),
@@ -66,7 +74,7 @@ function create (releases, options) {
      * @param {Object} request - The HTTP request
      * @param {Object} response - The HTTP response
      */
-    function getReleases (request, response) {
+    function getReleases (request: Request, response: Response) {
         response.render('releases', { releases: feedReleases });
     }
 
@@ -76,7 +84,7 @@ function create (releases, options) {
      * @param {Object} request - The HTTP request
      * @param {Object} response - The HTTP response
      */
-    function getRelease (request, response) {
+    function getRelease (request: Request, response: Response) {
         const fs = require('fs'),
             version = request.params.version,
             config = {
@@ -103,7 +111,9 @@ function create (releases, options) {
         }
     }
 
-    return { getFeed, getReleases, getRelease };
+    return {
+        getFeed,
+        getReleases,
+        getRelease
+    };
 }
-
-module.exports = { create };
