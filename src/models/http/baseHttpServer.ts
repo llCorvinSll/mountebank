@@ -2,10 +2,14 @@
 
 import {ILogger} from "../../util/scopedLogger";
 import * as Q from "q";
-import {IRequest, IResponse} from "../IRequest";
 import {Server} from "http";
 import {AddressInfo, Socket} from "net";
-import {IProtocolFactory, IServer, IServerImplementation} from "../IProtocol";
+import {
+    IProtocolFactory, IServerCreationOptions,
+    IServerImplementation,
+    IServerRequestData,
+    IServerResponseData, RequestCallback
+} from "../IProtocol";
 
 /**
  * The base implementation of http/s servers
@@ -14,12 +18,12 @@ import {IProtocolFactory, IServer, IServerImplementation} from "../IProtocol";
 
 export function create(createBaseServer: (options:any) => { createNodeServer():Server; metadata: unknown }): IProtocolFactory {
 
-    function create (options, logger: ILogger, responseFn):Q.Promise<IServerImplementation> {
-        const deferred = Q.defer<IServer>(),
+    function create (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback):Q.Promise<IServerImplementation> {
+        const deferred = Q.defer<IServerImplementation>(),
             connections:{[key: string]:Socket} = {},
             defaultResponse = options.defaultResponse || {};
 
-        function postProcess (stubResponse: IResponse, request: IRequest) {
+        function postProcess (stubResponse: IServerResponseData, request: IServerRequestData):IServerResponseData {
             /* eslint complexity: 0 */
             const headersHelper = require('./headersHelper'),
                 defaultHeaders = defaultResponse.headers || {},
@@ -121,12 +125,12 @@ export function create(createBaseServer: (options:any) => { createNodeServer():S
 
             domain.on('error', errorHandler);
             domain.run(() => {
-                let simplifiedRequest:any;
-                require('./httpRequest').createFrom(request).then(simpleRequest => {
+                let simplifiedRequest:IServerRequestData;
+                require('./httpRequest').createFrom(request).then((simpleRequest:IServerRequestData) => {
                     logger.debug('%s => %s', clientName, JSON.stringify(simpleRequest));
                     simplifiedRequest = simpleRequest;
                     return responseFn(simpleRequest, { rawUrl: request.url });
-                }).done(mbResponse => {
+                }).done((mbResponse:IServerResponseData) => {
                     if (mbResponse.blocked) {
                         request.socket.end();
                         return;

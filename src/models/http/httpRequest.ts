@@ -1,6 +1,7 @@
 'use strict';
 
 import * as Q from "q";
+import {IServerRequestData} from "../IProtocol";
 
 /**
  * Transforms a node http/s request to a simplified mountebank http/s request
@@ -8,7 +9,7 @@ import * as Q from "q";
  * @module
  */
 
-function transform (request: any) {
+function transform (request: any): IServerRequestData {
     const helpers = require('../../util/helpers'),
         url = require('url'),
         queryString = require('query-string'),
@@ -17,7 +18,7 @@ function transform (request: any) {
 
     const headers = headersHelper.headersFor(request.rawHeaders);
 
-    const transformed = {
+    const transformed: IServerRequestData = {
         requestFrom: helpers.socketName(request.socket),
         method: request.method,
         path: parts.pathname,
@@ -35,7 +36,7 @@ function transform (request: any) {
     return transformed;
 }
 
-function isUrlEncodedForm (contentType) {
+function isUrlEncodedForm (contentType: string) {
     if (!contentType) {
         return false;
     }
@@ -53,8 +54,8 @@ function isUrlEncodedForm (contentType) {
  * @param {Object} request - The raw http/s request
  * @returns {Object} - Promise resolving to the simplified request
  */
-export function createFrom (request:any): Q.Promise<any> {
-    const deferred = Q.defer();
+export function createFrom (request:any): Q.Promise<IServerRequestData> {
+    const deferred = Q.defer<IServerRequestData>();
     request.body = '';
     request.setEncoding('binary');
     request.on('data', (chunk:any) => { request.body += chunk; });

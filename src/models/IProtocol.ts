@@ -45,15 +45,16 @@ export interface IServerCreationOptions {
     [key: string]: any;
 }
 
+export type ServerImplCreatorFunction = (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback) => Q.Promise<IServerImplementation>;
 export type ServerCreatorFunction = (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback) => Q.Promise<IServer>;
 
-export type RequestCallback = (arg1: any, arg2: any) => any;
+export type RequestCallback = (arg1: IServerRequestData, arg2: any) => any;
 
 export interface IProtocolFactory {
     validate?:(imposter_config:IImposterConfig) => Q.Promise<IValidation>;
     testRequest:IRequestData;
     testProxyResponse: IResponceData;
-    create:ServerCreatorFunction;
+    create:ServerImplCreatorFunction;
 
     createServer?: ServerCreatorFunction;
     createImposterFrom?: (creationRequest: any) => Q.Promise<IImposter>;
@@ -79,7 +80,24 @@ export interface IServer {
     close(cb:(err?: Error) => void): void;
 }
 
-export interface IServerControl extends IServer {
+export interface IServerRequestData {
+    requestFrom: string;
+    method: string;
+    path: string;
+    query: any;
+    headers: any;
+    body: string;
+    ip: string;
+    form?: any | undefined;
+}
+
+
+export interface IServerResponseData {
+    blocked?: boolean;
+    statusCode: number;
+    headers: any;
+    body: string;
+    _mode: string;
 
 }
 

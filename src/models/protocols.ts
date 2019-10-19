@@ -2,7 +2,13 @@
 
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
-import {IProtocolFactory, IServer, IServerCreationOptions, ServerCreatorFunction} from "./IProtocol";
+import {
+    IProtocolFactory,
+    IServer,
+    IServerCreationOptions,
+    ServerCreatorFunction,
+    ServerImplCreatorFunction
+} from "./IProtocol";
 import {IpValidator} from "./IImposter";
 
 
@@ -26,7 +32,7 @@ export function load (
     options:IProtocolLoadOptions,
     isAllowedConnection: IpValidator,
     mbLogger: ILogger): {[key: string]: IProtocolFactory} {
-    function inProcessCreate (createProtocol: ServerCreatorFunction): ServerCreatorFunction {
+    function inProcessCreate (createProtocol: ServerImplCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn).then(server => {
                 const stubs = require('./stubRepository').create(server.encoding || 'utf8'),
