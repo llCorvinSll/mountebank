@@ -1,12 +1,30 @@
 'use strict';
 
-function load (builtInProtocols, customProtocols, options, isAllowedConnection, mbLogger) {
+import * as Q from "q";
+import {ILogger} from "../util/scopedLogger";
+import {IProtocol} from "./IProtocol";
+
+
+interface IProtocolLoadOptions {
+    callbackURLTemplate: string;
+    loglevel: string;
+    allowInjection: boolean;
+    host: string;
+    recordRequests: unknown;
+    recordMatches: unknown;
+}
+
+interface IProtocolMap {
+    [key: string]: unknown;
+}
+
+
+export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocolMap, options:IProtocolLoadOptions, isAllowedConnection: () => boolean, mbLogger: ILogger) {
     function inProcessCreate (createProtocol) {
-        return (creationRequest, logger, responseFn) =>
+        return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn).then(server => {
                 const stubs = require('./stubRepository').create(server.encoding || 'utf8'),
-                    resolver = require('./responseResolver').create(stubs, server.proxy),
-                    Q = require('q');
+                    resolver = require('./responseResolver').create(stubs, server.proxy);
 
                 return Q({
                     port: server.port,
@@ -30,9 +48,8 @@ function load (builtInProtocols, customProtocols, options, isAllowedConnection, 
             return result;
         }
 
-        return (creationRequest, logger) => {
-            const Q = require('q'),
-                deferred = Q.defer(),
+        return (creationRequest, logger: ILogger) => {
+            const deferred = Q.defer(),
                 { spawn } = require('child_process'),
                 command = config.createCommand.split(' ')[0],
                 args = config.createCommand.split(' ').splice(1),
@@ -54,7 +71,7 @@ function load (builtInProtocols, customProtocols, options, isAllowedConnection, 
 
             let closeCalled = false;
 
-            imposterProcess.on('error', error => {
+            imposterProcess.on('error', (error:any) => {
                 const errors = require('../util/errors'),
                     message = `Invalid configuration for protocol "${protocolName}": cannot run "${config.createCommand}"`;
                 deferred.reject(errors.ProtocolError(message,
@@ -72,8 +89,8 @@ function load (builtInProtocols, customProtocols, options, isAllowedConnection, 
                 }
             });
 
-            function resolveWithMetadata (possibleJSON) {
-                let metadata = {};
+            function resolveWithMetadata (possibleJSON: string) {
+                let metadata: any = {};
 
                 try {
                     metadata = JSON.parse(possibleJSON);
@@ -138,7 +155,7 @@ function load (builtInProtocols, customProtocols, options, isAllowedConnection, 
         return Imposter.create(Protocol, creationRequest, mbLogger.baseLogger, options, isAllowedConnection);
     }
 
-    const result = {};
+    const result: {[key: string]: IProtocol} = {};
     Object.keys(builtInProtocols).forEach(key => {
         result[key] = builtInProtocols[key];
         result[key].createServer = inProcessCreate(result[key].create);
@@ -151,5 +168,3 @@ function load (builtInProtocols, customProtocols, options, isAllowedConnection, 
     });
     return result;
 }
-
-module.exports = { load };
