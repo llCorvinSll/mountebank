@@ -7,7 +7,6 @@ import {ILogger} from "../util/scopedLogger";
 import {IProxyConfig, IStubConfig} from "./IStubConfig";
 import {IRequest, IResponse} from "./IRequest";
 import {IStubRepository} from "./stubRepository";
-import {IResponseResolver} from "./responseResolver";
 
 
 export interface IRequestData {
@@ -74,7 +73,7 @@ export interface IServer {
     port: number;
     metadata: any;
     stubs: IStubRepository;
-    resolver: IResponseResolver;
+    resolver: IResolver;
     encoding?:string;
     proxy?:IProxyImplementation;
     close(cb:(err?: Error) => void): void;
@@ -87,7 +86,7 @@ export interface IServerRequestData {
     query: any;
     headers: any;
     body: string;
-    ip: string;
+    ip?: string;
     form?: any | undefined;
 
     isDryRun?:boolean;
@@ -99,13 +98,13 @@ export interface IServerResponseData {
     statusCode: number;
     headers: any;
     body: string;
-    _mode: string;
+    _mode?: string;
 
 }
 
 export interface IResolver {
     resolve(responseConfig: IStubConfig, request: IRequest, logger: ILogger, imposterState: unknown, options: unknown): Q.Promise<unknown>;
-    resolveProxy(proxyResponse, proxyResolutionKey, logger: ILogger): Q.Promise<IResponse>;
+    resolveProxy(proxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IResponse>;
 }
 
 

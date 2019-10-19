@@ -6,6 +6,7 @@ import * as Q from "q";
 import {IStubRepository} from "./stubRepository";
 import {ILogger} from "../util/scopedLogger";
 import {IRequest} from "./IRequest";
+import {IProtocolLoadOptions} from "./protocols";
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -40,7 +41,7 @@ function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
  * @param {Function} isAllowedConnection - function to determine if the IP address of the requestor is allowed
  * @returns {Object}
  */
-export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogger, config, isAllowedConnection: IpValidator): Q.Promise<IImposter> {
+export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogger, config: IProtocolLoadOptions, isAllowedConnection: IpValidator): Q.Promise<IImposter> {
     function scopeFor (port: string): string {
         let scope = `${creationRequest.protocol}:${port}`;
 
@@ -114,9 +115,9 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
             creationRequest.host = config.host;
         }
 
-        Protocol.createServer(creationRequest, logger, getResponseFor).done(server => {
+        Protocol.createServer && Protocol.createServer(creationRequest, logger, getResponseFor).done(server => {
             if (creationRequest.port !== server.port) {
-                logger.changeScope(scopeFor(server.port));
+                logger.changeScope(scopeFor(String(server.port)));
             }
             logger.info('Open for business...');
 

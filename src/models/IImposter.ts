@@ -6,7 +6,7 @@ import {IStubConfig} from "./IStubConfig";
 import {ILogger} from "../util/scopedLogger";
 
 export interface IImposter {
-    port: string;
+    port: number;
     url: string;
 
     stubs():IStubConfig[];

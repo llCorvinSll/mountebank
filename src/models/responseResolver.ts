@@ -1,12 +1,13 @@
 'use strict';
 
-import {IProxy, IRequest, IResponse, IStub} from "./IRequest";
+import {IRequest, IResponse, IStub} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
 import {IStubRepository} from "./stubRepository";
 import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
 import {IProxyImplementation, IResolver} from "./IProtocol";
 import {IStubConfig} from "./IStubConfig";
+import {IJsonPathConfig, IXPathConfig} from "./IPredicate";
 
 /**
  * Determines the response for a stub based on the user-provided response configuration
@@ -14,8 +15,11 @@ import {IStubConfig} from "./IStubConfig";
  */
 
 
-export interface IResponseResolver {
-
+interface IPendingProxyResolution {
+    responseConfig: unknown;
+    request: unknown;
+    startTime: Date;
+    requestDetails: unknown;
 }
 
 /**
@@ -29,7 +33,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
     // imjectState is deprecated in favor of imposterState, but kept for backwards compatibility
     // @ts-ignore
     const injectState = {}, // eslint-disable-line no-unused-vars
-        pendingProxyResolutions: {[key: number]:unknown } = {},
+        pendingProxyResolutions: {[key: number]:IPendingProxyResolution } = {},
         inProcessProxy = Boolean(proxy);
     let nextProxyResolutionKey = 0;
 
@@ -87,13 +91,13 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
     }
 
-    function xpathValue (xpathConfig, possibleXML: string, logger: ILogger) {
+    function xpathValue (xpathConfig: IXPathConfig, possibleXML: string, logger: ILogger) {
         const xpath = require('./xpath'),
             nodes = xpath.select(xpathConfig.selector, xpathConfig.ns, possibleXML, logger);
         return selectionValue(nodes);
     }
 
-    function jsonpathValue (jsonpathConfig, possibleJSON: string, logger: ILogger) {
+    function jsonpathValue (jsonpathConfig: IJsonPathConfig, possibleJSON: string, logger: ILogger) {
         const jsonpath = require('./jsonpath'),
             nodes = jsonpath.select(jsonpathConfig.selector, possibleJSON, logger);
         return selectionValue(nodes);
@@ -157,7 +161,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
             }
 
             const basePredicate = {};
-            let hasPredicateOperator = false;
+            let hasPredicateOperator: boolean = false;
             let predicateOperator; // eslint-disable-line no-unused-vars
             let valueOf = field => field;
 
@@ -182,14 +186,14 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
                 const helpers = require('../util/helpers'),
                     matcherValue = matcher.matches[fieldName],
                     predicate = helpers.clone(basePredicate);
-                if (matcherValue === true && hasPredicateOperator === false) {
+                if (matcherValue === true && !hasPredicateOperator) {
                     predicate.deepEquals = {};
                     predicate.deepEquals[fieldName] = valueOf(request[fieldName]);
                 }
-                else if (hasPredicateOperator === true && matcher.predicateOperator === 'exists') {
+                else if (hasPredicateOperator && matcher.predicateOperator === 'exists') {
                     predicate[matcher.predicateOperator] = buildExists(request, fieldName, matcherValue, request);
                 }
-                else if (hasPredicateOperator === true && matcher.predicateOperator !== 'exists') {
+                else if (hasPredicateOperator && matcher.predicateOperator !== 'exists') {
                     predicate[matcher.predicateOperator] = valueOf(request);
                 }
                 else {
@@ -403,13 +407,13 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
      * @param {Object} logger - the logger
      * @returns {Object} - Promise resolving to the response
      */
-    function resolveProxy (proxyResponse, proxyResolutionKey, logger: ILogger): Q.Promise<IResponse> {
+    function resolveProxy (proxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IResponse> {
         const pendingProxyConfig = pendingProxyResolutions[proxyResolutionKey],
             behaviors = require('./behaviors');
 
         if (pendingProxyConfig) {
             // eslint-disable-next-line no-underscore-dangle
-            proxyResponse._proxyResponseTime = new Date().getTime() - pendingProxyConfig.startTime;
+            proxyResponse._proxyResponseTime = new Date().getTime() - pendingProxyConfig.startTime.getTime();
 
             return behaviors.execute(pendingProxyConfig.request, proxyResponse, pendingProxyConfig.responseConfig._behaviors, logger)
                 .then(response => {
