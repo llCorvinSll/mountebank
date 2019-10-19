@@ -1,6 +1,6 @@
 'use strict';
 
-import { ILogger } from "../util/scopedLogger";
+import {ILogger} from "../util/scopedLogger";
 
 /**
  * Shared logic for xpath selector

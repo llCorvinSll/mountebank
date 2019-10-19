@@ -1,4 +1,5 @@
-import { IRequest, toDeclaration, IStub } from "./IRequest";
+import {IRequest, IStub, toDeclaration} from "./IRequest";
+
 'use strict';
 
 

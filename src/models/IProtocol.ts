@@ -4,8 +4,8 @@ import {IImposter, IImposterConfig} from "./IImposter";
 import {IMontebankError} from "../util/errors";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
-import {IProxyConfig, IStubConfig} from "./IStubConfig";
-import {IRequest, IResponse} from "./IRequest";
+import {IProxyConfig} from "./IStubConfig";
+import {IBehaviors, IResponse} from "./IRequest";
 import {IStubRepository} from "./stubRepository";
 
 
@@ -102,14 +102,34 @@ export interface IServerResponseData {
 
 }
 
+export interface IMountebankResponse {
+    response?: IMountebankResponse;
+
+    proxy?: IProxyConfig;
+    blocked?: boolean;
+    code?: string;
+
+
+    _behaviors?: IBehaviors;
+    _proxyResponseTime?:number;
+
+    is?: unknown;
+
+    inject?:string;
+
+    recordMatch?: (match?: any) => void;
+    setMetadata?: (responseType: string, metadata: any) => void;
+}
+
+
 export interface IResolver {
-    resolve(responseConfig: IStubConfig, request: IRequest, logger: ILogger, imposterState: unknown, options: unknown): Q.Promise<unknown>;
+    resolve(responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, imposterState: unknown, options: unknown): Q.Promise<IMountebankResponse>;
     resolveProxy(proxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IResponse>;
 }
 
 
 export interface IProxyImplementation {
-    to(to: string, request: unknown, cfg: IProxyConfig, requestDetails?: unknown): Q.Promise<IResponse>
+    to(to: string, request: unknown, cfg: IProxyConfig, requestDetails?: unknown): Q.Promise<IMountebankResponse>
 }
 
 export interface IValidation {

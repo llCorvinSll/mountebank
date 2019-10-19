@@ -5,10 +5,12 @@ import * as Q from "q";
 import {Server} from "http";
 import {AddressInfo, Socket} from "net";
 import {
-    IProtocolFactory, IServerCreationOptions,
+    IProtocolFactory,
+    IServerCreationOptions,
     IServerImplementation,
     IServerRequestData,
-    IServerResponseData, RequestCallback
+    IServerResponseData,
+    RequestCallback
 } from "../IProtocol";
 
 /**

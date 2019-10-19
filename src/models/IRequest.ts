@@ -20,7 +20,14 @@ export interface IStub {
     statefulResponses: IResponse[];
     addResponse?: (resp: IResponse) => void;
     recordMatch?: (responce?: any) => void;
-    matches?:unknown[];
+
+
+    _behaviors?: IBehaviors;
+    proxy?: {
+        mode: string;
+    },
+    is?: any;
+    inject?: string;
 }
 
 export interface ICopyDescriptor {

@@ -16,7 +16,6 @@ import {IImposterConfig} from "./IImposter";
 import {IValidation} from "./IProtocol";
 
 
-
 interface IDryRunValidatorOptions {
     allowInjection:boolean;
     testRequest:IRequest;

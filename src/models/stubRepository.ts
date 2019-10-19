@@ -1,10 +1,11 @@
 'use strict';
 
 import {ILogger} from "../util/scopedLogger";
-import {IRequest, IResponse} from "./IRequest";
+import {IResponse} from "./IRequest";
 import {IPredicate} from "./IPredicate";
 import {IStubConfig} from "./IStubConfig";
-
+import {IMountebankResponse, IServerRequestData} from "./IProtocol";
+import * as  helpers from "../util/helpers";
 
 /**
  * Maintains all stubs for an imposter
@@ -13,12 +14,12 @@ import {IStubConfig} from "./IStubConfig";
 
 export interface IStubRepository {
     stubs: () => IStubConfig[];
-    addStub(stub: IStubConfig):void;
+    addStub(stub: IStubConfig, beforeResponse?: IMountebankResponse):void;
     addStubAtIndex(index: string, newStub: IStubConfig): void;
     overwriteStubs(newStubs: IStubConfig[]): void;
     overwriteStubAtIndex(index: string, newStub: IStubConfig):void;
     deleteStubAtIndex(index: string):void;
-    getResponseFor(request: IRequest, logger: ILogger, imposterState: unknown):IStubConfig;
+    getResponseFor(request: IServerRequestData, logger: ILogger, imposterState: unknown):IMountebankResponse;
     resetProxies():void;
 }
 
@@ -41,7 +42,7 @@ export function create (encoding: string): IStubRepository {
         return list.map(predicate).every(result => result);
     }
 
-    function findFirstMatch (request: IRequest, logger: ILogger, imposterState: unknown): IStubConfig | undefined {
+    function findFirstMatch (request: IServerRequestData, logger: ILogger, imposterState: unknown): IStubConfig | undefined {
         if (stubs.length === 0) {
             return undefined;
         }
@@ -66,7 +67,7 @@ export function create (encoding: string): IStubRepository {
         }
     }
 
-    function repeatsFor (response: IResponse) {
+    function repeatsFor (response: IMountebankResponse) {
         if (response._behaviors && response._behaviors.repeat) {
             return response._behaviors.repeat;
         }
@@ -75,7 +76,7 @@ export function create (encoding: string): IStubRepository {
         }
     }
 
-    function repeatTransform (responses: IResponse[]): IResponse[] {
+    function repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
         const result = [];
         let response, repeats;
 
@@ -101,7 +102,7 @@ export function create (encoding: string): IStubRepository {
     }
 
     function decorate (stub: IStubConfig) {
-        stub.statefulResponses = repeatTransform(stub.responses as IResponse[]);
+        stub.statefulResponses = repeatTransform(stub.responses as IMountebankResponse[]);
         stub.addResponse = response => { stub.responses && stub.responses.push(response); };
         return stub;
     }
@@ -112,7 +113,7 @@ export function create (encoding: string): IStubRepository {
      * @param {Object} stub - The stub to add
      * @param {Object} beforeResponse - If provided, the new stub will be added before the stub containing the response (used for proxyOnce)
      */
-    function addStub (stub: IStubConfig, beforeResponse?: object): void {
+    function addStub (stub: IStubConfig, beforeResponse?: IMountebankResponse): void {
         if (beforeResponse) {
             stubs.splice(stubIndexFor(beforeResponse), 0, decorate(stub));
         }
@@ -187,17 +188,16 @@ export function create (encoding: string): IStubRepository {
      * @param {Object} imposterState - The current state for the imposter
      * @returns {Object} - Promise resolving to the response
      */
-    function getResponseFor (request: IRequest, logger: ILogger, imposterState: unknown): IStubConfig {
-        const helpers = require('../util/helpers');
+    function getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
         const stub: IStubConfig = findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
-            responseConfig:IResponse = stub.statefulResponses.shift() as IResponse,
+            responseConfig:IMountebankResponse = stub.statefulResponses.shift() as IMountebankResponse,
             cloned = helpers.clone(responseConfig);
 
         logger.debug(`generating response from ${JSON.stringify(responseConfig)}`);
 
-        stub.statefulResponses.push(responseConfig as IResponse);
+        stub.statefulResponses.push(responseConfig);
 
-        cloned.recordMatch = (response?: IResponse) => {
+        cloned.recordMatch = (response?: any) => {
             const clonedResponse = helpers.clone(response),
                 match = {
                     timestamp: new Date().toJSON(),
@@ -212,7 +212,7 @@ export function create (encoding: string): IStubRepository {
             cloned.recordMatch = () => {}; // Only record once
         };
 
-        cloned.setMetadata = (responseType: any, metadata: any) => {
+        cloned.setMetadata = (responseType: string, metadata: any) => {
             Object.keys(metadata).forEach(key => {
                 ((responseConfig[responseType] as any)[key] as any) = metadata[key];
                 cloned[responseType][key] = metadata[key];

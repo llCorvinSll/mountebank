@@ -1,6 +1,6 @@
 'use strict';
 
-import {IProtocol, IResolver} from "./IProtocol";
+import {IMountebankResponse, IProtocol, IResolver, IServerRequestData} from "./IProtocol";
 import {IImposter, IpValidator} from "./IImposter";
 import * as Q from "q";
 import {IStubRepository} from "./stubRepository";
@@ -72,7 +72,7 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
     // requestDetails are not stored with the imposter
     // It was created to pass the raw URL to maintain the exact querystring during http proxying
     // without having to change the path / query options on the stored request
-    function getResponseFor (request, requestDetails) {
+    function getResponseFor (request: IServerRequestData, requestDetails: unknown): Q.Promise<IMountebankResponse> {
         if (!isAllowedConnection(request.ip, logger)) {
             return Q({ blocked: true, code: 'unauthorized ip address' });
         }
@@ -100,7 +100,7 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
         });
     }
 
-    function getProxyResponseFor (proxyResponse, proxyResolutionKey) {
+    function getProxyResponseFor (proxyResponse, proxyResolutionKey: number) {
         return resolver.resolveProxy(proxyResponse, proxyResolutionKey, logger).then(response => {
             if (config.recordMatches) {
                 response.recordMatch();

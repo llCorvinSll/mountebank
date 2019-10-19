@@ -1,13 +1,16 @@
 'use strict';
 
-import {IRequest, IResponse, IStub} from "./IRequest";
+import {IRequest} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
 import {IStubRepository} from "./stubRepository";
 import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
-import {IProxyImplementation, IResolver} from "./IProtocol";
+import {IMountebankResponse, IProxyImplementation, IResolver, IServerRequestData} from "./IProtocol";
+import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
+import * as behaviors from "./behaviors";
 import {IStubConfig} from "./IStubConfig";
-import {IJsonPathConfig, IXPathConfig} from "./IPredicate";
+import * as  helpers from '../util/helpers';
+
 
 /**
  * Determines the response for a stub based on the user-provided response configuration
@@ -16,8 +19,8 @@ import {IJsonPathConfig, IXPathConfig} from "./IPredicate";
 
 
 interface IPendingProxyResolution {
-    responseConfig: unknown;
-    request: unknown;
+    responseConfig: IMountebankResponse;
+    request: IServerRequestData;
     startTime: Date;
     requestDetails: unknown;
 }
@@ -37,9 +40,8 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         inProcessProxy = Boolean(proxy);
     let nextProxyResolutionKey = 0;
 
-    function inject (request: IRequest, fn: unknown, logger: ILogger, imposterState: unknown) {
-        const helpers = require('../util/helpers'),
-            deferred = Q.defer(),
+    function inject (request: IServerRequestData, fn: string, logger: ILogger, imposterState: unknown) {
+        const deferred = Q.defer(),
             config = {
                 request: helpers.clone(request),
                 state: imposterState,
@@ -139,7 +141,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return initialRequest;
     }
 
-    function predicatesFor (request: IRequest, matchers, logger: ILogger) {
+    function predicatesFor (request: IServerRequestData, matchers, logger: ILogger) {
         const predicates = [];
 
         matchers.forEach(matcher => {
@@ -224,19 +226,19 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return i;
     }
 
-    function indexOfStubToAddResponseTo (responseConfig, request, logger: ILogger) {
-        const predicates = predicatesFor(request, responseConfig.proxy.predicateGenerators || [], logger),
+    function indexOfStubToAddResponseTo (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger) {
+        const predicates = predicatesFor(request, responseConfig.proxy && responseConfig.proxy.predicateGenerators || [], logger),
             stubList = stubs.stubs();
 
         for (let index = stubIndexFor(responseConfig) + 1; index < stubList.length; index += 1) {
-            if (deepEqual(predicates, stubList[index].predicates)) {
+            if (deepEqual(predicates, stubList[index].predicates as IPredicate[])) {
                 return index;
             }
         }
         return -1;
     }
 
-    function canAddResponseToExistingStub (responseConfig, request, logger: ILogger) {
+    function canAddResponseToExistingStub (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger): boolean {
         return indexOfStubToAddResponseTo(responseConfig, request, logger) >= 0;
     }
 
@@ -257,7 +259,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return result;
     }
 
-    function addNewResponse (responseConfig, request, response, logger) {
+    function addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger) {
         const stubResponse = newIsResponse(response, responseConfig.proxy),
             responseIndex = indexOfStubToAddResponseTo(responseConfig, request, logger);
 
@@ -265,12 +267,12 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         i_stub.addResponse && i_stub.addResponse(stubResponse);
     }
 
-    function addNewStub (responseConfig, request, response, logger: ILogger) {
-        const predicates = predicatesFor(request, responseConfig.proxy.predicateGenerators || [], logger),
+    function addNewStub (responseConfig: IMountebankResponse, request :IServerRequestData, response: IMountebankResponse, logger: ILogger) {
+        const predicates = predicatesFor(request, (responseConfig.proxy && responseConfig.proxy.predicateGenerators) || [], logger),
             stubResponse = newIsResponse(response, responseConfig.proxy),
-            newStub:IStub = { predicates: predicates, responses: [stubResponse] };
+            newStub:IStubConfig = { predicates: predicates, responses: [stubResponse] };
 
-        if (responseConfig.proxy.mode === 'proxyAlways') {
+        if (responseConfig.proxy && responseConfig.proxy.mode === 'proxyAlways') {
             stubs.addStub(newStub);
         }
         else {
@@ -278,13 +280,13 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
     }
 
-    function recordProxyResponse (responseConfig, request, response, logger: ILogger) {
+    function recordProxyResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger) {
         // proxyTransparent prevents the request from being recorded, and always transparently issues the request.
-        if (responseConfig.proxy.mode === 'proxyTransparent') {
+        if (responseConfig.proxy && responseConfig.proxy.mode === 'proxyTransparent') {
             return;
         }
 
-        if (responseConfig.proxy.mode === 'proxyAlways' && canAddResponseToExistingStub(responseConfig, request, logger)) {
+        if (responseConfig.proxy && responseConfig.proxy.mode === 'proxyAlways' && canAddResponseToExistingStub(responseConfig, request, logger)) {
             addNewResponse(responseConfig, request, response, logger);
         }
         else {
@@ -292,9 +294,8 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
     }
 
-    function proxyAndRecord (responseConfig: IStubConfig, request: IRequest, logger: ILogger, requestDetails: unknown) {
-        const Q = require('q'),
-            startTime = new Date().getTime(),
+    function proxyAndRecord (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, requestDetails: unknown) {
+        const startTime = new Date().getTime(),
             behaviors = require('./behaviors');
 
         if (!responseConfig.proxy) {
@@ -302,7 +303,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
 
         if (['proxyOnce', 'proxyAlways', 'proxyTransparent'].indexOf(responseConfig.proxy.mode) < 0) {
-            responseConfig.setMetadata('proxy', { mode: 'proxyOnce' });
+            responseConfig.setMetadata && responseConfig.setMetadata('proxy', { mode: 'proxyOnce' });
         }
 
         if (inProcessProxy) {
@@ -312,7 +313,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
 
                 // Run behaviors here to persist decorated response
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
-            }).then((response: IResponse) => {
+            }).then((response) => {
                 recordProxyResponse(responseConfig, request, response, logger);
                 return Q(response);
             });
@@ -333,7 +334,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
     }
 
-    function processResponse (responseConfig: IStubConfig, request: IRequest, logger: ILogger, imposterState: unknown, requestDetails: unknown) {
+    function processResponse (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, imposterState: unknown, requestDetails: unknown): Q.Promise<IMountebankResponse> {
         const helpers = require('../util/helpers');
 
         if (responseConfig.is) {
@@ -344,7 +345,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
             return proxyAndRecord(responseConfig, request, logger, requestDetails);
         }
         else if (responseConfig.inject) {
-            return inject(request, responseConfig.inject, logger, imposterState).then(Q);
+            return inject(request, responseConfig.inject, logger, imposterState).then<IMountebankResponse>(Q);
         }
         else {
             return Q.reject(ValidationError('unrecognized response type',
@@ -352,7 +353,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
     }
 
-    function hasMultipleTypes (responseConfig: IStubConfig):boolean {
+    function hasMultipleTypes (responseConfig: IMountebankResponse):boolean {
         return !!((responseConfig.is && responseConfig.proxy) ||
             (responseConfig.is && responseConfig.inject) ||
             (responseConfig.proxy && responseConfig.inject));
@@ -368,30 +369,27 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
      * @param {Object} options - Additional options not carried with the request
      * @returns {Object} - Promise resolving to the response
      */
-    function resolve (responseConfig: IStubConfig, request: IRequest, logger: ILogger, imposterState: unknown, options: unknown) {
-        const helpers = require('../util/helpers'),
-            behaviors = require('./behaviors');
+    function resolve (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, imposterState: unknown, options: unknown): Q.Promise<IMountebankResponse> {
+        const helpers = require('../util/helpers');
 
         if (hasMultipleTypes(responseConfig)) {
             return Q.reject(ValidationError('each response object must have only one response type',
                 { source: responseConfig }));
         }
 
-        return processResponse(responseConfig, helpers.clone(request), logger, imposterState, options).then(response => {
+        return processResponse(responseConfig, helpers.clone(request), logger, imposterState, options).then((response: IMountebankResponse) => {
             // We may have already run the behaviors in the proxy call to persist the decorated response
             // in the new stub. If so, we need to ensure we don't re-run it
             if (responseConfig.proxy) {
                 return Q(response);
-            }
-            else {
+            } else {
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
             }
-        }).then((response: IResponse) => {
+        }).then((response: IMountebankResponse) => {
             if (inProcessProxy) {
-                return Q(response);
-            }
-            else {
-                return responseConfig.proxy ? Q(response) : Q({ response });
+                return Q<IMountebankResponse>(response);
+            } else {
+                return responseConfig.proxy ? Q<IMountebankResponse>(response) : Q<IMountebankResponse>({response});
             }
         });
     }
@@ -407,7 +405,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
      * @param {Object} logger - the logger
      * @returns {Object} - Promise resolving to the response
      */
-    function resolveProxy (proxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IResponse> {
+    function resolveProxy (proxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IMountebankResponse> {
         const pendingProxyConfig = pendingProxyResolutions[proxyResolutionKey],
             behaviors = require('./behaviors');
 
@@ -418,7 +416,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
             return behaviors.execute(pendingProxyConfig.request, proxyResponse, pendingProxyConfig.responseConfig._behaviors, logger)
                 .then(response => {
                     recordProxyResponse(pendingProxyConfig.responseConfig, pendingProxyConfig.request, response, logger);
-                    response.recordMatch = () => { pendingProxyConfig.responseConfig.recordMatch(response); };
+                    response.recordMatch = () => { pendingProxyConfig.responseConfig.recordMatch && pendingProxyConfig.responseConfig.recordMatch(response); };
                     delete pendingProxyResolutions[proxyResolutionKey];
                     return Q(response);
                 });

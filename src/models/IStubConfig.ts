@@ -1,17 +1,19 @@
 import {IPredicate} from "./IPredicate";
 import {IBehaviors, IResponse} from "./IRequest";
+import {IMountebankResponse} from "./IProtocol";
 
 
 export interface IProxyConfig {
     mode: string;
     to: string;
-    [key: string]: string | object;
+    predicateGenerators?: unknown[];
+    [key: string]: string | object | unknown[] | undefined;
 }
 
 export interface IStubConfig {
     responses?:IResponse[];
     predicates?: IPredicate[];
-    statefulResponses: IResponse[];
+    statefulResponses?: IMountebankResponse[];
     addResponse?: (resp: IResponse) => void;
     recordMatch?: (responce?: any) => void;
     matches?:unknown[];
@@ -20,8 +22,4 @@ export interface IStubConfig {
 
     is?:any;
     inject?:unknown;
-
-
-    //functions
-    setMetadata(key: string, data: unknown): void;
 }

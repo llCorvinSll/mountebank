@@ -1,10 +1,11 @@
 'use strict';
 
-import {IRequest, IResponse, IBehaviors, ICopyDescriptor, ILookupDescriptor} from "./IRequest";
+import {IBehaviors, ICopyDescriptor, ILookupDescriptor, IResponse} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
 import * as Q from "q";
 import {IValidationMap} from "./behaviorsValidator";
 import {exec} from "child_process";
+import {IMountebankResponse, IServerRequestData} from "./IProtocol";
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -117,7 +118,7 @@ export function validate (config) {
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object} A promise resolving to the response
  */
-function wait (request: IRequest, responsePromise: Q.Promise<IResponse>, millisecondsOrFn: (() => number) | string, logger: ILogger): Q.Promise<IResponse> {
+function wait (request: IServerRequestData, responsePromise: Q.Promise<IMountebankResponse>, millisecondsOrFn: (() => number) | string, logger: ILogger): Q.Promise<IMountebankResponse> {
     if (request.isDryRun) {
         return responsePromise;
     }
@@ -158,8 +159,8 @@ function quoteForShell (obj: object): string {
     }
 }
 
-function execShell (command, request: IRequest, response: IResponse, logger: ILogger):Q.Promise<IResponse> {
-    const deferred = Q.defer<IResponse>(),
+function execShell (command: string, request: IServerRequestData, response: IMountebankResponse, logger: ILogger):Q.Promise<IMountebankResponse> {
+    const deferred = Q.defer<IMountebankResponse>(),
         util = require('util'),
         fullCommand = util.format('%s %s %s', command, quoteForShell(request), quoteForShell(response)),
         env = require('../util/helpers').clone(process.env);
@@ -202,7 +203,7 @@ function execShell (command, request: IRequest, response: IResponse, logger: ILo
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function shellTransform (request: IRequest, responsePromise: Q.Promise<IResponse>, commandArray: string[], logger: ILogger) {
+function shellTransform (request: IServerRequestData, responsePromise: Q.Promise<IMountebankResponse>, commandArray: string[], logger: ILogger) {
     if (request.isDryRun) {
         return responsePromise;
     }
@@ -223,7 +224,7 @@ function shellTransform (request: IRequest, responsePromise: Q.Promise<IResponse
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function decorate (originalRequest: IRequest, responsePromise: Q.Promise<IResponse>, fn, logger: ILogger) {
+function decorate (originalRequest: IServerRequestData, responsePromise: Q.Promise<IResponse>, fn, logger: ILogger) {
     if (originalRequest.isDryRun === true) {
         return responsePromise;
     }
@@ -388,7 +389,7 @@ function replaceArrayValuesIn (response: IResponse, token, values, logger: ILogg
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function copy (originalRequest: IRequest, responsePromise: Q.Promise<IResponse>, copyArray:ICopyDescriptor[], logger: ILogger) {
+function copy (originalRequest: IServerRequestData, responsePromise: Q.Promise<IResponse>, copyArray:ICopyDescriptor[], logger: ILogger) {
     return responsePromise.then(response => {
         copyArray.forEach(function (copyConfig) {
             const from = getFrom(originalRequest, copyConfig.from),
@@ -461,7 +462,7 @@ function selectRowFromCSV (csvConfig, keyValue, logger: ILogger) {
     return deferred.promise;
 }
 
-function lookupRow (lookupConfig:ILookupDescriptor, originalRequest: IRequest, logger: ILogger) {
+function lookupRow (lookupConfig:ILookupDescriptor, originalRequest: IServerRequestData, logger: ILogger) {
     const from = getFrom(originalRequest, lookupConfig.key.from),
         fnMap: {[key: string]: (from: any, config: any, logger: ILogger) => any} = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
         keyValues = fnMap[lookupConfig.key.using.method](from, lookupConfig.key, logger),
@@ -501,7 +502,7 @@ function replaceObjectValuesIn (response: IResponse, token: string, values: {[ke
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function lookup (originalRequest: IRequest, responsePromise: Q.Promise<IResponse>, lookupArray:ILookupDescriptor[], logger: ILogger) {
+function lookup (originalRequest: IServerRequestData, responsePromise: Q.Promise<IResponse>, lookupArray:ILookupDescriptor[], logger: ILogger) {
     return responsePromise.then(response => {
         const lookupPromises = lookupArray.map(function (lookupConfig) {
                 return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
@@ -522,7 +523,7 @@ function lookup (originalRequest: IRequest, responsePromise: Q.Promise<IResponse
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object}
  */
-export function execute (request: IRequest, response: IResponse, behaviors: IBehaviors, logger: ILogger):Q.Promise<IResponse> {
+export function execute (request: IServerRequestData, response: IMountebankResponse, behaviors: IBehaviors | undefined, logger: ILogger):Q.Promise<IMountebankResponse> {
     if (!behaviors) {
         return require('q')(response);
     }
