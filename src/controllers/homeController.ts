@@ -1,25 +1,37 @@
 'use strict';
 
+import { Request, Response } from 'express';
+
+interface IRelease {
+    version: string;
+    date: string;
+}
+
 /**
  * The controller that returns the base mountebank hypermedia
  * @module
  */
+
+interface IReleaseNotice {
+    version: string;
+    when: string;
+}
 
 /**
  * Creates the home controller
  * @param {Object} releases - The releases.json file
  * @returns {Object} The controller
  */
-function create (releases) {
-    function createNotice (release) {
+export function create (releases: IRelease[]) {
+    function createNotice (release: IRelease) {
         const date = require('../util/date');
-        return {
+        return <IReleaseNotice>{
             version: release.version,
             when: date.howLongAgo(release.date)
         };
     }
 
-    const isRecent = notice => notice.when !== '';
+    const isRecent = (notice:IReleaseNotice) => notice.when !== '';
 
     /**
      * The function that responds to GET /
@@ -27,7 +39,7 @@ function create (releases) {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    function get (request, response) {
+    function get (request: Request, response: Response) {
         const hypermedia = {
                 _links: {
                     imposters: { href: '/imposters' },
@@ -36,7 +48,7 @@ function create (releases) {
                 }
             },
             notices = releases.map(createNotice).filter(isRecent),
-            viewNotices = [];
+            viewNotices:IReleaseNotice[] = [];
 
         if (notices.length > 0) {
             notices.reverse();
@@ -51,5 +63,3 @@ function create (releases) {
 
     return { get };
 }
-
-module.exports = { create };

@@ -11,7 +11,7 @@ import {AddressInfo, Socket} from "net";
  * @module
  */
 
-export function create(createBaseServer: (options:any) => { createNodeServer():Server; metadata: unknown }) {
+export function create(createBaseServer: (options:any) => { createNodeServer():Server; metadata: unknown }): Q.Promise<unknown> {
 
     function create (options, logger: ILogger, responseFn) {
         const deferred = Q.defer(),
