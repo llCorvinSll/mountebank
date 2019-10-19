@@ -190,12 +190,12 @@ export function create (encoding: string): IStubRepository {
      */
     function getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
         const stub: IStubConfig = findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
-            responseConfig:IMountebankResponse = stub.statefulResponses.shift() as IMountebankResponse,
+            responseConfig:IMountebankResponse = (stub.statefulResponses as IMountebankResponse[]).shift() as IMountebankResponse,
             cloned = helpers.clone(responseConfig);
 
         logger.debug(`generating response from ${JSON.stringify(responseConfig)}`);
 
-        stub.statefulResponses.push(responseConfig);
+        (stub.statefulResponses as IMountebankResponse[]).push(responseConfig);
 
         cloned.recordMatch = (response?: any) => {
             const clonedResponse = helpers.clone(response),

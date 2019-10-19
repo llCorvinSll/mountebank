@@ -32,8 +32,15 @@ export interface IStub {
 
 export interface ICopyDescriptor {
     from:string;
-    using: {};
+    using: IUsingConfig;
     into: {};
+}
+
+export interface IUsingConfig {
+    method: string;
+    ns: string;
+    selector: string;
+    options: any;
 }
 
 export interface ILookupDescriptor {

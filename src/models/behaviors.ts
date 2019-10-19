@@ -282,11 +282,10 @@ function getFrom (obj: {[key: string]: any}, from: {[key: string]: never} | stri
         return getFrom(obj[keys[0]], from[keys[0]]);
     }
     else {
-        const result = obj[getKeyIgnoringCase(obj, from as string)],
-            util = require('util');
+        const result = obj[getKeyIgnoringCase(obj, from as string)];
 
         // Some request fields, like query parameters, can be multi-valued
-        if (util.isArray(result)) {
+        if (Array.isArray(result)) {
             return result[0];
         }
         else {
@@ -318,13 +317,13 @@ function getMatches (selectionFn, selector, logger: ILogger) {
     }
 }
 
-function regexValue (from, config, logger: ILogger) {
+function regexValue (from, config: ICopyDescriptor, logger: ILogger) {
     const regex = new RegExp(config.using.selector, regexFlags(config.using.options)),
         selectionFn = () => regex.exec(from);
     return getMatches(selectionFn, regex, logger);
 }
 
-function xpathValue (from, config, logger: ILogger) {
+function xpathValue (from, config: ICopyDescriptor, logger: ILogger) {
     const selectionFn = () => {
         const xpath = require('./xpath');
         return xpath.select(config.using.selector, config.using.ns, from, logger);
@@ -332,7 +331,7 @@ function xpathValue (from, config, logger: ILogger) {
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function jsonpathValue (from, config, logger: ILogger) {
+function jsonpathValue (from, config: ICopyDescriptor, logger: ILogger) {
     const selectionFn = () => {
         const jsonpath = require('./jsonpath');
         return jsonpath.select(config.using.selector, from, logger);
@@ -393,8 +392,8 @@ function copy (originalRequest: IServerRequestData, responsePromise: Q.Promise<I
     return responsePromise.then(response => {
         copyArray.forEach(function (copyConfig) {
             const from = getFrom(originalRequest, copyConfig.from),
-                using = copyConfig.using || {},
-                fnMap = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
+                using  = copyConfig.using || {},
+                fnMap: { [key:string]: any } = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
                 values = fnMap[using.method](from, copyConfig, logger);
 
             replaceArrayValuesIn(response, copyConfig.into, values, logger);
