@@ -1,11 +1,13 @@
 'use strict';
 
+import {IServerCreationOptions} from "../IProtocol";
+
 /**
  * Represents an https imposter
  * @module
  */
 
-function createBaseServer (options) {
+function createBaseServer (options: IServerCreationOptions) {
     const path = require('path'),
         fs = require('fs'),
         metadata = {

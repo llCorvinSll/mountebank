@@ -16,7 +16,7 @@ import {
  * @module
  */
 
-export function create(createBaseServer: (options:any) => { createNodeServer():Server; metadata: unknown }): IProtocolFactory {
+export function create(createBaseServer: (options:IServerCreationOptions) => { createNodeServer():Server; metadata: unknown }): IProtocolFactory {
 
     function create (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback):Q.Promise<IServerImplementation> {
         const deferred = Q.defer<IServerImplementation>(),
