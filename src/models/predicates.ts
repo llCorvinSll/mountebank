@@ -1,11 +1,11 @@
 'use strict';
 
-import {IRequest} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
-import {IPredicate} from "./IPredicate";
+import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
+import {IServerRequestData} from "./IProtocol";
 
 /**
- * All the predicates that determine whether a stub matches a request
+ * All the PREDICATES that determine whether a stub matches a request
  * @module
  */
 
@@ -26,20 +26,20 @@ function sortObjects (a: any, b: any): number {
     }
 }
 
-function forceStrings (value: any) {
+function forceStrings (value: any): any {
     const isObject = require('../util/helpers').isObject;
 
     if (value === null) {
         return 'null';
     }
     else if (Array.isArray(value)) {
-        return value.map(forceStrings);
+        return value.map(forceStrings) as any;
     }
     else if (isObject(value)) {
         return Object.keys(value).reduce((accumulator, key) => {
             accumulator[key] = forceStrings(value[key]);
             return accumulator;
-        }, {});
+        }, {} as any);
     }
     else if (typeof value.toString === 'function') {
         return value.toString();
@@ -61,7 +61,7 @@ function select (type, selectFn, encoding: string) {
     // This matches the behavior of node's handling of query parameters,
     // which allows us to maintain the same semantics between deepEquals
     // (all have to match, passing in an array if necessary) and the other
-    // predicates (any can match)
+    // PREDICATES (any can match)
     if (nodeValues && nodeValues.length === 1) {
         return nodeValues[0];
     }
@@ -79,14 +79,14 @@ function orderIndependent (possibleArray: object) {
     }
 }
 
-function transformObject (obj, transform) {
+function transformObject (obj: any, transform: (inp: any) => any) {
     Object.keys(obj).forEach(key => {
         obj[key] = transform(obj[key]);
     });
     return obj;
 }
 
-function selectXPath (config, encoding: string, text: string) {
+function selectXPath (config: IXPathConfig, encoding: string, text: string) {
     const xpath = require('./xpath'),
         combinators = require('../util/combinators'),
         selectFn = combinators.curry(xpath.select, config.selector, config.ns, text);
@@ -94,7 +94,7 @@ function selectXPath (config, encoding: string, text: string) {
     return orderIndependent(select('xpath', selectFn, encoding));
 }
 
-function selectTransform (config, options) {
+function selectTransform (config: IPredicate, options: INormalizeOptions) {
     const combinators = require('../util/combinators'),
         helpers = require('../util/helpers'),
         cloned = helpers.clone(config);
@@ -102,7 +102,7 @@ function selectTransform (config, options) {
     if (config.jsonpath) {
         const stringTransform = options.shouldForceStrings ? forceStrings : combinators.identity;
 
-        // use keyCaseSensitive instead of caseSensitive to help "matches" predicates too
+        // use keyCaseSensitive instead of caseSensitive to help "matches" PREDICATES too
         // see https://github.com/bbyars/mountebank/issues/361
         if (!cloned.keyCaseSensitive) {
             cloned.jsonpath.selector = cloned.jsonpath.selector.toLowerCase();
@@ -126,34 +126,34 @@ function lowercase (text: string): string {
     return text.toLowerCase();
 }
 
-function caseTransform (config) {
+function caseTransform (config: IPredicate) {
     const combinators = require('../util/combinators');
     return config.caseSensitive ? combinators.identity : lowercase;
 }
 
-function exceptTransform (config) {
+function exceptTransform (config: IPredicate) {
     const combinators = require('../util/combinators'),
         exceptRegexOptions = config.caseSensitive ? 'g' : 'gi';
 
     if (config.except) {
-        return text => text.replace(new RegExp(config.except, exceptRegexOptions), '');
+        return (text: string) => text.replace(new RegExp(config.except, exceptRegexOptions), '');
     }
     else {
         return combinators.identity;
     }
 }
 
-function encodingTransform (encoding) {
+function encodingTransform (encoding: string) {
     const combinators = require('../util/combinators');
     if (encoding === 'base64') {
-        return text => Buffer.from(text, 'base64').toString();
+        return (text: string) => Buffer.from(text, 'base64').toString();
     }
     else {
         return combinators.identity;
     }
 }
 
-function tryJSON (value, predicateConfig) {
+function tryJSON (value: string, predicateConfig: IPredicate) {
     try {
         const keyCaseTransform = predicateConfig.keyCaseSensitive === false ? lowercase : caseTransform(predicateConfig),
             valueTransforms = [exceptTransform(predicateConfig), caseTransform(predicateConfig)];
@@ -167,7 +167,7 @@ function tryJSON (value, predicateConfig) {
     }
 }
 
-function selectJSONPath (config, encoding, predicateConfig, stringTransform, text) {
+function selectJSONPath (config: IJsonPathConfig, encoding: string, predicateConfig: IPredicate, stringTransform: (inp: string) => string, text: string) {
     const jsonpath = require('./jsonpath'),
         combinators = require('../util/combinators'),
         possibleJSON = stringTransform(tryJSON(text, predicateConfig)),
@@ -178,7 +178,7 @@ function selectJSONPath (config, encoding, predicateConfig, stringTransform, tex
 
 function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
     const combinators = require('../util/combinators'),
-        apply = fns => combinators.compose.apply(null, fns),
+        apply = (fns: Function) => combinators.compose.apply(null, fns),
         isObject = require('../util/helpers').isObject;
 
     if (Array.isArray(obj)) {
@@ -188,7 +188,7 @@ function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
         return Object.keys(obj).reduce((accumulator, key) => {
             accumulator[apply(keyTransforms)(key)] = transformAll(obj[key], keyTransforms, valueTransforms, arrayTransforms);
             return accumulator;
-        }, {});
+        }, {} as any);
     }
     else if (typeof obj === 'string') {
         return apply(valueTransforms)(obj);
@@ -198,14 +198,20 @@ function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
     }
 }
 
-function normalize (obj, config, options) {
-    // Needed to solve a tricky case conversion for "matches" predicates with jsonpath/xpath parameters
+interface INormalizeOptions {
+    withSelectors?: boolean;
+    encoding?: string;
+    shouldForceStrings?: boolean;
+}
+
+function normalize (obj, config: IPredicate, options: INormalizeOptions) {
+    // Needed to solve a tricky case conversion for "matches" PREDICATES with jsonpath/xpath parameters
     if (typeof config.keyCaseSensitive === 'undefined') {
         config.keyCaseSensitive = config.caseSensitive;
     }
 
     const keyCaseTransform = config.keyCaseSensitive === false ? lowercase : caseTransform(config),
-        sortTransform = array => array.sort(sortObjects),
+        sortTransform = (array:any[]) => array.sort(sortObjects),
         transforms = [];
 
     if (options.withSelectors) {
@@ -214,7 +220,7 @@ function normalize (obj, config, options) {
 
     transforms.push(exceptTransform(config));
     transforms.push(caseTransform(config));
-    transforms.push(encodingTransform(options.encoding));
+    transforms.push(encodingTransform(options.encoding as string));
 
     // sort to provide deterministic comparison for deepEquals,
     // where the order in the array for multi-valued querystring keys
@@ -222,7 +228,7 @@ function normalize (obj, config, options) {
     return transformAll(obj, [keyCaseTransform], transforms, [sortTransform]);
 }
 
-function testPredicate (expected, actual, predicateConfig, predicateFn) {
+function testPredicate (expected, actual, predicateConfig: IPredicate, predicateFn) {
     const helpers = require('../util/helpers');
     if (!helpers.defined(actual)) {
         actual = '';
@@ -235,34 +241,34 @@ function testPredicate (expected, actual, predicateConfig, predicateFn) {
     }
 }
 
-function bothArrays (expected, actual) {
+function bothArrays (expected: object, actual: object): any {
     return Array.isArray(actual) && Array.isArray(expected);
 }
 
-function allExpectedArrayValuesMatchActualArray (expectedArray, actualArray, predicateConfig, predicateFn) {
+function allExpectedArrayValuesMatchActualArray (expectedArray: any[], actualArray: any[], predicateConfig: IPredicate, predicateFn): boolean {
     return expectedArray.every(expectedValue =>
         actualArray.some(actualValue => testPredicate(expectedValue, actualValue, predicateConfig, predicateFn)));
 }
 
-function onlyActualIsArray (expected, actual) {
+function onlyActualIsArray (expected: any, actual: any): boolean {
     return Array.isArray(actual) && !Array.isArray(expected);
 }
 
-function expectedMatchesAtLeastOneValueInActualArray (expected, actualArray, predicateConfig, predicateFn) {
-    return actualArray.some(actual => testPredicate(expected, actual, predicateConfig, predicateFn));
+function expectedMatchesAtLeastOneValueInActualArray (expected: any, actualArray: any[], predicateConfig: IPredicate, predicateFn):boolean {
+    return actualArray.some((actual: object) => testPredicate(expected, actual, predicateConfig, predicateFn));
 }
 
-function expectedLeftOffArraySyntaxButActualIsArrayOfObjects (expected, actual, fieldName) {
+function expectedLeftOffArraySyntaxButActualIsArrayOfObjects (expected: any, actual: any, fieldName: string) {
     const helpers = require('../util/helpers');
     return !Array.isArray(expected[fieldName]) && !helpers.defined(actual[fieldName]) && Array.isArray(actual);
 }
 
-function predicateSatisfied (expected, actual, predicateConfig, predicateFn) {
+function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredicate, predicateFn) {
     if (!actual) {
         return false;
     }
 
-    // Support predicates that reach into fields encoded in JSON strings (e.g. HTTP bodies)
+    // Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
     if (typeof actual === 'string') {
         actual = tryJSON(actual, predicateConfig);
     }
@@ -312,14 +318,14 @@ function create (operator: string, predicateFn: (expected: string, actual: strin
     };
 }
 
-function deepEquals (predicate: IPredicate, request, encoding) {
+function deepEquals (predicate: IPredicate, request: IServerRequestData, encoding: string) {
     const expected = normalize(forceStrings(predicate.deepEquals), predicate, { encoding: encoding }),
         actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true }),
         stringify = require('json-stable-stringify'),
         isObject = require('../util/helpers').isObject;
 
     return Object.keys(expected).every(fieldName => {
-        // Support predicates that reach into fields encoded in JSON strings (e.g. HTTP bodies)
+        // Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
         if (isObject(expected[fieldName]) && typeof actual[fieldName] === 'string') {
             const possibleJSON = tryJSON(actual[fieldName], predicate);
             actual[fieldName] = normalize(forceStrings(possibleJSON), predicate, { encoding: encoding });
@@ -328,7 +334,7 @@ function deepEquals (predicate: IPredicate, request, encoding) {
     });
 }
 
-function matches (predicate: IPredicate, request: IRequest, encoding: string) {
+function matches (predicate: IPredicate, request: IServerRequestData, encoding: string) {
     // We want to avoid the lowerCase transform on values so we don't accidentally butcher
     // a regular expression with upper case metacharacters like \W and \S
     // However, we need to maintain the case transform for keys like http header names (issue #169)
@@ -346,26 +352,26 @@ function matches (predicate: IPredicate, request: IRequest, encoding: string) {
         throw errors.ValidationError('the matches predicate is not allowed in binary mode');
     }
 
-    return predicateSatisfied(expected, actual, clone, (a, b) => new RegExp(a, options).test(b));
+    return predicateSatisfied(expected, actual, clone, (a:string, b: string) => new RegExp(a, options).test(b));
 }
 
-function not (predicate: IPredicate, request, encoding, logger, imposterState) {
+function not (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
     return !evaluate(predicate.not, request, encoding, logger, imposterState);
 }
 
-function evaluateFn (request, encoding, logger, imposterState) {
-    return subPredicate => evaluate(subPredicate, request, encoding, logger, imposterState);
+function evaluateFn (request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
+    return (subPredicate:IPredicate) => evaluate(subPredicate, request, encoding, logger, imposterState);
 }
 
-function or (predicate: IPredicate, request, encoding, logger, imposterState) {
+function or (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
     return predicate.or.some(evaluateFn(request, encoding, logger, imposterState));
 }
 
-function and (predicate: IPredicate, request, encoding, logger, imposterState) {
+function and (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
     return predicate.and.every(evaluateFn(request, encoding, logger, imposterState));
 }
 
-function inject (predicate: IPredicate, request, encoding, logger, imposterState) {
+function inject (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
     if (request.isDryRun === true) {
         return true;
     }
@@ -403,10 +409,10 @@ function toString (value: any): string {
     }
 }
 
-type PredicateFunction = (clone: IPredicate, request: IRequest, encoding: string, logger: ILogger, imposter: object) => boolean;
+type PredicateFunction = (clone: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposter: unknown) => boolean;
 
 
-const predicates: { [key: string]: PredicateFunction } = {
+const PREDICATES: { [key: string]: PredicateFunction } = {
     equals: create('equals', (expected, actual) => toString(expected) === toString(actual)),
     deepEquals,
     contains: create('contains', (expected, actual) => actual.indexOf(expected) >= 0),
@@ -431,14 +437,14 @@ const predicates: { [key: string]: PredicateFunction } = {
  * @param {Object} imposterState - The current state for the imposter
  * @returns {boolean}
  */
-export function evaluate (predicate: IPredicate, request: IRequest, encoding: string, logger: ILogger, imposterState): boolean {
-    const predicateFn = Object.keys(predicate).find(key => Object.keys(predicates).indexOf(key) >= 0),
+export function evaluate (predicate: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown): boolean {
+    const predicateFn = Object.keys(predicate).find(key => Object.keys(PREDICATES).indexOf(key) >= 0),
         errors = require('../util/errors'),
         helpers = require('../util/helpers'),
-        clone = helpers.clone(predicate);
+        clone:IPredicate = helpers.clone(predicate);
 
     if (predicateFn) {
-        return predicates[predicateFn](clone, request, encoding, logger, imposterState);
+        return PREDICATES[predicateFn](clone, request, encoding, logger, imposterState);
     }
     else {
         throw errors.ValidationError('missing predicate', { source: predicate });

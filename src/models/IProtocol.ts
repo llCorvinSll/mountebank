@@ -52,8 +52,8 @@ export type RequestCallback = (arg1: IServerRequestData, arg2: any) => any;
 
 export interface IProtocolFactory {
     validate?:(imposter_config:IImposterConfig) => Q.Promise<IValidation>;
-    testRequest:IRequestData;
-    testProxyResponse: IResponceData;
+    testRequest:IServerRequestData;
+    testProxyResponse: IServerResponseData;
     create:ServerImplCreatorFunction;
 
     createServer?: ServerCreatorFunction;
@@ -89,6 +89,8 @@ export interface IServerRequestData {
     body: string;
     ip: string;
     form?: any | undefined;
+
+    isDryRun?:boolean;
 }
 
 

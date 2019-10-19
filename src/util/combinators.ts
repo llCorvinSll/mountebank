@@ -63,6 +63,6 @@ export function constant<T>(k:T): () => T {
  * @param {Object} i - The input
  * @returns {Object} Exactly what was passed in
  */
-export function identity<T>(i:T):T {
-    return i
+export function identity<T> (i:T):T {
+    return i;
 }
