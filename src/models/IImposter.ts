@@ -3,6 +3,7 @@
 import {IStub} from "./IRequest";
 import * as Q from 'q';
 import {IStubConfig} from "./IStubConfig";
+import {ILogger} from "../util/scopedLogger";
 
 export interface IImposter {
     port: string;
@@ -21,6 +22,8 @@ export interface IImposter {
     getResponseFor(request: any, details?: any):Q.Promise<any>;
     getProxyResponseFor(proxyResponse: any, proxyResolutionKey: any):Q.Promise<any>;
 }
+
+export type IpValidator = (ip: string | undefined, logger: ILogger) => boolean;
 
 
 export interface IImposterConfig {

@@ -33,8 +33,8 @@ export function isObject (obj:Object|null): obj is object {
  * @param {Object} socket - the socket
  * @returns {string}
  */
-export function socketName (socket:Socket):string|undefined {
-    let result = socket.remoteAddress;
+export function socketName (socket:Socket):string {
+    let result = socket.remoteAddress as string;
     if (socket.remotePort) {
         result += `:${socket.remotePort}`;
     }

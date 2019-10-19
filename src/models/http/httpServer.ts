@@ -14,4 +14,5 @@ function createBaseServer () {
     };
 }
 
-export default create(createBaseServer);
+const server = create(createBaseServer);
+export default server;

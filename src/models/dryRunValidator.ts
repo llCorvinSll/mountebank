@@ -8,7 +8,7 @@
  */
 
 import {ILogger} from "../util/scopedLogger";
-import {IResponse, IStub} from "./IRequest";
+import {IRequest, IResponse, IStub} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
 import {IStubRepository} from "./stubRepository";
@@ -19,7 +19,7 @@ import {IValidation} from "./IProtocol";
 
 interface IDryRunValidatorOptions {
     allowInjection:boolean;
-    testRequest:any;
+    testRequest:IRequest;
     testProxyResponse:any;
     additionalValidation:(cfg:IImposterConfig) => Q.Promise<IValidation>
 }

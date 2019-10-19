@@ -3,7 +3,7 @@
 import {IPredicate} from "./IPredicate";
 
 export interface IRequest {
-    protocol: string;
+    protocol?: string;
     method: string;
     data: never;
     stubs:IStub[];

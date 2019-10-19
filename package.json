@@ -121,6 +121,8 @@
     "yargs": "14.0.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.6",
+    "@types/errorhandler": "0.0.32",
     "@typescript-eslint/parser": "^2.3.0",
     "firebase-tools": "^7.0.0",
     "fs-extra": "8.1.0",

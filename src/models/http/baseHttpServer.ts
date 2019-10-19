@@ -5,16 +5,17 @@ import * as Q from "q";
 import {IRequest, IResponse} from "../IRequest";
 import {Server} from "http";
 import {AddressInfo, Socket} from "net";
+import {IProtocolFactory, IServer, IServerImplementation} from "../IProtocol";
 
 /**
  * The base implementation of http/s servers
  * @module
  */
 
-export function create(createBaseServer: (options:any) => { createNodeServer():Server; metadata: unknown }): Q.Promise<unknown> {
+export function create(createBaseServer: (options:any) => { createNodeServer():Server; metadata: unknown }): IProtocolFactory {
 
-    function create (options, logger: ILogger, responseFn) {
-        const deferred = Q.defer(),
+    function create (options, logger: ILogger, responseFn):Q.Promise<IServerImplementation> {
+        const deferred = Q.defer<IServer>(),
             connections:{[key: string]:Socket} = {},
             defaultResponse = options.defaultResponse || {};
 

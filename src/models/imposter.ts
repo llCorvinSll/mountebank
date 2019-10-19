@@ -1,7 +1,7 @@
 'use strict';
 
 import {IProtocol, IResolver} from "./IProtocol";
-import {IImposter} from "./IImposter";
+import {IImposter, IpValidator} from "./IImposter";
 import * as Q from "q";
 import {IStubRepository} from "./stubRepository";
 import {ILogger} from "../util/scopedLogger";
@@ -40,7 +40,7 @@ function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
  * @param {Function} isAllowedConnection - function to determine if the IP address of the requestor is allowed
  * @returns {Object}
  */
-export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogger, config, isAllowedConnection): Q.Promise<IImposter> {
+export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogger, config, isAllowedConnection: IpValidator): Q.Promise<IImposter> {
     function scopeFor (port: string): string {
         let scope = `${creationRequest.protocol}:${port}`;
 

@@ -1,16 +1,32 @@
 'use strict';
 
+import  * as Q from "q";
+import * as express from "express";
+import {IMountebankOptions} from "./models/IMountebankOptions";
+import {ILogger} from "./util/scopedLogger";
+import path from 'path';
+import cors from 'cors';
+import errorHandler from 'errorhandler';
+import * as middleware from './util/middleware';
+import thisPackage from "../package.json";
+import releases from "../releases.json";
+import * as helpers from './util/helpers';
+import fs from "fs";
+import winston from "winston";
+import {NetworkInterfaceInfo} from "os";
+import {Socket} from "net";
+import {IProtocolLoadOptions} from "./models/protocols";
+import {IpValidator} from "./models/IImposter";
+
 /**
  * The entry point for mountebank.  This module creates the mountebank server,
  * configures all middleware, starts the logger, and manages all routing
  * @module
  */
 
-function initializeLogfile (filename) {
+function initializeLogfile (filename: string) {
     // Ensure new logfile on startup so the /logs only shows for this process
-    const path = require('path'),
-        fs = require('fs'),
-        extension = path.extname(filename),
+    const extension = path.extname(filename),
         pattern = new RegExp(`${extension}$`),
         newFilename = filename.replace(pattern, `1${extension}`);
 
@@ -19,9 +35,8 @@ function initializeLogfile (filename) {
     }
 }
 
-function createLogger (options) {
-    const winston = require('winston'),
-        format = winston.format,
+function createLogger (options: IMountebankOptions) {
+    const format = winston.format,
         consoleFormat = format.printf(info => `${info.level}: ${info.message}`),
         winstonLogger = winston.createLogger({
             level: options.loglevel,
@@ -36,7 +51,7 @@ function createLogger (options) {
         initializeLogfile(options.logfile);
         winstonLogger.add(new winston.transports.File({
             filename: options.logfile,
-            maxsize: '20m',
+            maxsize: 4096,
             maxFiles: 5,
             tailable: true,
             format: format.combine(format.timestamp(), format.json())
@@ -49,10 +64,10 @@ function createLogger (options) {
 function getLocalIPs () {
     const os = require('os'),
         interfaces = os.networkInterfaces(),
-        result = [];
+        result: string[] = [];
 
     Object.keys(interfaces).forEach(name => {
-        interfaces[name].forEach(ip => {
+        interfaces[name].forEach((ip:NetworkInterfaceInfo) => {
             if (ip.internal) {
                 result.push(ip.address);
                 if (ip.family === 'IPv4') {
@@ -65,18 +80,18 @@ function getLocalIPs () {
     return result;
 }
 
-function createIPVerification (options) {
+function createIPVerification (options: IMountebankOptions): IpValidator {
     const allowedIPs = getLocalIPs();
 
     if (!options.localOnly) {
-        options.ipWhitelist.forEach(ip => { allowedIPs.push(ip.toLowerCase()); });
+        options.ipWhitelist.forEach((ip:string) => { allowedIPs.push(ip.toLowerCase()); });
     }
 
     if (allowedIPs.indexOf('*') >= 0) {
         return () => true;
     }
     else {
-        return (ip, logger) => {
+        return (ip: string | undefined, logger: ILogger) => {
             if (typeof ip === 'undefined') {
                 logger.error('Blocking request because no IP address provided. This is likely a bug in the protocol implementation.');
                 return false;
@@ -92,14 +107,12 @@ function createIPVerification (options) {
     }
 }
 
-function isBuiltInProtocol (protocol) {
+function isBuiltInProtocol (protocol: string):boolean {
     return ['tcp', 'smtp', 'http', 'https'].indexOf(protocol) >= 0;
 }
 
-function loadCustomProtocols (protofile, logger) {
-    const fs = require('fs'),
-        path = require('path'),
-        filename = path.join(process.cwd(), protofile);
+function loadCustomProtocols (protofile: string, logger: ILogger) {
+    const filename = path.join(process.cwd(), protofile);
 
     if (fs.existsSync(filename)) {
         try {
@@ -124,7 +137,7 @@ function loadCustomProtocols (protofile, logger) {
     }
 }
 
-function loadProtocols (options, baseURL, logger, isAllowedConnection) {
+function loadProtocols (options: IMountebankOptions, baseURL: string, logger: ILogger, isAllowedConnection: IpValidator) {
     const builtInProtocols = {
             tcp: require('./models/tcp/tcpServer'),
             http: require('./models/http/httpServer'),
@@ -132,7 +145,7 @@ function loadProtocols (options, baseURL, logger, isAllowedConnection) {
             smtp: require('./models/smtp/smtpServer')
         },
         customProtocols = loadCustomProtocols(options.protofile, logger),
-        config = {
+        config: IProtocolLoadOptions = {
             callbackURLTemplate: `${baseURL}/imposters/:port/_requests`,
             recordRequests: options.mock,
             recordMatches: options.debug,
@@ -149,17 +162,8 @@ function loadProtocols (options, baseURL, logger, isAllowedConnection) {
  * @param {object} options - The command line options
  * @returns {Object} An object with a close method to stop the server
  */
-function create (options) {
-    const Q = require('q'),
-        express = require('express'),
-        cors = require('cors'),
-        errorHandler = require('errorhandler'),
-        path = require('path'),
-        middleware = require('./util/middleware'),
-        thisPackage = require('../package.json'),
-        releases = require('../releases.json'),
-        helpers = require('./util/helpers'),
-        deferred = Q.defer(),
+export function create (options: IMountebankOptions) {
+    const deferred = Q.defer(),
         app = express(),
         imposters = options.imposters || {},
         hostname = options.host || 'localhost',
@@ -258,8 +262,8 @@ function create (options) {
         });
     });
 
-    const connections = {},
-        server = app.listen(options.port, options.host, () => {
+    const connections: { [key: string]:Socket } = {},
+        server = app.listen(parseInt(options.port), options.host, () => {
             logger.info(`mountebank v${thisPackage.version} now taking orders - point your browser to ${baseURL}/ for help`);
             logger.debug(`config: ${JSON.stringify({
                 options: options,
@@ -292,7 +296,7 @@ function create (options) {
             });
 
             deferred.resolve({
-                close: callback => {
+                close: (callback: () => void) => {
                     server.close(() => {
                         logger.info('Adios - see you soon?');
                         callback();
@@ -314,5 +318,3 @@ function create (options) {
 
     return deferred.promise;
 }
-
-module.exports = { create };

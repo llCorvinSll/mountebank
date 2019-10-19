@@ -1,32 +1,14 @@
 'use strict';
 
 import {ILogger} from "./scopedLogger";
+import { Request, Response } from "express";
+import {IImposter} from "../models/IImposter";
 
 /**
  * Express middleware functions to inject into the HTTP processing
  * @module
  */
 
-interface IResponse {
-    setHeader(...args:string[]):void;
-    send(data:unknown):void;
-    statusCode:number;
-    render():void;
-}
-
-interface IRequest {
-    headers:any;
-    url:string;
-    method:string;
-    body:string;
-    params:any;
-    setEncoding(encoding:string):void;
-    on(event:string, cb:(...args:any[]) => void):void;
-}
-
-interface IImposter {
-    stubs:IStub[];
-}
 
 interface IStub {
 
@@ -43,14 +25,13 @@ interface IBody {
  * @param {number} port - The port of the current instance
  * @returns {Function}
  */
-export function useAbsoluteUrls (port:number):(request:IRequest, response:IResponse, next:() => void) => void {
+export function useAbsoluteUrls (port:string):(request:Request, response:Response, next:() => void) => void {
     return function (request, response, next) {
         const setHeaderOriginal = response.setHeader,
             sendOriginal = response.send,
             host = request.headers.host || `localhost:${port}`,
             absolutize = (link:string) => `http://${host}${link}`,
-            isObject = require('../util/helpers').isObject,
-            util = require('util');
+            isObject = require('../util/helpers').isObject;
 
         response.setHeader = function (...args:string[]) {
             if (args[0] && args[0].toLowerCase() === 'location') {
@@ -87,12 +68,12 @@ export function useAbsoluteUrls (port:number):(request:IRequest, response:IRespo
 
                 // Special case stubs _links. Hard to manage in the traverse function because stubs is an array
                 // and we want to change stubs[]._links but not stubs[]._responses.is.body._links
-                if (util.isArray(body.stubs)) {
+                if (Array.isArray(body.stubs)) {
                     body.stubs.forEach(changeLinks);
                 }
-                else if (util.isArray(body.imposters)) {
+                else if (Array.isArray(body.imposters)) {
                     body.imposters.forEach((imposter) => {
-                        if (util.isArray(imposter.stubs)) {
+                        if (Array.isArray(imposter.stubs)) {
                             imposter.stubs.forEach(changeLinks);
                         }
                     });
@@ -110,7 +91,7 @@ export function useAbsoluteUrls (port:number):(request:IRequest, response:IRespo
  * @param {Object} imposters - The current dictionary of imposters
  * @returns {Function}
  */
-export function createImposterValidator (imposters:{[key:string]:IImposter}):(request:IRequest, response:IResponse, next:() => void) => void {
+export function createImposterValidator (imposters:{[key:string]:IImposter}):(request:Request, response:Response, next:() => void) => void {
     return function validateImposterExists (request, response, next) {
         const errors = require('./errors'),
             imposter = imposters[request.params.id];
@@ -134,7 +115,7 @@ export function createImposterValidator (imposters:{[key:string]:IImposter}):(re
  * @returns {Function}
  */
 export function logger (log:ILogger, format:string) {
-    function shouldLog (request:IRequest) {
+    function shouldLog (request:Request) {
         const isStaticAsset = (['.js', '.css', '.gif', '.png', '.ico'].some(function (fileType) {
                 return request.url.indexOf(fileType) >= 0;
             })),
@@ -144,7 +125,7 @@ export function logger (log:ILogger, format:string) {
         return !(isStaticAsset || isHtmlRequest || isXHR);
     }
 
-    return function (request:IRequest, response:IResponse, next:() => void) {
+    return function (request:Request, response:Response, next:() => void) {
         if (shouldLog(request)) {
             const message = format.replace(':method', request.method).replace(':url', request.url);
             if (request.url.indexOf('_requests') > 0) {
@@ -166,7 +147,7 @@ export function logger (log:ILogger, format:string) {
  * @returns {Function}
  */
 export function globals (vars:{[key:string]:unknown}) {
-    return function (request:IRequest, response:IResponse, next:() => void) {
+    return function (request:Request, response:Response, next:() => void) {
         const originalRender = response.render;
         response.render = function () {
             const args = Array.prototype.slice.call(arguments),
@@ -192,7 +173,7 @@ export function globals (vars:{[key:string]:unknown}) {
  * @param {Object} response - The http response
  * @param {Function} next - The next middleware function to call
  */
-export function defaultIEtoHTML (request:IRequest, response:IResponse, next:() => void) {
+export function defaultIEtoHTML (request:Request, response:Response, next:() => void) {
     // IE has inconsistent Accept headers, often defaulting to */*
     // Our default is JSON, which fails to render in the browser on content-negotiated pages
     if (request.headers['user-agent'] && request.headers['user-agent'].indexOf('MSIE') >= 0) {
@@ -211,7 +192,7 @@ export function defaultIEtoHTML (request:IRequest, response:IResponse, next:() =
  * @returns {Function}
  */
 export function json (log:ILogger) {
-    return function (request:IRequest, response:IResponse, next:() => void) {
+    return function (request:Request, response:Response, next:() => void) {
         request.body = '';
         request.setEncoding('utf8');
         request.on('data', chunk => {

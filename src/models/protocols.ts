@@ -2,10 +2,11 @@
 
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
-import {IProtocol} from "./IProtocol";
+import {IProtocolFactory, IServer, IServerCreationOptions, ServerCreatorFunction} from "./IProtocol";
+import {IpValidator} from "./IImposter";
 
 
-interface IProtocolLoadOptions {
+export interface IProtocolLoadOptions {
     callbackURLTemplate: string;
     loglevel: string;
     allowInjection: boolean;
@@ -15,12 +16,12 @@ interface IProtocolLoadOptions {
 }
 
 interface IProtocolMap {
-    [key: string]: unknown;
+    [key: string]: IProtocolFactory;
 }
 
 
-export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocolMap, options:IProtocolLoadOptions, isAllowedConnection: () => boolean, mbLogger: ILogger) {
-    function inProcessCreate (createProtocol) {
+export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocolMap, options:IProtocolLoadOptions, isAllowedConnection: IpValidator, mbLogger: ILogger) {
+    function inProcessCreate (createProtocol: ServerCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn).then(server => {
                 const stubs = require('./stubRepository').create(server.encoding || 'utf8'),
@@ -36,9 +37,9 @@ export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocol
             });
     }
 
-    function outOfProcessCreate (protocolName, config) {
-        function customFieldsFor (creationRequest) {
-            const result = {},
+    function outOfProcessCreate (protocolName: string, config: any): ServerCreatorFunction {
+        function customFieldsFor (creationRequest: IServerCreationOptions): any {
+            const result: any = {},
                 commonFields = ['protocol', 'port', 'name', 'recordRequests', 'stubs', 'defaultResponse'];
             Object.keys(creationRequest).forEach(key => {
                 if (commonFields.indexOf(key) < 0) {
@@ -48,8 +49,8 @@ export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocol
             return result;
         }
 
-        return (creationRequest, logger: ILogger) => {
-            const deferred = Q.defer(),
+        return (creationRequest: IServerCreationOptions, logger: ILogger) => {
+            const deferred = Q.defer<IServer>(),
                 { spawn } = require('child_process'),
                 command = config.createCommand.split(' ')[0],
                 args = config.createCommand.split(' ').splice(1),
@@ -78,7 +79,7 @@ export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocol
                     { source: config.createCommand, details: error }));
             });
 
-            imposterProcess.once('exit', code => {
+            imposterProcess.once('exit', (code: number) => {
                 if (code !== 0 && deferred.promise.isPending()) {
                     const errors = require('../util/errors'),
                         message = `"${protocolName}" start command failed (exit code ${code})`;
@@ -97,12 +98,12 @@ export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocol
                 }
                 catch (error) { /* do nothing */ }
 
-                let serverPort = creationRequest.port;
+                let serverPort: number = creationRequest.port;
                 if (metadata.port) {
                     serverPort = metadata.port;
                     delete metadata.port;
                 }
-                const callbackURL = options.callbackURLTemplate.replace(':port', serverPort),
+                const callbackURL = options.callbackURLTemplate.replace(':port', String(serverPort)),
                     encoding = metadata.encoding || 'utf8';
 
                 const stubs = require('./stubRepository').create(encoding),
@@ -123,7 +124,7 @@ export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocol
                 });
             }
 
-            function log (message) {
+            function log (message: string) {
                 if (message.indexOf(' ') > 0) {
                     const words = message.split(' '),
                         level = words[0],
@@ -134,8 +135,8 @@ export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocol
                 }
             }
 
-            imposterProcess.stdout.on('data', data => {
-                const lines = data.toString('utf8').trim().split('\n');
+            imposterProcess.stdout.on('data', (data: any) => {
+                const lines: string[] = data.toString('utf8').trim().split('\n');
                 lines.forEach(line => {
                     if (deferred.promise.isPending()) {
                         resolveWithMetadata(line);
@@ -150,21 +151,21 @@ export function load (builtInProtocols: IProtocolMap, customProtocols: IProtocol
         };
     }
 
-    function createImposter (Protocol, creationRequest) {
+    function createImposter (Protocol: IProtocolFactory, creationRequest: any) {
         const Imposter = require('./imposter');
         return Imposter.create(Protocol, creationRequest, mbLogger.baseLogger, options, isAllowedConnection);
     }
 
-    const result: {[key: string]: IProtocol} = {};
+    const result: {[key: string]: IProtocolFactory} = {};
     Object.keys(builtInProtocols).forEach(key => {
         result[key] = builtInProtocols[key];
         result[key].createServer = inProcessCreate(result[key].create);
-        result[key].createImposterFrom = creationRequest => createImposter(result[key], creationRequest);
+        result[key].createImposterFrom = (creationRequest: any) => createImposter(result[key], creationRequest);
     });
     Object.keys(customProtocols).forEach(key => {
         result[key] = customProtocols[key];
         result[key].createServer = outOfProcessCreate(key, result[key]);
-        result[key].createImposterFrom = creationRequest => createImposter(result[key], creationRequest);
+        result[key].createImposterFrom = (creationRequest: any) => createImposter(result[key], creationRequest);
     });
     return result;
 }
