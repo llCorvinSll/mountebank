@@ -1,5 +1,8 @@
 'use strict';
 
+import { Request, Response } from 'express';
+import { IMountebankOptions } from '../models/IMountebankOptions';
+
 /**
  * The controller that exposes the mountebank configuration for the running process
  * @module
@@ -11,7 +14,7 @@
  * @param {Object} options - The command line options used to start mb
  * @returns {Object}
  */
-function create (version, options) {
+export function create (version: string, options: IMountebankOptions) {
     const helpers = require('../util/helpers'),
         publicOptions = helpers.clone(options);
 
@@ -32,7 +35,7 @@ function create (version, options) {
      * @param {Object} request - The HTTP request
      * @param {Object} response - The HTTP response
      */
-    function get (request, response) {
+    function get (request: Request, response: Response) {
         const config = {
             version,
             options: publicOptions,
@@ -56,5 +59,3 @@ function create (version, options) {
 
     return { get };
 }
-
-module.exports = { create };
