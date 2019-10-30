@@ -1,18 +1,21 @@
 'use strict';
 
-import {IRequest} from "./IRequest";
+import {IRequest, IResponse} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
 import {IStubRepository} from "./stubRepository";
 import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
-import {IMountebankResponse, IProxyImplementation, IResolver, IServerRequestData} from "./IProtocol";
+import {IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
 import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
 import * as behaviors from "./behaviors";
-import {IStubConfig} from "./IStubConfig";
+import {IProxyConfig, IStubConfig} from "./IStubConfig";
 import * as  helpers from '../util/helpers';
+import * as jsonpath from './jsonpath';
+import * as compatibility from './compatibility';
 
 
-/**
+
+    /**
  * Determines the response for a stub based on the user-provided response configuration
  * @module
  */
@@ -42,13 +45,12 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
 
     function inject (request: IServerRequestData, fn: string, logger: ILogger, imposterState: unknown) {
         const deferred = Q.defer(),
-            config = {
+            config:any = {
                 request: helpers.clone(request),
                 state: imposterState,
                 logger: logger,
                 callback: deferred.resolve
-            },
-            compatibility = require('./compatibility');
+            };
 
         compatibility.downcastInjectionConfig(config);
 
@@ -80,8 +82,8 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return deferred.promise;
     }
 
+    // @ts-ignore
     function selectionValue (nodes) {
-        const helpers = require('../util/helpers');
         if (!helpers.defined(nodes)) {
             return '';
         }
@@ -100,20 +102,22 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
     }
 
     function jsonpathValue (jsonpathConfig: IJsonPathConfig, possibleJSON: string, logger: ILogger) {
-        const jsonpath = require('./jsonpath'),
-            nodes = jsonpath.select(jsonpathConfig.selector, possibleJSON, logger);
+        const nodes = jsonpath.select(jsonpathConfig.selector, possibleJSON, logger);
         return selectionValue(nodes);
     }
 
+    // @ts-ignore
     function buildEquals (request: IRequest, matchers, valueOf) {
         const result = {},
             isObject = require('../util/helpers').isObject;
 
         Object.keys(matchers).forEach(key => {
             if (isObject(request[key])) {
+                // @ts-ignore
                 result[key] = buildEquals(request[key], matchers[key], valueOf);
             }
             else {
+                // @ts-ignore
                 result[key] = valueOf(request[key]);
             }
         });
@@ -122,15 +126,17 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
 
     const path:string[] = [];
 
+    // @ts-ignore
     function buildExists (request: IRequest | undefined, fieldName: string, matchers, initialRequest) {
-        const isObject = require('../util/helpers').isObject,
-            setDeep = require('../util/helpers').setDeep;
+        const setDeep = require('../util/helpers').setDeep;
 
         request = request || {} as IRequest;
 
         Object.keys(request || {}).forEach(key => {
             path.push(key);
-            if (isObject(request[key])) {
+            // @ts-ignore
+            if (helpers.isObject(request[key])) {
+                // @ts-ignore
                 buildExists(request[key], fieldName, matchers[key], initialRequest);
             }
             else {
@@ -141,16 +147,21 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return initialRequest;
     }
 
+    // @ts-ignore
     function predicatesFor (request: IServerRequestData, matchers, logger: ILogger) {
+        // @ts-ignore
         const predicates = [];
 
+        // @ts-ignore
         matchers.forEach(matcher => {
             if (matcher.inject) {
                 // eslint-disable-next-line no-unused-vars
+                // @ts-ignore
                 const config = { request, logger },
                     injected = `(${matcher.inject})(config);`,
                     errors = require('../util/errors');
                 try {
+                    // @ts-ignore
                     predicates.push(...eval(injected));
                 }
                 catch (error) {
@@ -164,12 +175,15 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
 
             const basePredicate = {};
             let hasPredicateOperator: boolean = false;
+            // @ts-ignore
             let predicateOperator; // eslint-disable-line no-unused-vars
+            // @ts-ignore
             let valueOf = field => field;
 
             // Add parameters
             Object.keys(matcher).forEach(key => {
                 if (key !== 'matches' && key !== 'predicateOperator') {
+                    // @ts-ignore
                     basePredicate[key] = matcher[key];
                 }
                 if (key === 'xpath') {
@@ -190,9 +204,11 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
                     predicate = helpers.clone(basePredicate);
                 if (matcherValue === true && !hasPredicateOperator) {
                     predicate.deepEquals = {};
+                    // @ts-ignore
                     predicate.deepEquals[fieldName] = valueOf(request[fieldName]);
                 }
                 else if (hasPredicateOperator && matcher.predicateOperator === 'exists') {
+                    // @ts-ignore
                     predicate[matcher.predicateOperator] = buildExists(request, fieldName, matcherValue, request);
                 }
                 else if (hasPredicateOperator && matcher.predicateOperator !== 'exists') {
@@ -200,13 +216,16 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
                 }
                 else {
                     predicate.equals = {};
+                    // @ts-ignore
                     predicate.equals[fieldName] = buildEquals(request[fieldName], matcherValue, valueOf);
                 }
 
+                // @ts-ignore
                 predicates.push(predicate);
             });
         });
 
+        // @ts-ignore
         return predicates;
     }
 
@@ -215,6 +234,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return stringify(obj1) === stringify(obj2);
     }
 
+    // @ts-ignore
     function stubIndexFor (responseConfig) {
         const stubList = stubs.stubs();
         for (var i = 0; i < stubList.length; i += 1) {
@@ -242,11 +262,12 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         return indexOfStubToAddResponseTo(responseConfig, request, logger) >= 0;
     }
 
-    function newIsResponse (response, proxyConfig) {
-        const result = { is: response };
-        const addBehaviors = {};
+    function newIsResponse (response: IMountebankResponse, proxyConfig: IProxyConfig):IResponse {
+        const result:IResponse = { is: response };
+        const addBehaviors:IProxyConfig = {} as any;
 
         if (proxyConfig.addWaitBehavior && response._proxyResponseTime) { // eslint-disable-line no-underscore-dangle
+            // @ts-ignore
             addBehaviors.wait = response._proxyResponseTime; // eslint-disable-line no-underscore-dangle
         }
         if (proxyConfig.addDecorateBehavior) {
@@ -254,22 +275,23 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
         }
 
         if (Object.keys(addBehaviors).length) {
+            // @ts-ignore
             result._behaviors = addBehaviors;
         }
         return result;
     }
 
-    function addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger) {
-        const stubResponse = newIsResponse(response, responseConfig.proxy),
-            responseIndex = indexOfStubToAddResponseTo(responseConfig, request, logger);
+    function addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger):void {
+        const stubResponse:IResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig);
+        const responseIndex = indexOfStubToAddResponseTo(responseConfig, request, logger);
 
         let i_stub = stubs.stubs()[responseIndex];
         i_stub.addResponse && i_stub.addResponse(stubResponse);
     }
 
-    function addNewStub (responseConfig: IMountebankResponse, request :IServerRequestData, response: IMountebankResponse, logger: ILogger) {
+    function addNewStub (responseConfig: IMountebankResponse, request :IServerRequestData, response: IMountebankResponse, logger: ILogger):void {
         const predicates = predicatesFor(request, (responseConfig.proxy && responseConfig.proxy.predicateGenerators) || [], logger),
-            stubResponse = newIsResponse(response, responseConfig.proxy),
+            stubResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig),
             newStub:IStubConfig = { predicates: predicates, responses: [stubResponse] };
 
         if (responseConfig.proxy && responseConfig.proxy.mode === 'proxyAlways') {
@@ -295,8 +317,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
     }
 
     function proxyAndRecord (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, requestDetails: unknown) {
-        const startTime = new Date().getTime(),
-            behaviors = require('./behaviors');
+        const startTime = new Date().getTime();
 
         if (!responseConfig.proxy) {
             throw ValidationError("try proxy without actual config")
@@ -405,16 +426,15 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
      * @param {Object} logger - the logger
      * @returns {Object} - Promise resolving to the response
      */
-    function resolveProxy (proxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IMountebankResponse> {
-        const pendingProxyConfig = pendingProxyResolutions[proxyResolutionKey],
-            behaviors = require('./behaviors');
+    function resolveProxy (proxyResponse: IProxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IMountebankResponse> {
+        const pendingProxyConfig = pendingProxyResolutions[proxyResolutionKey];
 
         if (pendingProxyConfig) {
             // eslint-disable-next-line no-underscore-dangle
             proxyResponse._proxyResponseTime = new Date().getTime() - pendingProxyConfig.startTime.getTime();
 
             return behaviors.execute(pendingProxyConfig.request, proxyResponse, pendingProxyConfig.responseConfig._behaviors, logger)
-                .then(response => {
+                .then((response) => {
                     recordProxyResponse(pendingProxyConfig.responseConfig, pendingProxyConfig.request, response, logger);
                     response.recordMatch = () => { pendingProxyConfig.responseConfig.recordMatch && pendingProxyConfig.responseConfig.recordMatch(response); };
                     delete pendingProxyResolutions[proxyResolutionKey];
@@ -432,6 +452,7 @@ export function create (stubs: IStubRepository, proxy: IProxyImplementation, cal
 
     return {
         resolve,
+        // @ts-ignore
         resolveProxy
     };
 }

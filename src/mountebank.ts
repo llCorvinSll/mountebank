@@ -1,18 +1,18 @@
 'use strict';
 
-import  * as Q from "q";
+import * as Q from "q";
 import * as express from "express";
 import {IMountebankOptions} from "./models/IMountebankOptions";
 import {ILogger} from "./util/scopedLogger";
-import path from 'path';
-import cors from 'cors';
-import errorHandler from 'errorhandler';
+import * as path from 'path';
+import * as cors from 'cors';
+import * as errorHandler from 'errorhandler';
 import * as middleware from './util/middleware';
-import thisPackage from "../package.json";
-import releases from "../releases.json";
+const thisPackage = require("../package.json");
+const releases = require("../releases.json");
 import * as helpers from './util/helpers';
-import fs from "fs";
-import winston from "winston";
+import * as fs from "fs";
+import * as winston from "winston";
 import {NetworkInterfaceInfo} from "os";
 import {Socket} from "net";
 import {IProtocolLoadOptions} from "./models/protocols";

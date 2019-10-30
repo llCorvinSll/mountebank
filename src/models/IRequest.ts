@@ -74,8 +74,8 @@ export interface IResponse {
     _behaviors?: IBehaviors;
     setMetadata?: SetMetadataFunction;
     is?: {
-        _proxyResponseTime: string;
-    };
+        _proxyResponseTime?: string;
+    } & any;
 
     _proxyResponseTime?: number;
     [key: string]:IProxy | IBehaviors | undefined | SetMetadataFunction | unknown;

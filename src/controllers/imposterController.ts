@@ -8,7 +8,7 @@ import {ParsedUrlQuery} from "querystring";
 import * as Q from "q";
 import {IMontebankError, ValidationError} from "../util/errors";
 import {IStub} from "../models/IRequest";
-import url from "url";
+import * as url from "url";
 
 /**
  * The controller that gets and deletes single imposters
@@ -132,6 +132,7 @@ export function create (protocols: {[key: string]: IProtocolFactory}, imposters:
         const imposter = imposters[request.params.id],
             protoRequest = request.body.request;
 
+        // @ts-ignore
         imposter.getResponseFor(protoRequest).done(protoResponse => {
             response.send(protoResponse);
         });
@@ -270,6 +271,7 @@ export function create (protocols: {[key: string]: IProtocolFactory}, imposters:
             errors = [];
 
         if (typeof index !== 'number' || index < 0 || index > imposter.stubs().length) {
+            // @ts-ignore
             errors.push(exceptions.ValidationError("'index' must be between 0 and the length of the stubs array"));
         }
         if (errors.length > 0) {

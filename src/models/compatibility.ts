@@ -62,7 +62,6 @@ export function upcast (request: IRequest) {
 interface IConfig {
     request: IRequest;
     [key: string]: IRequest|string|IStub;
-
 }
 
 /**

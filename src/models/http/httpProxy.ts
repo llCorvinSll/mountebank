@@ -22,12 +22,14 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
  * @returns {Object}
  */
 export function create (logger: ILogger): IProxyImplementation {
+    // @ts-ignore
     function addInjectedHeadersTo (request, headersToInject) {
         Object.keys(headersToInject || {}).forEach(key => {
             request.headers[key] = headersToInject[key];
         });
     }
 
+    // @ts-ignore
     function toUrl (path: string | undefined, query, requestDetails: any) {
         if (requestDetails) {
             // Not passed in outOfProcess mode
@@ -199,6 +201,7 @@ export function create (logger: ILogger): IProxyImplementation {
     }
 
     return {
+        // @ts-ignore
         to
     };
 }

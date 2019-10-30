@@ -91,6 +91,7 @@ export function create (options: IDryRunValidatorOptions) {
         options.testRequest = options.testRequest || {};
         options.testRequest.isDryRun = true;
         return Q.all(dryRunRepositories.map(stubRepository => {
+            // @ts-ignore
             const responseConfig = stubRepository.getResponseFor(options.testRequest, dryRunLogger, {}),
                 resolver = resolverFor(stubRepository);
             return resolver.resolve(responseConfig, options.testRequest, dryRunLogger, {});
@@ -200,6 +201,7 @@ export function create (options: IDryRunValidatorOptions) {
             hasRequestInjection = request.endOfRequestResolver && request.endOfRequestResolver.inject;
 
         if (!options.allowInjection && hasRequestInjection) {
+            // @ts-ignore
             errors.push(InjectionError(
                 'JavaScript injection is not allowed unless mb is run with the --allowInjection flag',
                 { source: request.endOfRequestResolver }));

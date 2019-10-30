@@ -40,6 +40,7 @@ export function useAbsoluteUrls (port:string):(request:Request, response:Respons
             setHeaderOriginal.apply(this, args);
         };
 
+        // @ts-ignore
         response.send = function (...args:IBody[]) {
             const body = args[0],
                 changeLinks = function (obj:any) {
@@ -74,6 +75,7 @@ export function useAbsoluteUrls (port:string):(request:Request, response:Respons
                 else if (Array.isArray(body.imposters)) {
                     body.imposters.forEach((imposter) => {
                         if (Array.isArray(imposter.stubs)) {
+                            // @ts-ignore
                             imposter.stubs.forEach(changeLinks);
                         }
                     });

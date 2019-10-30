@@ -103,6 +103,7 @@ export function create (config: IMbConnectionConfig): IMbConnection {
 
     function getProxyResponse (proxyConfig: IProxyConfig, request: IRequest, proxyCallbackURL: string): Q.Promise<IResponse> {
         return proxy.to(proxyConfig.to, request, proxyConfig)
+        // @ts-ignore
             .then((response:IResponse) => postJSON({ proxyResponse: response }, proxyCallbackURL));
     }
 

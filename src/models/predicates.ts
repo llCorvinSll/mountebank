@@ -49,6 +49,7 @@ function forceStrings (value: any): any {
     }
 }
 
+// @ts-ignore
 function select (type, selectFn, encoding: string) {
     if (encoding === 'base64') {
         const errors = require('../util/errors');
@@ -176,6 +177,7 @@ function selectJSONPath (config: IJsonPathConfig, encoding: string, predicateCon
     return orderIndependent(select('jsonpath', selectFn, encoding));
 }
 
+// @ts-ignore
 function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
     const combinators = require('../util/combinators'),
         apply = (fns: Function) => combinators.compose.apply(null, fns),
@@ -204,6 +206,7 @@ interface INormalizeOptions {
     shouldForceStrings?: boolean;
 }
 
+// @ts-ignore
 function normalize (obj, config: IPredicate, options: INormalizeOptions) {
     // Needed to solve a tricky case conversion for "matches" PREDICATES with jsonpath/xpath parameters
     if (typeof config.keyCaseSensitive === 'undefined') {
@@ -215,11 +218,15 @@ function normalize (obj, config: IPredicate, options: INormalizeOptions) {
         transforms = [];
 
     if (options.withSelectors) {
+        // @ts-ignore
         transforms.push(selectTransform(config, options));
     }
 
+    // @ts-ignore
     transforms.push(exceptTransform(config));
+    // @ts-ignore
     transforms.push(caseTransform(config));
+    // @ts-ignore
     transforms.push(encodingTransform(options.encoding as string));
 
     // sort to provide deterministic comparison for deepEquals,
@@ -228,6 +235,7 @@ function normalize (obj, config: IPredicate, options: INormalizeOptions) {
     return transformAll(obj, [keyCaseTransform], transforms, [sortTransform]);
 }
 
+// @ts-ignore
 function testPredicate (expected, actual, predicateConfig: IPredicate, predicateFn) {
     const helpers = require('../util/helpers');
     if (!helpers.defined(actual)) {
@@ -245,6 +253,7 @@ function bothArrays (expected: object, actual: object): any {
     return Array.isArray(actual) && Array.isArray(expected);
 }
 
+// @ts-ignore
 function allExpectedArrayValuesMatchActualArray (expectedArray: any[], actualArray: any[], predicateConfig: IPredicate, predicateFn): boolean {
     return expectedArray.every(expectedValue =>
         actualArray.some(actualValue => testPredicate(expectedValue, actualValue, predicateConfig, predicateFn)));
@@ -254,6 +263,7 @@ function onlyActualIsArray (expected: any, actual: any): boolean {
     return Array.isArray(actual) && !Array.isArray(expected);
 }
 
+// @ts-ignore
 function expectedMatchesAtLeastOneValueInActualArray (expected: any, actualArray: any[], predicateConfig: IPredicate, predicateFn):boolean {
     return actualArray.some((actual: object) => testPredicate(expected, actual, predicateConfig, predicateFn));
 }
@@ -263,6 +273,7 @@ function expectedLeftOffArraySyntaxButActualIsArrayOfObjects (expected: any, act
     return !Array.isArray(expected[fieldName]) && !helpers.defined(actual[fieldName]) && Array.isArray(actual);
 }
 
+// @ts-ignore
 function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredicate, predicateFn) {
     if (!actual) {
         return false;
@@ -311,6 +322,7 @@ function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredi
 
 function create (operator: string, predicateFn: (expected: string, actual: string) => boolean): PredicateFunction {
     return (predicate, request, encoding) => {
+        // @ts-ignore
         const expected = normalize(predicate[operator], predicate, { encoding: encoding }),
             actual = normalize(request, predicate, { encoding: encoding, withSelectors: true });
 

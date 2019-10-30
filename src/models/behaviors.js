@@ -1,34 +1,25 @@
 'use strict';
 
-import {IBehaviors, ICopyDescriptor, ILookupDescriptor, IResponse} from "./IRequest";
-import {ILogger} from "../util/scopedLogger";
-import * as Q from "q";
-import {IValidationMap} from "./behaviorsValidator";
-import {exec} from "child_process";
-import {IMountebankResponse, IServerRequestData} from "./IProtocol";
-
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
  * @module
  */
 
 // The following schemas are used by both the lookup and copy behaviors and should be kept consistent
-const fromSchema: IValidationMap = {
+const fromSchema = {
         _required: true,
         _allowedTypes: {
             string: {},
             object: { singleKeyOnly: true }
         },
         _additionalContext: 'the request field to select from'
-    };
-
-const intoSchema: IValidationMap = {
+    },
+    intoSchema = {
         _required: true,
         _allowedTypes: { string: {} },
         _additionalContext: 'the token to replace in response fields'
-    };
-
-const usingSchema: IValidationMap = {
+    },
+    usingSchema = {
         _required: true,
         _allowedTypes: { object: {} },
         method: {
@@ -39,9 +30,8 @@ const usingSchema: IValidationMap = {
             _required: true,
             _allowedTypes: { string: {} }
         }
-    };
-
-const VALIDATIONS: IValidationMap = {
+    },
+    validations = {
         wait: {
             _required: true,
             _allowedTypes: { string: {}, number: { nonNegativeInteger: true } }
@@ -104,9 +94,9 @@ const VALIDATIONS: IValidationMap = {
  * @param {Object} config - The behavior configuration
  * @returns {Object} The array of errors
  */
-export function validate (config) {
+function validate (config) {
     const validator = require('./behaviorsValidator').create();
-    return validator.validate(config, VALIDATIONS);
+    return validator.validate(config, validations);
 }
 
 /**
@@ -118,15 +108,16 @@ export function validate (config) {
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object} A promise resolving to the response
  */
-function wait (request: IServerRequestData, responsePromise: Q.Promise<IMountebankResponse>, millisecondsOrFn: (() => number) | string, logger: ILogger): Q.Promise<IMountebankResponse> {
+function wait (request, responsePromise, millisecondsOrFn, logger) {
     if (request.isDryRun) {
         return responsePromise;
     }
 
-    const util = require('util');
-    const fn = util.format('(%s)()', millisecondsOrFn);
-    const exceptions = require('../util/errors');
-    let milliseconds = parseInt(millisecondsOrFn as string);
+    const util = require('util'),
+        fn = util.format('(%s)()', millisecondsOrFn),
+        Q = require('q'),
+        exceptions = require('../util/errors');
+    let milliseconds = parseInt(millisecondsOrFn);
 
     if (isNaN(milliseconds)) {
         try {
@@ -144,7 +135,7 @@ function wait (request: IServerRequestData, responsePromise: Q.Promise<IMounteba
     return responsePromise.delay(milliseconds);
 }
 
-function quoteForShell (obj: object): string {
+function quoteForShell (obj) {
     const json = JSON.stringify(obj),
         isWindows = require('os').platform().indexOf('win') === 0,
         util = require('util');
@@ -159,9 +150,11 @@ function quoteForShell (obj: object): string {
     }
 }
 
-function execShell (command: string, request: IServerRequestData, response: IMountebankResponse, logger: ILogger):Q.Promise<IMountebankResponse> {
-    const deferred = Q.defer<IMountebankResponse>(),
+function execShell (command, request, response, logger) {
+    const Q = require('q'),
+        deferred = Q.defer(),
         util = require('util'),
+        exec = require('child_process').exec,
         fullCommand = util.format('%s %s %s', command, quoteForShell(request), quoteForShell(response)),
         env = require('../util/helpers').clone(process.env);
     logger.debug('Shelling out to %s', command);
@@ -203,7 +196,7 @@ function execShell (command: string, request: IServerRequestData, response: IMou
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function shellTransform (request: IServerRequestData, responsePromise: Q.Promise<IMountebankResponse>, commandArray: string[], logger: ILogger) {
+function shellTransform (request, responsePromise, commandArray, logger) {
     if (request.isDryRun) {
         return responsePromise;
     }
@@ -224,13 +217,14 @@ function shellTransform (request: IServerRequestData, responsePromise: Q.Promise
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function decorate (originalRequest: IServerRequestData, responsePromise: Q.Promise<IResponse>, fn, logger: ILogger) {
+function decorate (originalRequest, responsePromise, fn, logger) {
     if (originalRequest.isDryRun === true) {
         return responsePromise;
     }
 
     return responsePromise.then(response => {
-        const helpers = require('../util/helpers'),
+        const Q = require('q'),
+            helpers = require('../util/helpers'),
             config = {
                 request: helpers.clone(originalRequest),
                 response,
@@ -260,7 +254,7 @@ function decorate (originalRequest: IServerRequestData, responsePromise: Q.Promi
     });
 }
 
-function getKeyIgnoringCase (obj: object, expectedKey: string):string|undefined {
+function getKeyIgnoringCase (obj, expectedKey) {
     return Object.keys(obj).find(key => {
         if (key.toLowerCase() === expectedKey.toLowerCase()) {
             return key;
@@ -271,7 +265,7 @@ function getKeyIgnoringCase (obj: object, expectedKey: string):string|undefined 
     });
 }
 
-function getFrom (obj: {[key: string]: any}, from: {[key: string]: never} | string): any {
+function getFrom (obj, from) {
     const isObject = require('../util/helpers').isObject;
 
     if (typeof obj === 'undefined') {
@@ -282,10 +276,11 @@ function getFrom (obj: {[key: string]: any}, from: {[key: string]: never} | stri
         return getFrom(obj[keys[0]], from[keys[0]]);
     }
     else {
-        const result = obj[getKeyIgnoringCase(obj, from as string)];
+        const result = obj[getKeyIgnoringCase(obj, from)],
+            util = require('util');
 
         // Some request fields, like query parameters, can be multi-valued
-        if (Array.isArray(result)) {
+        if (util.isArray(result)) {
             return result[0];
         }
         else {
@@ -305,7 +300,7 @@ function regexFlags (options) {
     return result;
 }
 
-function getMatches (selectionFn, selector, logger: ILogger) {
+function getMatches (selectionFn, selector, logger) {
     const matches = selectionFn();
 
     if (matches && matches.length > 0) {
@@ -317,13 +312,13 @@ function getMatches (selectionFn, selector, logger: ILogger) {
     }
 }
 
-function regexValue (from, config: ICopyDescriptor, logger: ILogger) {
+function regexValue (from, config, logger) {
     const regex = new RegExp(config.using.selector, regexFlags(config.using.options)),
         selectionFn = () => regex.exec(from);
     return getMatches(selectionFn, regex, logger);
 }
 
-function xpathValue (from, config: ICopyDescriptor, logger: ILogger) {
+function xpathValue (from, config, logger) {
     const selectionFn = () => {
         const xpath = require('./xpath');
         return xpath.select(config.using.selector, config.using.ns, from, logger);
@@ -331,7 +326,7 @@ function xpathValue (from, config: ICopyDescriptor, logger: ILogger) {
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function jsonpathValue (from, config: ICopyDescriptor, logger: ILogger) {
+function jsonpathValue (from, config, logger) {
     const selectionFn = () => {
         const jsonpath = require('./jsonpath');
         return jsonpath.select(config.using.selector, from, logger);
@@ -339,7 +334,7 @@ function jsonpathValue (from, config: ICopyDescriptor, logger: ILogger) {
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function globalStringReplace (str: string, substring: string, newSubstring: string, logger: ILogger): string {
+function globalStringReplace (str, substring, newSubstring, logger) {
     if (substring !== newSubstring) {
         logger.debug('Replacing %s with %s', JSON.stringify(substring), JSON.stringify(newSubstring));
         return str.split(substring).join(newSubstring);
@@ -349,7 +344,7 @@ function globalStringReplace (str: string, substring: string, newSubstring: stri
     }
 }
 
-function globalObjectReplace (obj: {[key: string]: any}, replacer: (input: any) => any): void {
+function globalObjectReplace (obj, replacer) {
     const isObject = require('../util/helpers').isObject;
 
     Object.keys(obj).forEach(key => {
@@ -362,7 +357,7 @@ function globalObjectReplace (obj: {[key: string]: any}, replacer: (input: any) 
     });
 }
 
-function replaceArrayValuesIn (response: IResponse, token, values, logger: ILogger) {
+function replaceArrayValuesIn (response, token, values, logger) {
     const replacer = field => {
         values.forEach(function (replacement, index) {
             // replace ${TOKEN}[1] with indexed element
@@ -388,12 +383,14 @@ function replaceArrayValuesIn (response: IResponse, token, values, logger: ILogg
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function copy (originalRequest: IServerRequestData, responsePromise: Q.Promise<IResponse>, copyArray:ICopyDescriptor[], logger: ILogger) {
+function copy (originalRequest, responsePromise, copyArray, logger) {
     return responsePromise.then(response => {
+        const Q = require('q');
+
         copyArray.forEach(function (copyConfig) {
             const from = getFrom(originalRequest, copyConfig.from),
-                using  = copyConfig.using || {},
-                fnMap: { [key:string]: any } = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
+                using = copyConfig.using || {},
+                fnMap = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
                 values = fnMap[using.method](from, copyConfig, logger);
 
             replaceArrayValuesIn(response, copyConfig.into, values, logger);
@@ -416,7 +413,7 @@ function createRowObject (headers, rowArray) {
     return row;
 }
 
-function selectRowFromCSV (csvConfig, keyValue, logger: ILogger) {
+function selectRowFromCSV (csvConfig, keyValue, logger) {
     const fs = require('fs'),
         Q = require('q'),
         helpers = require('../util/helpers'),
@@ -461,9 +458,10 @@ function selectRowFromCSV (csvConfig, keyValue, logger: ILogger) {
     return deferred.promise;
 }
 
-function lookupRow (lookupConfig:ILookupDescriptor, originalRequest: IServerRequestData, logger: ILogger) {
-    const from = getFrom(originalRequest, lookupConfig.key.from),
-        fnMap: {[key: string]: (from: any, config: any, logger: ILogger) => any} = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
+function lookupRow (lookupConfig, originalRequest, logger) {
+    const Q = require('q'),
+        from = getFrom(originalRequest, lookupConfig.key.from),
+        fnMap = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
         keyValues = fnMap[lookupConfig.key.using.method](from, lookupConfig.key, logger),
         index = lookupConfig.key.index || 0;
 
@@ -475,8 +473,8 @@ function lookupRow (lookupConfig:ILookupDescriptor, originalRequest: IServerRequ
     }
 }
 
-function replaceObjectValuesIn (response: IResponse, token: string, values: {[key: string]: never}, logger: ILogger) {
-    const replacer = (field:string) => {
+function replaceObjectValuesIn (response, token, values, logger) {
+    const replacer = field => {
         Object.keys(values).forEach(key => {
             const util = require('util');
 
@@ -501,9 +499,10 @@ function replaceObjectValuesIn (response: IResponse, token: string, values: {[ke
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function lookup (originalRequest: IServerRequestData, responsePromise: Q.Promise<IResponse>, lookupArray:ILookupDescriptor[], logger: ILogger) {
+function lookup (originalRequest, responsePromise, lookupArray, logger) {
     return responsePromise.then(response => {
-        const lookupPromises = lookupArray.map(function (lookupConfig) {
+        const Q = require('q'),
+            lookupPromises = lookupArray.map(function (lookupConfig) {
                 return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
                     replaceObjectValuesIn(response, lookupConfig.into, row, logger);
                 });
@@ -522,25 +521,26 @@ function lookup (originalRequest: IServerRequestData, responsePromise: Q.Promise
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object}
  */
-export function execute (request: IServerRequestData, response: IMountebankResponse, behaviors: IBehaviors | undefined, logger: ILogger):Q.Promise<IMountebankResponse> {
+function execute (request, response, behaviors, logger) {
     if (!behaviors) {
         return require('q')(response);
     }
 
-    const combinators = require('../util/combinators'),
-        waitFn:(input: never) => never = behaviors.wait ?
+    const Q = require('q'),
+        combinators = require('../util/combinators'),
+        waitFn = behaviors.wait ?
             result => wait(request, result, behaviors.wait, logger) :
             combinators.identity,
-        copyFn:(input: never) => never = behaviors.copy ?
+        copyFn = behaviors.copy ?
             result => copy(request, result, behaviors.copy, logger) :
             combinators.identity,
-        lookupFn:(input: never) => never = behaviors.lookup ?
+        lookupFn = behaviors.lookup ?
             result => lookup(request, result, behaviors.lookup, logger) :
             combinators.identity,
-        shellTransformFn:(input: never) => never = behaviors.shellTransform ?
+        shellTransformFn = behaviors.shellTransform ?
             result => shellTransform(request, result, behaviors.shellTransform, logger) :
             combinators.identity,
-        decorateFn:(input: never) => never = behaviors.decorate ?
+        decorateFn = behaviors.decorate ?
             result => decorate(request, result, behaviors.decorate, logger) :
             combinators.identity;
 
@@ -548,3 +548,8 @@ export function execute (request: IServerRequestData, response: IMountebankRespo
 
     return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, waitFn, Q)(response);
 }
+
+module.exports = {
+    validate,
+    execute: execute
+};

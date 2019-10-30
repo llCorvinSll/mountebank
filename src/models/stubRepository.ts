@@ -84,6 +84,7 @@ export function create (encoding: string): IStubRepository {
             response = responses[i];
             repeats = repeatsFor(response);
             for (let j = 0; j < repeats; j += 1) {
+                // @ts-ignore
                 result.push(response);
             }
         }
@@ -214,7 +215,9 @@ export function create (encoding: string): IStubRepository {
 
         cloned.setMetadata = (responseType: string, metadata: any) => {
             Object.keys(metadata).forEach(key => {
+                // @ts-ignore
                 ((responseConfig[responseType] as any)[key] as any) = metadata[key];
+                // @ts-ignore
                 cloned[responseType][key] = metadata[key];
             });
         };

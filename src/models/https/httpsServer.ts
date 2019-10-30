@@ -1,6 +1,9 @@
 'use strict';
 
 import {IServerCreationOptions} from "../IProtocol";
+import * as path from "path";
+import * as fs from "fs";
+import {create} from '../http/baseHttpServer'
 
 /**
  * Represents an https imposter
@@ -8,9 +11,7 @@ import {IServerCreationOptions} from "../IProtocol";
  */
 
 function createBaseServer (options: IServerCreationOptions) {
-    const path = require('path'),
-        fs = require('fs'),
-        metadata = {
+    const metadata = {
             key: options.key || fs.readFileSync(path.join(__dirname, '/cert/mb-key.pem'), 'utf8'),
             cert: options.cert || fs.readFileSync(path.join(__dirname, '/cert/mb-cert.pem'), 'utf8'),
             mutualAuth: Boolean(options.mutualAuth)
@@ -30,4 +31,4 @@ function createBaseServer (options: IServerCreationOptions) {
     return { metadata, createNodeServer };
 }
 
-module.exports = require('../http/baseHttpServer')(createBaseServer);
+module.exports = create(createBaseServer);

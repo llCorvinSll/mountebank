@@ -122,9 +122,13 @@ export interface IMountebankResponse {
 }
 
 
+export interface IProxyResponse {
+    _proxyResponseTime?:number;
+}
+
 export interface IResolver {
     resolve(responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, imposterState: unknown, options: unknown): Q.Promise<IMountebankResponse>;
-    resolveProxy(proxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IResponse>;
+    resolveProxy(proxyResponse: IProxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IResponse>;
 }
 
 

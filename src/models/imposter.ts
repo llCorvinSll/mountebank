@@ -1,6 +1,6 @@
 'use strict';
 
-import {IMountebankResponse, IProtocol, IResolver, IServerRequestData} from "./IProtocol";
+import {IMountebankResponse, IProtocol, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
 import {IImposter, IpValidator} from "./IImposter";
 import * as Q from "q";
 import {IStubRepository} from "./stubRepository";
@@ -41,6 +41,7 @@ function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
  * @param {Function} isAllowedConnection - function to determine if the IP address of the requestor is allowed
  * @returns {Object}
  */
+// @ts-ignore
 export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogger, config: IProtocolLoadOptions, isAllowedConnection: IpValidator): Q.Promise<IImposter> {
     function scopeFor (port: string): string {
         let scope = `${creationRequest.protocol}:${port}`;
@@ -100,9 +101,10 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
         });
     }
 
-    function getProxyResponseFor (proxyResponse, proxyResolutionKey: number) {
+    function getProxyResponseFor (proxyResponse: IProxyResponse, proxyResolutionKey: number) {
         return resolver.resolveProxy(proxyResponse, proxyResolutionKey, logger).then(response => {
             if (config.recordMatches) {
+                // @ts-ignore
                 response.recordMatch();
             }
             return Q(response);
