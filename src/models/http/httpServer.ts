@@ -1,6 +1,5 @@
 'use strict';
 
-import {create} from "./baseHttpServer";
 
 /**
  * Represents an http imposter
@@ -14,5 +13,6 @@ function createBaseServer () {
     };
 }
 
-const server = create(createBaseServer);
-export default server;
+const create = require('./baseHttpServer').create;
+
+module.exports = create(createBaseServer);
