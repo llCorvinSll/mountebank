@@ -18,6 +18,7 @@ import {Socket} from "net";
 import {IProtocolLoadOptions} from "./models/protocols";
 import {IpValidator} from "./models/IImposter";
 import {IProtocolFactory} from "./models/IProtocol";
+import {ImpostersController} from "./controllers/impostersController";
 
 /**
  * The entry point for mountebank.  This module creates the mountebank server,
@@ -173,7 +174,7 @@ export function create (options: IMountebankOptions) {
         isAllowedConnection = createIPVerification(options),
         protocols = loadProtocols(options, baseURL, logger, isAllowedConnection),
         homeController = require('./controllers/homeController').create(releases),
-        impostersController = require('./controllers/impostersController').create(
+        impostersController = new ImpostersController(
             protocols, imposters, logger, options.allowInjection),
         imposterController = require('./controllers/imposterController').create(
             protocols, imposters, logger, options.allowInjection),
