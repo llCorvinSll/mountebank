@@ -8,17 +8,18 @@
  */
 
 import {ILogger} from "../util/scopedLogger";
-import {IRequest, IResponse, IStub} from "./IRequest";
+import {IResponse, IStub} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
 import {IStubRepository, StubRepository} from "./stubRepository";
 import {IImposterConfig} from "./IImposter";
-import {IValidation} from "./IProtocol";
+import {IServerRequestData, IValidation} from "./IProtocol";
+import {ResponseResolver} from "./responseResolver";
 
 
 interface IDryRunValidatorOptions {
     allowInjection:boolean;
-    testRequest:IRequest;
+    testRequest:IServerRequestData;
     testProxyResponse:any;
     additionalValidation:(cfg:IImposterConfig) => Q.Promise<IValidation>
 }
@@ -71,10 +72,10 @@ export function create (options: IDryRunValidatorOptions) {
         // us a testProxyResult
         if (options.testProxyResponse) {
             const dryRunProxy = { to: () => Q(options.testProxyResponse) };
-            return require('./responseResolver').create(stubRepository, dryRunProxy);
+            return new ResponseResolver(stubRepository, dryRunProxy);
         }
         else {
-            return require('./responseResolver').create(stubRepository, undefined, 'URL');
+            return new ResponseResolver(stubRepository, undefined, 'URL');
         }
     }
 

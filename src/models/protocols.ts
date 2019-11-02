@@ -11,6 +11,7 @@ import {
 } from "./IProtocol";
 import {IpValidator} from "./IImposter";
 import {Imposter} from "./imposter";
+import {ResponseResolver} from "./responseResolver";
 
 
 export interface IProtocolLoadOptions {
@@ -38,7 +39,7 @@ export function load (
             createProtocol(creationRequest, logger, responseFn).then(server => {
                 const StubRepository = require('./stubRepository').StubRepository;
                 const stubs = new StubRepository(server.encoding || 'utf8'),
-                    resolver = require('./responseResolver').create(stubs, server.proxy);
+                    resolver = new ResponseResolver(stubs, server.proxy);
 
                 return Q({
                     port: server.port,
@@ -121,7 +122,7 @@ export function load (
 
                 const StubRepository = require('./stubRepository').StubRepository;
                 const stubs = new StubRepository(encoding),
-                    resolver = require('./responseResolver').create(stubs, undefined, callbackURL);
+                    resolver = new ResponseResolver(stubs, undefined, callbackURL);
 
                 delete metadata.encoding;
 

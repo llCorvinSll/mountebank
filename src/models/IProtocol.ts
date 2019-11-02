@@ -5,7 +5,7 @@ import {IMontebankError} from "../util/errors";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
 import {IProxyConfig} from "./IStubConfig";
-import {IBehaviors, IResponse} from "./IRequest";
+import {IBehaviors} from "./IRequest";
 import {IStubRepository} from "./stubRepository";
 
 
@@ -86,9 +86,9 @@ export interface IServerRequestData {
     query: any;
     headers: any;
     body: string;
-    ip?: string;
     form?: any | undefined;
 
+    ip?: string;
     timestamp?:string;
     isDryRun?:boolean;
 }
@@ -114,7 +114,7 @@ export interface IMountebankResponse {
     _behaviors?: IBehaviors;
     _proxyResponseTime?:number;
 
-    is?: unknown;
+    is?: any;
 
     inject?:string;
 
@@ -129,7 +129,7 @@ export interface IProxyResponse {
 
 export interface IResolver {
     resolve(responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, imposterState: unknown, options: unknown): Q.Promise<IMountebankResponse>;
-    resolveProxy(proxyResponse: IProxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IResponse>;
+    resolveProxy(proxyResponse: IProxyResponse, proxyResolutionKey: number, logger: ILogger): Q.Promise<IMountebankResponse>;
 }
 
 
