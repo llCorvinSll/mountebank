@@ -11,7 +11,7 @@ import {ILogger} from "../util/scopedLogger";
 import {IRequest, IResponse, IStub} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
-import {IStubRepository} from "./stubRepository";
+import {IStubRepository, StubRepository} from "./stubRepository";
 import {IImposterConfig} from "./IImposter";
 import {IValidation} from "./IProtocol";
 
@@ -59,7 +59,7 @@ export function create (options: IDryRunValidatorOptions) {
             stubsToValidate = stubsToValidateWithPredicates.concat(stubsToValidateWithoutPredicates);
 
         return stubsToValidate.map(stubToValidate => {
-            const stubRepository: IStubRepository = require('./stubRepository').create(encoding);
+            const stubRepository: IStubRepository = new StubRepository(encoding);
             stubRepository.addStub(stubToValidate);
             return stubRepository;
         });

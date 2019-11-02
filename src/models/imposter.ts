@@ -7,6 +7,7 @@ import {IStubRepository} from "./stubRepository";
 import {ILogger} from "../util/scopedLogger";
 import {IRequest} from "./IRequest";
 import {IProtocolLoadOptions} from "./protocols";
+import {IStubConfig} from "./IStubConfig";
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -127,7 +128,7 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
             resolver = server.resolver;
 
             if (creationRequest.stubs) {
-                creationRequest.stubs.forEach(stubs.addStub);
+                creationRequest.stubs.forEach((st) => stubs.addStub(st));
             }
 
             function stop () {
@@ -147,15 +148,15 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
                 url: '/imposters/' + server.port,
                 toJSON,
                 stop,
-                resetProxies: stubs.resetProxies,
+                resetProxies: () => stubs.resetProxies(),
                 getResponseFor,
                 getProxyResponseFor,
-                addStub: server.stubs.addStub,
-                stubs: server.stubs.stubs,
-                overwriteStubs: server.stubs.overwriteStubs,
-                overwriteStubAtIndex: server.stubs.overwriteStubAtIndex,
-                deleteStubAtIndex: server.stubs.deleteStubAtIndex,
-                addStubAtIndex: server.stubs.addStubAtIndex
+                addStub: (stub: IStubConfig, beforeResponse?: IMountebankResponse) => server.stubs.addStub(stub, beforeResponse),
+                stubs: () => server.stubs.stubs(),
+                overwriteStubs: (stubs:IStubConfig[]) => server.stubs.overwriteStubs(stubs),
+                overwriteStubAtIndex: (index:string, newStub: IStubConfig) => server.stubs.overwriteStubAtIndex(index, newStub),
+                deleteStubAtIndex: (index:string) => server.stubs.deleteStubAtIndex(index),
+                addStubAtIndex: (index: string, newStub: IStubConfig) => server.stubs.addStubAtIndex(index, newStub)
             });
         });
     });

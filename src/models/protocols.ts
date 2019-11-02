@@ -35,7 +35,8 @@ export function load (
     function inProcessCreate (createProtocol: ServerImplCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn).then(server => {
-                const stubs = require('./stubRepository').create(server.encoding || 'utf8'),
+                const StubRepository = require('./stubRepository').StubRepository;
+                const stubs = new StubRepository(server.encoding || 'utf8'),
                     resolver = require('./responseResolver').create(stubs, server.proxy);
 
                 return Q({
@@ -117,7 +118,8 @@ export function load (
                 const callbackURL = options.callbackURLTemplate.replace(':port', String(serverPort)),
                     encoding = metadata.encoding || 'utf8';
 
-                const stubs = require('./stubRepository').create(encoding),
+                const StubRepository = require('./stubRepository').StubRepository;
+                const stubs = new StubRepository(encoding),
                     resolver = require('./responseResolver').create(stubs, undefined, callbackURL);
 
                 delete metadata.encoding;

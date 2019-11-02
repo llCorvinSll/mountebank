@@ -2,7 +2,7 @@
 
 const assert = require('assert'),
     mock = require('../mock').mock,
-    StubRepository = require('../../src/models/stubRepository');
+    StubRepository = require('../../src/models/stubRepository').StubRepository;
 
 describe('stubRepository', function () {
     function jsonWithoutFunctions (obj) {
@@ -11,7 +11,7 @@ describe('stubRepository', function () {
 
     describe('#addStub', function () {
         it('should add new stub in front of passed in response', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
                 secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
 
@@ -31,7 +31,7 @@ describe('stubRepository', function () {
 
     describe('#overwriteStubs', function () {
         it('should overwrite entire list', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
                 secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] },
                 thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
@@ -50,7 +50,7 @@ describe('stubRepository', function () {
 
     describe('#overwriteStubAtIndex', function () {
         it('should overwrite single stub', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
                 secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] },
                 thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
@@ -70,7 +70,7 @@ describe('stubRepository', function () {
 
     describe('#deleteeStubAtIndex', function () {
         it('should overwrite single stub', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
                 secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] },
                 thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
@@ -91,7 +91,7 @@ describe('stubRepository', function () {
 
     describe('#stubs', function () {
         it('should not allow changing state in stubRepository', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 stub = { responses: [] };
 
             stubs.addStub(stub);
@@ -101,7 +101,7 @@ describe('stubRepository', function () {
         });
 
         it('should support adding responses', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 stub = { responses: [] };
 
             stubs.addStub(stub);
@@ -113,7 +113,7 @@ describe('stubRepository', function () {
 
     describe('#getResponseFor', function () {
         it('should return default response if no match', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 logger = { debug: mock() };
 
             const responseConfig = stubs.getResponseFor({ field: 'value' }, logger, {});
@@ -122,7 +122,7 @@ describe('stubRepository', function () {
         });
 
         it('should always match if no predicate', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 logger = { debug: mock() },
                 stub = { responses: [{ is: 'first stub' }] };
 
@@ -133,7 +133,7 @@ describe('stubRepository', function () {
         });
 
         it('should return first match', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 logger = { debug: mock() },
                 firstStub = { predicates: [{ equals: { field: '1' } }], responses: [{ is: 'first stub' }] },
                 secondStub = { predicates: [{ equals: { field: '2' } }], responses: [{ is: 'second stub' }] },
@@ -148,7 +148,7 @@ describe('stubRepository', function () {
         });
 
         it('should return responses in order, looping around', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 logger = { debug: mock() },
                 stub = { responses: [{ is: 'first response' }, { is: 'second response' }] };
 
@@ -160,7 +160,7 @@ describe('stubRepository', function () {
         });
 
         it('should support recording matches', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 logger = { debug: mock() },
                 matchingRequest = { field: 'value' },
                 mismatchingRequest = { field: 'other' },
@@ -176,7 +176,7 @@ describe('stubRepository', function () {
         });
 
         it('should only record match once for given response', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 logger = { debug: mock() },
                 stub = { responses: [{ is: 'response' }] };
 
@@ -191,7 +191,7 @@ describe('stubRepository', function () {
         });
 
         it('should repeat a response and continue looping', function () {
-            const stubs = StubRepository.create('utf8'),
+            const stubs = new StubRepository('utf8'),
                 logger = { debug: mock() },
                 stub = { responses: [
                     { is: 'first response', _behaviors: { repeat: 2 } },

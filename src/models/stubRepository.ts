@@ -28,85 +28,32 @@ export interface IStubRepository {
  * @param {string} encoding - utf8 or base64
  * @returns {Object}
  */
-export function create (encoding: string): IStubRepository {
+export class StubRepository implements IStubRepository {
+    public constructor(private encoding:string) {
+
+    }
+
+    protected _stubs:IStubConfig[] = [];
+
     /**
-     * The list of stubs within this repository
+     * Returns the outside representation of the stubs
      * @memberOf module:models/stubRepository#
-     * @type {Array}
+     * @returns {Object} - The stubs
      */
-    const stubs: IStubConfig[] = [];
-
-    // We call map before calling every so we make sure to call every
-    // predicate during dry run validation rather than short-circuiting
-    function trueForAll (list: IPredicate[], predicate: (p: IPredicate) => boolean) {
-        return list.map(predicate).every(result => result);
-    }
-
-    function findFirstMatch (request: IServerRequestData, logger: ILogger, imposterState: unknown): IStubConfig | undefined {
-        if (stubs.length === 0) {
-            return undefined;
-        }
-
+    public stubs = () => {
         const helpers = require('../util/helpers'),
-            readOnlyState = helpers.clone(imposterState),
-            matches = stubs.filter(stub => {
-                const stubPredicates: IPredicate[] = stub.predicates || [],
-                    predicates = require('./predicates');
+            result = helpers.clone(this._stubs);
 
-                return trueForAll(stubPredicates,
-                    (predicate: IPredicate) => predicates.evaluate(predicate, request, encoding, logger, readOnlyState));
-            });
-
-        if (matches.length === 0) {
-            logger.debug('no predicate match');
-            return undefined;
-        }
-        else {
-            logger.debug(`using predicate match: ${JSON.stringify(matches[0].predicates || {})}`);
-            return matches[0];
-        }
-    }
-
-    function repeatsFor (response: IMountebankResponse) {
-        if (response._behaviors && response._behaviors.repeat) {
-            return response._behaviors.repeat;
-        }
-        else {
-            return 1;
-        }
-    }
-
-    function repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
-        const result = [];
-        let response, repeats;
-
-        for (let i = 0; i < responses.length; i += 1) {
-            response = responses[i];
-            repeats = repeatsFor(response);
-            for (let j = 0; j < repeats; j += 1) {
-                // @ts-ignore
-                result.push(response);
-            }
+        for (let i = 0; i < this._stubs.length; i += 1) {
+            delete result[i].statefulResponses;
+            const stub = this._stubs[i];
+            result[i].addResponse = (response: IResponse) => { stub.responses && stub.responses.push(response); };
         }
         return result;
     }
 
-    function stubIndexFor (responseToMatch: object) {
-        let i = 0;
-        for (i; i < stubs.length; i += 1) {
-            let current_stub = stubs[i];
-            if (current_stub.responses && current_stub.responses.some(response => JSON.stringify(response) === JSON.stringify(responseToMatch))) {
-                break;
-            }
-        }
-        return i;
-    }
 
-    function decorate (stub: IStubConfig) {
-        stub.statefulResponses = repeatTransform(stub.responses as IMountebankResponse[]);
-        stub.addResponse = response => { stub.responses && stub.responses.push(response); };
-        return stub;
-    }
+    //#region addStub
 
     /**
      * Adds a stub to the repository
@@ -114,12 +61,12 @@ export function create (encoding: string): IStubRepository {
      * @param {Object} stub - The stub to add
      * @param {Object} beforeResponse - If provided, the new stub will be added before the stub containing the response (used for proxyOnce)
      */
-    function addStub (stub: IStubConfig, beforeResponse?: IMountebankResponse): void {
+    public addStub (stub: IStubConfig, beforeResponse?: IMountebankResponse): void {
         if (beforeResponse) {
-            stubs.splice(stubIndexFor(beforeResponse), 0, decorate(stub));
+            this._stubs.splice(this.stubIndexFor(beforeResponse), 0, this.decorate(stub));
         }
         else {
-            stubs.push(decorate(stub));
+            this._stubs.push(this.decorate(stub));
         }
     }
 
@@ -129,30 +76,8 @@ export function create (encoding: string): IStubRepository {
      * @param {Number} index - the index of the stub to change
      * @param {Object} newStub - the new stub
      */
-    function addStubAtIndex (index: string, newStub: IStubConfig): void {
-        stubs.splice(parseInt(index), 0, decorate(newStub));
-    }
-
-    /**
-     * Overwrites the entire list of stubs
-     * @memberOf module:models/stubRepository#
-     * @param {Object} newStubs - the new list of stubs
-     */
-    function overwriteStubs (newStubs: IStubConfig[]): void {
-        while (stubs.length > 0) {
-            stubs.pop();
-        }
-        newStubs.forEach(stub => addStub(stub));
-    }
-
-    /**
-     * Overwrites the stub at stubIndex without changing the state of any other stubs
-     * @memberOf module:models/stubRepository#
-     * @param {Number} index - the index of the stub to change
-     * @param {Object} newStub - the new stub
-     */
-    function overwriteStubAtIndex (index: string, newStub: IStubConfig): void {
-        stubs[parseInt(index)] = decorate(newStub);
+    public addStubAtIndex (index: string, newStub: IStubConfig): void {
+        this._stubs.splice(parseInt(index), 0, this.decorate(newStub));
     }
 
     /**
@@ -160,26 +85,76 @@ export function create (encoding: string): IStubRepository {
      * @memberOf module:models/stubRepository#
      * @param {Number} index - the index of the stub to remove
      */
-    function deleteStubAtIndex (index: string): void {
-        stubs.splice(parseInt(index), 1);
+    public deleteStubAtIndex (index: string): void {
+        this._stubs.splice(parseInt(index), 1);
     }
 
     /**
-     * Returns the outside representation of the stubs
+     * Overwrites the entire list of stubs
      * @memberOf module:models/stubRepository#
-     * @returns {Object} - The stubs
+     * @param {Object} newStubs - the new list of stubs
      */
-    function getStubs (): IStubConfig[] {
-        const helpers = require('../util/helpers'),
-            result = helpers.clone(stubs);
+    public overwriteStubs (newStubs: IStubConfig[]): void {
+        while (this._stubs.length > 0) {
+            this._stubs.pop();
+        }
+        newStubs.forEach(stub => this.addStub(stub));
+    }
 
-        for (let i = 0; i < stubs.length; i += 1) {
-            delete result[i].statefulResponses;
-            const stub = stubs[i];
-            result[i].addResponse = (response: IResponse) => { stub.responses && stub.responses.push(response); };
+    private stubIndexFor (responseToMatch: object) {
+        let i = 0;
+        for (i; i < this._stubs.length; i += 1) {
+            let current_stub = this._stubs[i];
+            if (current_stub.responses && current_stub.responses.some(response => JSON.stringify(response) === JSON.stringify(responseToMatch))) {
+                break;
+            }
+        }
+        return i;
+    }
+
+    private decorate (stub: IStubConfig) {
+        stub.statefulResponses = this.repeatTransform(stub.responses as IMountebankResponse[]);
+        stub.addResponse = response => { stub.responses && stub.responses.push(response); };
+        return stub;
+    }
+
+    private repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
+        const result = [];
+        let response, repeats;
+
+        for (let i = 0; i < responses.length; i += 1) {
+            response = responses[i];
+            repeats = this.repeatsFor(response);
+            for (let j = 0; j < repeats; j += 1) {
+                // @ts-ignore
+                result.push(response);
+            }
         }
         return result;
     }
+
+    private repeatsFor (response: IMountebankResponse) {
+        if (response._behaviors && response._behaviors.repeat) {
+            return response._behaviors.repeat;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    //#endregion
+
+    /**
+     * Overwrites the stub at stubIndex without changing the state of any other stubs
+     * @memberOf module:models/stubRepository#
+     * @param {Number} index - the index of the stub to change
+     * @param {Object} newStub - the new stub
+     */
+    public overwriteStubAtIndex (index: string, newStub: IStubConfig): void {
+        this._stubs[parseInt(index)] = this.decorate(newStub);
+    }
+
+    //#region getResponseFor
 
     /**
      * Finds the next response configuration for the given request
@@ -189,8 +164,8 @@ export function create (encoding: string): IStubRepository {
      * @param {Object} imposterState - The current state for the imposter
      * @returns {Object} - Promise resolving to the response
      */
-    function getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
-        const stub: IStubConfig = findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
+    public getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
+        const stub: IStubConfig = this.findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
             responseConfig:IMountebankResponse = (stub.statefulResponses as IMountebankResponse[]).shift() as IMountebankResponse,
             cloned = helpers.clone(responseConfig);
 
@@ -224,12 +199,45 @@ export function create (encoding: string): IStubRepository {
         return cloned;
     }
 
+    // We call map before calling every so we make sure to call every
+    // predicate during dry run validation rather than short-circuiting
+    private trueForAll(list: IPredicate[], predicate: (p: IPredicate) => boolean) {
+        return list.map(predicate).every(result => result);
+    }
+
+    private findFirstMatch (request: IServerRequestData, logger: ILogger, imposterState: unknown): IStubConfig | undefined {
+        if (this._stubs.length === 0) {
+            return undefined;
+        }
+
+        const helpers = require('../util/helpers'),
+            readOnlyState = helpers.clone(imposterState),
+            matches = this._stubs.filter(stub => {
+                const stubPredicates: IPredicate[] = stub.predicates || [],
+                    predicates = require('./predicates');
+
+                return this.trueForAll(stubPredicates,
+                    (predicate: IPredicate) => predicates.evaluate(predicate, request, this.encoding, logger, readOnlyState));
+            });
+
+        if (matches.length === 0) {
+            logger.debug('no predicate match');
+            return undefined;
+        }
+        else {
+            logger.debug(`using predicate match: ${JSON.stringify(matches[0].predicates || {})}`);
+            return matches[0];
+        }
+    }
+
+    //#endregion
+
     /**
-    * Removes the saved proxy responses
-    */
-    function resetProxies (): void {
-        for (let i = stubs.length - 1; i >= 0; i -= 1) {
-            let current_stub = stubs[i];
+     * Removes the saved proxy responses
+     */
+    public resetProxies (): void {
+        for (let i = this._stubs.length - 1; i >= 0; i -= 1) {
+            let current_stub = this._stubs[i];
             current_stub.responses = current_stub.responses && current_stub.responses.filter(response => {
                 if (!response.is) {
                     return true;
@@ -237,19 +245,8 @@ export function create (encoding: string): IStubRepository {
                 return typeof response.is._proxyResponseTime === 'undefined'; // eslint-disable-line no-underscore-dangle
             });
             if (current_stub.responses && current_stub.responses.length === 0) {
-                stubs.splice(i, 1);
+                this._stubs.splice(i, 1);
             }
         }
     }
-
-    return {
-        stubs: getStubs,
-        addStub,
-        addStubAtIndex,
-        overwriteStubs,
-        overwriteStubAtIndex,
-        deleteStubAtIndex,
-        getResponseFor,
-        resetProxies
-    };
 }
