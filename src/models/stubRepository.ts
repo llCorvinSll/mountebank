@@ -40,9 +40,8 @@ export class StubRepository implements IStubRepository {
      * @memberOf module:models/stubRepository#
      * @returns {Object} - The stubs
      */
-    public stubs = () => {
-        const helpers = require('../util/helpers'),
-            result = helpers.clone(this._stubs);
+    public stubs() {
+        const result = helpers.clone(this._stubs);
 
         for (let i = 0; i < this._stubs.length; i += 1) {
             delete result[i].statefulResponses;

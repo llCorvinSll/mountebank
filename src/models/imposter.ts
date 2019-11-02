@@ -1,13 +1,23 @@
 'use strict';
 
-import {IMountebankResponse, IProtocol, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
+import {
+    IMountebankResponse,
+    IProtocolFactory,
+    IProxyResponse,
+    IResolver,
+    IServer,
+    IServerRequestData
+} from "./IProtocol";
 import {IImposter, IpValidator} from "./IImposter";
 import * as Q from "q";
-import {IStubRepository} from "./stubRepository";
 import {ILogger} from "../util/scopedLogger";
-import {IRequest} from "./IRequest";
 import {IProtocolLoadOptions} from "./protocols";
 import {IStubConfig} from "./IStubConfig";
+import * as domain_nsp from "domain";
+import {Domain} from "domain";
+import * as helpers from '../util/helpers';
+import * as compatibility from './compatibility';
+import * as imposterPrinter from './imposterPrinter';
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -16,7 +26,6 @@ import {IStubConfig} from "./IStubConfig";
  * JSON for the end user.
  * @module
  */
-
 function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
     return (error: any) => {
         const errors = require('../util/errors');
@@ -42,58 +51,146 @@ function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
  * @param {Function} isAllowedConnection - function to determine if the IP address of the requestor is allowed
  * @returns {Object}
  */
-// @ts-ignore
-export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogger, config: IProtocolLoadOptions, isAllowedConnection: IpValidator): Q.Promise<IImposter> {
-    function scopeFor (port: string): string {
-        let scope = `${creationRequest.protocol}:${port}`;
+export class Imposter implements IImposter {
+    public constructor(
+        protected Protocol: IProtocolFactory,
+        protected creationRequest,
+        protected baseLogger: ILogger,
+        protected config: IProtocolLoadOptions,
+        protected isAllowedConnection: IpValidator) {
+        compatibility.upcast(this.creationRequest);
 
-        if (creationRequest.name) {
-            scope += ' ' + creationRequest.name;
-        }
-        return scope;
+        this.logger = require('../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port));
+        // If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
+        this.recordRequests = config.recordRequests || creationRequest.recordRequests;
     }
 
-    const deferred = Q.defer<IImposter>(),
-        domain = require('domain').create(),
-        errorHandler = createErrorHandler(deferred, creationRequest.port),
-        compatibility = require('./compatibility'),
-        requests:IRequest[] = [],
-        logger = require('../util/scopedLogger').create(baseLogger, scopeFor(creationRequest.port)),
-        helpers = require('../util/helpers'),
-        imposterState = {};
+    private readonly logger: ILogger;
+    private resolver: IResolver;
+    private domain: Domain;
+    private server: IServer;
+    private numberOfRequests = 0;
+    private requests: IServerRequestData[] = [];
+    private readonly recordRequests: boolean = false;
+    private imposterState = {};
+    private printer:any;
 
-    let stubs:IStubRepository;
-    let resolver: IResolver;
-    let numberOfRequests = 0;
+    public init(): Q.Promise<IImposter> {
+        this.domain = domain_nsp.create();
+        const deferred = Q.defer<IImposter>();
 
-    compatibility.upcast(creationRequest);
+        const errorHandler = createErrorHandler(deferred, this.creationRequest.port);
 
-    // If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
-    const recordRequests = config.recordRequests || creationRequest.recordRequests;
+        this.domain.on('error', errorHandler);
+
+        this.domain.run(() => {
+            if (!helpers.defined(this.creationRequest.host) && helpers.defined(this.config.host)) {
+                this.creationRequest.host = this.config.host;
+            }
+
+            this.Protocol.createServer && this.Protocol.createServer(
+                this.creationRequest,
+                this.logger,
+                (request: IServerRequestData, requestDetails: unknown) => this.getResponseFor(request, requestDetails))
+                .done(server => {
+                    this.server = server;
+
+                    if (this.creationRequest.port !== server.port) {
+                        this.logger.changeScope(this.scopeFor(String(server.port)));
+                    }
+                    this.logger.info('Open for business...');
+
+                    this.resolver = server.resolver;
+
+                    this.printer = imposterPrinter.create(this.creationRequest, this.server, this.requests);
+
+                    if (this.creationRequest.stubs) {
+                        this.creationRequest.stubs.forEach((st) => this.server.stubs.addStub(st));
+                    }
+
+                    return deferred.resolve(this);
+                });
+        });
+
+        return deferred.promise;
+    }
+
+    public get port(): number {
+        return this.server.port;
+    }
+
+    public get url(): string {
+        return '/imposters/' + this.server.port;
+    }
+
+    public toJSON(options?: any): string {
+        return this.printer.toJSON(this.numberOfRequests, options);
+    }
+
+    public stop() {
+        const stopDeferred = Q.defer();
+        this.server.close(() => {
+            this.logger.info('Ciao for now');
+            return stopDeferred.resolve({});
+        });
+        return stopDeferred.promise;
+    }
+
+    //#region ProxyMethods
+
+    public resetProxies() {
+        this.server.stubs.resetProxies();
+    };
+
+    public addStub(stub: IStubConfig, beforeResponse?: IMountebankResponse) {
+        this.server.stubs.addStub(stub, beforeResponse);
+    };
+
+    public stubs(): IStubConfig[] {
+        return this.server.stubs.stubs();
+    }
+
+    public overwriteStubs(stubs: IStubConfig[]) {
+        this.server.stubs.overwriteStubs(stubs);
+    }
+
+    public overwriteStubAtIndex(index: string, newStub: IStubConfig) {
+        this.server.stubs.overwriteStubAtIndex(index, newStub);
+    }
+
+    public deleteStubAtIndex(index: string) {
+        this.server.stubs.deleteStubAtIndex(index);
+    }
+
+    public addStubAtIndex(index: string, newStub: IStubConfig) {
+        this.server.stubs.addStubAtIndex(index, newStub);
+    }
+
+    //#endregion
+
 
     // requestDetails are not stored with the imposter
     // It was created to pass the raw URL to maintain the exact querystring during http proxying
     // without having to change the path / query options on the stored request
-    function getResponseFor (request: IServerRequestData, requestDetails: unknown): Q.Promise<IMountebankResponse> {
-        if (!isAllowedConnection(request.ip, logger)) {
-            return Q({ blocked: true, code: 'unauthorized ip address' });
+    public getResponseFor(request: IServerRequestData, requestDetails: unknown): Q.Promise<IMountebankResponse> {
+        if (!this.isAllowedConnection(request.ip, this.logger)) {
+            return Q({blocked: true, code: 'unauthorized ip address'});
         }
 
-        numberOfRequests += 1;
-        if (recordRequests) {
+        this.numberOfRequests += 1;
+        if (this.recordRequests) {
             const recordedRequest = helpers.clone(request);
             recordedRequest.timestamp = new Date().toJSON();
-            requests.push(recordedRequest);
+            this.requests.push(recordedRequest);
         }
 
-        const responseConfig = stubs.getResponseFor(request, logger, imposterState);
-        return resolver.resolve(responseConfig, request, logger, imposterState, requestDetails).then(response => {
-            if (config.recordMatches && !response.proxy) {
+        const responseConfig = this.server.stubs.getResponseFor(request, this.logger, this.imposterState);
+        return this.resolver.resolve(responseConfig, request, this.logger, this.imposterState, requestDetails).then(response => {
+            if (this.config.recordMatches && !response.proxy) {
                 if (response.response) {
                     // Out of process responses wrap the result in an outer response object
                     responseConfig.recordMatch && responseConfig.recordMatch(response.response);
-                }
-                else {
+                } else {
                     // In process resolution
                     responseConfig.recordMatch && responseConfig.recordMatch(response);
                 }
@@ -102,9 +199,9 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
         });
     }
 
-    function getProxyResponseFor (proxyResponse: IProxyResponse, proxyResolutionKey: number) {
-        return resolver.resolveProxy(proxyResponse, proxyResolutionKey, logger).then(response => {
-            if (config.recordMatches) {
+    public getProxyResponseFor(proxyResponse: IProxyResponse, proxyResolutionKey: number) {
+        return this.resolver.resolveProxy(proxyResponse, proxyResolutionKey, this.logger).then(response => {
+            if (this.config.recordMatches) {
                 // @ts-ignore
                 response.recordMatch();
             }
@@ -112,54 +209,13 @@ export function create (Protocol: IProtocol, creationRequest, baseLogger: ILogge
         });
     }
 
-    domain.on('error', errorHandler);
-    domain.run(() => {
-        if (!helpers.defined(creationRequest.host) && helpers.defined(config.host)) {
-            creationRequest.host = config.host;
+    private scopeFor(port: string): string {
+        let scope = `${this.creationRequest.protocol}:${port}`;
+
+        if (this.creationRequest.name) {
+            scope += ' ' + this.creationRequest.name;
         }
+        return scope;
+    }
 
-        Protocol.createServer && Protocol.createServer(creationRequest, logger, getResponseFor).done(server => {
-            if (creationRequest.port !== server.port) {
-                logger.changeScope(scopeFor(String(server.port)));
-            }
-            logger.info('Open for business...');
-
-            stubs = server.stubs;
-            resolver = server.resolver;
-
-            if (creationRequest.stubs) {
-                creationRequest.stubs.forEach((st) => stubs.addStub(st));
-            }
-
-            function stop () {
-                const stopDeferred = Q.defer();
-                server.close(() => {
-                    logger.info('Ciao for now');
-                    return stopDeferred.resolve({});
-                });
-                return stopDeferred.promise;
-            }
-
-            const printer = require('./imposterPrinter').create(creationRequest, server, requests),
-                toJSON = (options: unknown) => printer.toJSON(numberOfRequests, options);
-
-            return deferred.resolve({
-                port: server.port,
-                url: '/imposters/' + server.port,
-                toJSON,
-                stop,
-                resetProxies: () => stubs.resetProxies(),
-                getResponseFor,
-                getProxyResponseFor,
-                addStub: (stub: IStubConfig, beforeResponse?: IMountebankResponse) => server.stubs.addStub(stub, beforeResponse),
-                stubs: () => server.stubs.stubs(),
-                overwriteStubs: (stubs:IStubConfig[]) => server.stubs.overwriteStubs(stubs),
-                overwriteStubAtIndex: (index:string, newStub: IStubConfig) => server.stubs.overwriteStubAtIndex(index, newStub),
-                deleteStubAtIndex: (index:string) => server.stubs.deleteStubAtIndex(index),
-                addStubAtIndex: (index: string, newStub: IStubConfig) => server.stubs.addStubAtIndex(index, newStub)
-            });
-        });
-    });
-
-    return deferred.promise;
 }

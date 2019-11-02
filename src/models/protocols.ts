@@ -10,6 +10,7 @@ import {
     ServerImplCreatorFunction
 } from "./IProtocol";
 import {IpValidator} from "./IImposter";
+import {Imposter} from "./imposter";
 
 
 export interface IProtocolLoadOptions {
@@ -165,8 +166,7 @@ export function load (
     }
 
     function createImposter (Protocol: IProtocolFactory, creationRequest: any) {
-        const Imposter = require('./imposter');
-        return Imposter.create(Protocol, creationRequest, mbLogger.baseLogger, options, isAllowedConnection);
+        return new Imposter(Protocol, creationRequest, mbLogger.baseLogger, options, isAllowedConnection).init();
     }
 
     const result: {[key: string]: IProtocolFactory} = {};
