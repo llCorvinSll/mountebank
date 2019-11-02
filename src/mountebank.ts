@@ -52,7 +52,7 @@ function createLogger (options: IMountebankOptions) {
         initializeLogfile(options.logfile);
         winstonLogger.add(new winston.transports.File({
             filename: options.logfile,
-            maxsize: 4096,
+            maxsize: 20 * 1024 * 1024,
             maxFiles: 5,
             tailable: true,
             format: format.combine(format.timestamp(), format.json())
