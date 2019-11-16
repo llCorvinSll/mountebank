@@ -8,13 +8,14 @@
  */
 
 import {ILogger} from "../util/scopedLogger";
-import {IResponse, IStub} from "./IRequest";
+import {IResponse} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
 import {IStubRepository, StubRepository} from "./stubRepository";
 import {IImposterConfig} from "./IImposter";
 import {IServerRequestData, IValidation} from "./IProtocol";
 import {ResponseResolver} from "./responseResolver";
+import {IStubConfig} from "./IStubConfig";
 
 
 interface IDryRunValidatorOptions {
@@ -34,7 +35,7 @@ interface IDryRunValidatorOptions {
  * @returns {Object}
  */
 export function create (options: IDryRunValidatorOptions) {
-    function stubForResponse (originalStub: IStub, response: IResponse, withPredicates: boolean) {
+    function stubForResponse (originalStub: IStubConfig, response: IResponse, withPredicates: boolean) {
         // Each dry run only validates the first response, so we
         // explode the number of stubs to dry run each response separately
         const helpers = require('../util/helpers'),
@@ -52,7 +53,7 @@ export function create (options: IDryRunValidatorOptions) {
         return clonedStub;
     }
 
-    function reposToTestFor (stub: IStub, encoding: string) {
+    function reposToTestFor (stub: IStubConfig, encoding: string) {
         // Test with predicates (likely won't match) to make sure predicates don't blow up
         // Test without predicates (always matches) to make sure response doesn't blow up
         const stubsToValidateWithPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, true)) : [],
@@ -79,7 +80,7 @@ export function create (options: IDryRunValidatorOptions) {
         }
     }
 
-    function dryRun (stub: IStub, encoding: string, logger: ILogger) {
+    function dryRun (stub: IStubConfig, encoding: string, logger: ILogger) {
         const combinators = require('../util/combinators'),
             dryRunLogger: ILogger = {
                 debug: combinators.noop,
@@ -99,7 +100,7 @@ export function create (options: IDryRunValidatorOptions) {
         }));
     }
 
-    function addDryRunErrors (stub: IStub, encoding: string, errors: IMontebankError[], logger: ILogger) {
+    function addDryRunErrors (stub: IStubConfig, encoding: string, errors: IMontebankError[], logger: ILogger) {
         const deferred = Q.defer();
 
         try {
@@ -125,7 +126,7 @@ export function create (options: IDryRunValidatorOptions) {
             response.proxy.predicateGenerators.some(generator => generator.inject);
     }
 
-    function hasStubInjection (stub: IStub) {
+    function hasStubInjection (stub: IStubConfig) {
         const hasResponseInjections = stub.responses && stub.responses.some((response: IResponse) => {
                 const hasDecorator = response._behaviors && response._behaviors.decorate,
                     hasWaitFunction = response._behaviors && typeof response._behaviors.wait === 'string';
@@ -137,11 +138,11 @@ export function create (options: IDryRunValidatorOptions) {
         return hasResponseInjections || hasPredicateInjections || hasAddDecorateBehaviorInProxy;
     }
 
-    function hasShellExecution (stub: IStub) {
+    function hasShellExecution (stub: IStubConfig) {
         return stub.responses && stub.responses.some(response => response._behaviors && response._behaviors.shellTransform);
     }
 
-    function addStubInjectionErrors (stub: IStub, errors: IMontebankError[]) {
+    function addStubInjectionErrors (stub: IStubConfig, errors: IMontebankError[]) {
         if (options.allowInjection) {
             return;
         }
@@ -162,14 +163,14 @@ export function create (options: IDryRunValidatorOptions) {
         });
     }
 
-    function addBehaviorErrors (stub: IStub, errors: IMontebankError[]) {
+    function addBehaviorErrors (stub: IStubConfig, errors: IMontebankError[]) {
         stub.responses && stub.responses.forEach(response => {
             const behaviors = require('./behaviors');
             addAllTo(errors, behaviors.validate(response._behaviors));
         });
     }
 
-    function errorsForStub (stub: IStub, encoding: string, logger: ILogger) {
+    function errorsForStub (stub: IStubConfig, encoding: string, logger: ILogger) {
         const errors: IMontebankError[] = [],
             deferred = Q.defer();
 

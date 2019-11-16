@@ -8,7 +8,7 @@ import {
     IServer,
     IServerRequestData
 } from "./IProtocol";
-import {IImposter, IpValidator} from "./IImposter";
+import {IImposter, IImposterConfig, IpValidator} from "./IImposter";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
 import {IProtocolLoadOptions} from "./protocols";
@@ -54,7 +54,7 @@ function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
 export class Imposter implements IImposter {
     public constructor(
         protected Protocol: IProtocolFactory,
-        protected creationRequest,
+        protected creationRequest:IImposterConfig,
         protected baseLogger: ILogger,
         protected config: IProtocolLoadOptions,
         protected isAllowedConnection: IpValidator) {
@@ -211,7 +211,7 @@ export class Imposter implements IImposter {
         });
     }
 
-    private scopeFor(port: string): string {
+    private scopeFor(port: string|number): string {
         let scope = `${this.creationRequest.protocol}:${port}`;
 
         if (this.creationRequest.name) {

@@ -9,7 +9,7 @@ import {
     ServerCreatorFunction,
     ServerImplCreatorFunction
 } from "./IProtocol";
-import {IpValidator} from "./IImposter";
+import {IImposterConfig, IpValidator} from "./IImposter";
 import {Imposter} from "./imposter";
 import {ResponseResolver} from "./responseResolver";
 
@@ -19,7 +19,7 @@ export interface IProtocolLoadOptions {
     loglevel: string;
     allowInjection: boolean;
     host: string;
-    recordRequests: unknown;
+    recordRequests: boolean;
     recordMatches: unknown;
 }
 
@@ -166,7 +166,7 @@ export function load (
         };
     }
 
-    function createImposter (Protocol: IProtocolFactory, creationRequest: any) {
+    function createImposter (Protocol: IProtocolFactory, creationRequest: IImposterConfig) {
         return new Imposter(Protocol, creationRequest, mbLogger.baseLogger, options, isAllowedConnection).init();
     }
 

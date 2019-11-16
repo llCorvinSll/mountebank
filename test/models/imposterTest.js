@@ -3,7 +3,6 @@
 const assert = require('assert'),
     mock = require('../mock').mock,
     Imposter = require('../../src/models/imposter').Imposter,
-    createImposter = require('../../src/models/imposter').create,
     Q = require('q'),
     promiseIt = require('../testHelpers').promiseIt,
     FakeLogger = require('../fakes/fakeLogger');

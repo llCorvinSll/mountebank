@@ -8,23 +8,6 @@ import {IProxyConfig} from "./IStubConfig";
 import {IBehaviors} from "./IRequest";
 import {IStubRepository} from "./stubRepository";
 
-
-export interface IRequestData {
-    requestFrom: string,
-    method: string,
-    path: string,
-    query: any,
-    headers: any,
-    form: any,
-    body: string
-}
-
-export interface IResponceData {
-    statusCode: number,
-    headers: any,
-    body: string;
-}
-
 export interface IProtocol {
     port:number;
     metadata: any;
@@ -56,7 +39,7 @@ export interface IProtocolFactory {
     create:ServerImplCreatorFunction;
 
     createServer?: ServerCreatorFunction;
-    createImposterFrom?: (creationRequest: any) => Q.Promise<IImposter>;
+    createImposterFrom?: (creationRequest: IImposterConfig) => Q.Promise<IImposter>;
 }
 
 

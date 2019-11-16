@@ -3,19 +3,15 @@
 import {ILogger} from "./scopedLogger";
 import { Request, Response } from "express";
 import {IImposter} from "../models/IImposter";
+import {IStubConfig} from "../models/IStubConfig";
 
 /**
  * Express middleware functions to inject into the HTTP processing
  * @module
  */
 
-
-interface IStub {
-
-}
-
 interface IBody {
-    stubs:IStub[];
+    stubs:IStubConfig[];
     imposters:IImposter[];
 }
 

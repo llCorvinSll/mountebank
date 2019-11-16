@@ -16,7 +16,7 @@ import {IRequest, IStub, toDeclaration} from "./IRequest";
  * The new syntax expects an array, creating a shell pipeline
  * @param {Object} request - the request to upcast
  */
-function upcastShellTransformToArray (request: IRequest) {
+function upcastShellTransformToArray (request: any) {
     (request.stubs || []).forEach(stub => {
         (stub.responses || []).forEach(response => {
             if (response._behaviors && response._behaviors.shellTransform &&
@@ -32,7 +32,7 @@ function upcastShellTransformToArray (request: IRequest) {
  * The new syntax uses a tcp:// url for symmetry with http/s
  * @param {Object} request - the request to upcast
  */
-function upcastTcpProxyDestinationToUrl (request: IRequest) {
+function upcastTcpProxyDestinationToUrl (request: any) {
     if (request.protocol !== 'tcp') {
         return;
     }
@@ -53,7 +53,7 @@ function upcastTcpProxyDestinationToUrl (request: IRequest) {
  * Upcast the request to the current version
  * @param {Object} request - the request to upcast
  */
-export function upcast (request: IRequest) {
+export function upcast (request: any) {
     upcastShellTransformToArray(request);
     upcastTcpProxyDestinationToUrl(request);
 }

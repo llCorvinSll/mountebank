@@ -1,6 +1,5 @@
 'use strict';
 
-import {IStub} from "./IRequest";
 import * as Q from 'q';
 import {IStubConfig} from "./IStubConfig";
 import {ILogger} from "../util/scopedLogger";
@@ -31,8 +30,11 @@ export type IpValidator = (ip: string | undefined, logger: ILogger) => boolean;
 export interface IImposterConfig {
     port: number;
     protocol: string;
+    host: string;
+    name: string;
     mode: string;
-    stubs: IStub[];
+    recordRequests: boolean;
+    stubs: IStubConfig[];
     endOfRequestResolver: {
         inject: boolean
     }
