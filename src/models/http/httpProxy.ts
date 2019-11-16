@@ -7,7 +7,7 @@ import {UrlWithStringQuery} from "url";
 import {ClientRequest, IncomingHttpHeaders} from "http";
 import {InvalidProxyError} from "../../util/errors";
 import {IProxyImplementation} from "../IProtocol";
-import {IProxyConfig} from "../IStubConfig";
+import {IProxyConfig} from "../stubs/IStubConfig";
 
 /**
  * The proxy implementation for http/s imposters

@@ -12,7 +12,7 @@ import {IImposter, IImposterConfig, IpValidator} from "./IImposter";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
 import {IProtocolLoadOptions} from "./protocols";
-import {IStubConfig} from "./IStubConfig";
+import {IStubConfig} from "./stubs/IStubConfig";
 import * as domain_nsp from "domain";
 import {Domain} from "domain";
 import * as helpers from '../util/helpers';

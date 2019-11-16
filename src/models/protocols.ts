@@ -12,6 +12,7 @@ import {
 import {IImposterConfig, IpValidator} from "./IImposter";
 import {Imposter} from "./imposter";
 import {ResponseResolver} from "./responseResolver";
+import {StubRepository} from "./stubs/stubRepository";
 
 
 export interface IProtocolLoadOptions {
@@ -37,7 +38,6 @@ export function load (
     function inProcessCreate (createProtocol: ServerImplCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn).then(server => {
-                const StubRepository = require('./stubRepository').StubRepository;
                 const stubs = new StubRepository(server.encoding || 'utf8'),
                     resolver = new ResponseResolver(stubs, server.proxy);
 
@@ -120,7 +120,6 @@ export function load (
                 const callbackURL = options.callbackURLTemplate.replace(':port', String(serverPort)),
                     encoding = metadata.encoding || 'utf8';
 
-                const StubRepository = require('./stubRepository').StubRepository;
                 const stubs = new StubRepository(encoding),
                     resolver = new ResponseResolver(stubs, undefined, callbackURL);
 

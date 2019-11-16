@@ -1,7 +1,7 @@
 'use strict';
 
 import * as Q from 'q';
-import {IStubConfig} from "./IStubConfig";
+import {IStubConfig} from "./stubs/IStubConfig";
 import {ILogger} from "../util/scopedLogger";
 import {IMountebankResponse, IServerRequestData} from "./IProtocol";
 

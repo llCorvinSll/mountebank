@@ -1,11 +1,12 @@
 'use strict';
 
-import {ILogger} from "../util/scopedLogger";
-import {IResponse} from "./IRequest";
-import {IPredicate} from "./IPredicate";
+import {ILogger} from "../../util/scopedLogger";
+import {IResponse} from "../IRequest";
+import {IPredicate} from "../IPredicate";
 import {IStubConfig} from "./IStubConfig";
-import {IMountebankResponse, IServerRequestData} from "./IProtocol";
-import * as  helpers from "../util/helpers";
+import {IMountebankResponse, IServerRequestData} from "../IProtocol";
+import * as helpers from "../../util/helpers";
+import * as predicates from '../predicates';
 
 /**
  * Maintains all stubs for an imposter
@@ -209,11 +210,9 @@ export class StubRepository implements IStubRepository {
             return undefined;
         }
 
-        const helpers = require('../util/helpers'),
-            readOnlyState = helpers.clone(imposterState),
+        const readOnlyState = helpers.clone(imposterState),
             matches = this._stubs.filter(stub => {
-                const stubPredicates: IPredicate[] = stub.predicates || [],
-                    predicates = require('./predicates');
+                const stubPredicates: IPredicate[] = stub.predicates || [];
 
                 return this.trueForAll(stubPredicates,
                     (predicate: IPredicate) => predicates.evaluate(predicate, request, this.encoding, logger, readOnlyState));

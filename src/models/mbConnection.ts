@@ -3,7 +3,7 @@
 import {ILogger} from "../util/scopedLogger";
 import * as Q from "q";
 import {IProxyImplementation} from "./IProtocol";
-import {IProxyConfig} from "./IStubConfig";
+import {IProxyConfig} from "./stubs/IStubConfig";
 import {IRequest, IResponse} from "./IRequest";
 import {IncomingMessage, RequestOptions} from "http";
 

@@ -2,13 +2,13 @@
 
 import {IRequest, IResponse} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
-import {IStubRepository} from "./stubRepository";
+import {IStubRepository} from "./stubs/stubRepository";
 import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
 import {IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
 import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
 import * as behaviors from "./behaviors";
-import {IProxyConfig, IStubConfig} from "./IStubConfig";
+import {IProxyConfig, IStubConfig} from "./stubs/IStubConfig";
 import * as  helpers from '../util/helpers';
 import * as jsonpath from './jsonpath';
 import * as compatibility from './compatibility';

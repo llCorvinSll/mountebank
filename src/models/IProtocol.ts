@@ -4,9 +4,9 @@ import {IImposter, IImposterConfig} from "./IImposter";
 import {IMontebankError} from "../util/errors";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
-import {IProxyConfig} from "./IStubConfig";
+import {IProxyConfig} from "./stubs/IStubConfig";
 import {IBehaviors} from "./IRequest";
-import {IStubRepository} from "./stubRepository";
+import {IStubRepository} from "./stubs/stubRepository";
 
 export interface IProtocol {
     port:number;

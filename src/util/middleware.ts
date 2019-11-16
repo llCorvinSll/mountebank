@@ -3,7 +3,7 @@
 import {ILogger} from "./scopedLogger";
 import { Request, Response } from "express";
 import {IImposter} from "../models/IImposter";
-import {IStubConfig} from "../models/IStubConfig";
+import {IStubConfig} from "../models/stubs/IStubConfig";
 
 /**
  * Express middleware functions to inject into the HTTP processing

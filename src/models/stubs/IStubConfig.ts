@@ -1,6 +1,6 @@
-import {IPredicate} from "./IPredicate";
-import {IBehaviors, IResponse} from "./IRequest";
-import {IMountebankResponse} from "./IProtocol";
+import {IPredicate} from "../IPredicate";
+import {IBehaviors, IResponse} from "../IRequest";
+import {IMountebankResponse} from "../IProtocol";
 
 
 export interface IProxyConfig {

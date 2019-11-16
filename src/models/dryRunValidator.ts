@@ -11,11 +11,11 @@ import {ILogger} from "../util/scopedLogger";
 import {IResponse} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
-import {IStubRepository, StubRepository} from "./stubRepository";
+import {IStubRepository, StubRepository} from "./stubs/stubRepository";
 import {IImposterConfig} from "./IImposter";
 import {IServerRequestData, IValidation} from "./IProtocol";
 import {ResponseResolver} from "./responseResolver";
-import {IStubConfig} from "./IStubConfig";
+import {IStubConfig} from "./stubs/IStubConfig";
 
 
 interface IDryRunValidatorOptions {
