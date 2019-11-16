@@ -1,6 +1,11 @@
 'use strict';
 
 import {BehaviorsValidator} from "./behaviorsValidator";
+import * as Q from "q";
+import {clone, defined, isObject} from "../util/helpers";
+import * as errors from "../util/errors";
+import {IMountebankResponse, IServerRequestData} from "./IProtocol";
+import {ILogger} from "../util/scopedLogger";
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -116,9 +121,7 @@ function wait (request, responsePromise, millisecondsOrFn, logger) {
     }
 
     const util = require('util'),
-        fn = util.format('(%s)()', millisecondsOrFn),
-        Q = require('q'),
-        exceptions = require('../util/errors');
+        fn = util.format('(%s)()', millisecondsOrFn);
     let milliseconds = parseInt(millisecondsOrFn);
 
     if (isNaN(milliseconds)) {
@@ -128,7 +131,7 @@ function wait (request, responsePromise, millisecondsOrFn, logger) {
         catch (error) {
             logger.error('injection X=> ' + error);
             logger.error('    full source: ' + JSON.stringify(fn));
-            return Q.reject(exceptions.InjectionError('invalid wait injection',
+            return Q.reject(errors.InjectionError('invalid wait injection',
                 { source: millisecondsOrFn, data: error.message }));
         }
     }
@@ -153,12 +156,11 @@ function quoteForShell (obj) {
 }
 
 function execShell (command, request, response, logger) {
-    const Q = require('q'),
-        deferred = Q.defer(),
+    const deferred = Q.defer(),
         util = require('util'),
         exec = require('child_process').exec,
         fullCommand = util.format('%s %s %s', command, quoteForShell(request), quoteForShell(response)),
-        env = require('../util/helpers').clone(process.env);
+        env = clone(process.env);
     logger.debug('Shelling out to %s', command);
     logger.debug(fullCommand);
 
@@ -225,15 +227,12 @@ function decorate (originalRequest, responsePromise, fn, logger) {
     }
 
     return responsePromise.then(response => {
-        const Q = require('q'),
-            helpers = require('../util/helpers'),
-            config = {
-                request: helpers.clone(originalRequest),
+        const config = {
+                request: clone(originalRequest),
                 response,
                 logger
             },
             injected = `(${fn})(config, response, logger);`,
-            exceptions = require('../util/errors'),
             compatibility = require('./compatibility');
 
         compatibility.downcastInjectionConfig(config);
@@ -251,7 +250,7 @@ function decorate (originalRequest, responsePromise, fn, logger) {
             logger.error('injection X=> ' + error);
             logger.error('    full source: ' + JSON.stringify(injected));
             logger.error('    config: ' + JSON.stringify(config));
-            return Q.reject(exceptions.InjectionError('invalid decorator injection', { source: injected, data: error.message }));
+            return Q.reject(errors.InjectionError('invalid decorator injection', { source: injected, data: error.message }));
         }
     });
 }
@@ -268,8 +267,6 @@ function getKeyIgnoringCase (obj, expectedKey):string {
 }
 
 function getFrom (obj, from) {
-    const isObject = require('../util/helpers').isObject;
-
     if (typeof obj === 'undefined') {
         return undefined;
     }
@@ -347,8 +344,6 @@ function globalStringReplace (str, substring, newSubstring, logger) {
 }
 
 function globalObjectReplace (obj, replacer) {
-    const isObject = require('../util/helpers').isObject;
-
     Object.keys(obj).forEach(key => {
         if (typeof obj[key] === 'string') {
             obj[key] = replacer(obj[key]);
@@ -387,7 +382,6 @@ function replaceArrayValuesIn (response, token, values, logger) {
  */
 function copy (originalRequest, responsePromise, copyArray, logger) {
     return responsePromise.then(response => {
-        const Q = require('q');
 
         copyArray.forEach(function (copyConfig) {
             const from = getFrom(originalRequest, copyConfig.from),
@@ -402,9 +396,8 @@ function copy (originalRequest, responsePromise, copyArray, logger) {
 }
 
 function containsKey (headers, keyColumn) {
-    const helpers = require('../util/helpers'),
-        key = Object.values(headers).find(value => value === keyColumn);
-    return helpers.defined(key);
+    const key = Object.values(headers).find(value => value === keyColumn);
+    return defined(key);
 }
 
 function createRowObject (headers, rowArray) {
@@ -417,8 +410,6 @@ function createRowObject (headers, rowArray) {
 
 function selectRowFromCSV (csvConfig, keyValue, logger) {
     const fs = require('fs'),
-        Q = require('q'),
-        helpers = require('../util/helpers'),
         delimiter = csvConfig.delimiter || ',',
         inputStream = fs.createReadStream(csvConfig.path),
         parser = require('csv-parse')({ delimiter: delimiter }),
@@ -432,7 +423,7 @@ function selectRowFromCSV (csvConfig, keyValue, logger) {
     });
 
     pipe.on('data', function (rowArray) {
-        if (!helpers.defined(headers)) {
+        if (!defined(headers)) {
             headers = rowArray;
             const keyOnHeader = containsKey(headers, csvConfig.keyColumn);
             if (!keyOnHeader) {
@@ -442,7 +433,7 @@ function selectRowFromCSV (csvConfig, keyValue, logger) {
         }
         else {
             const row = createRowObject(headers, rowArray);
-            if (helpers.defined(row[csvConfig.keyColumn]) && row[csvConfig.keyColumn].localeCompare(keyValue) === 0) {
+            if (defined(row[csvConfig.keyColumn]) && row[csvConfig.keyColumn].localeCompare(keyValue) === 0) {
                 deferred.resolve(row);
             }
         }
@@ -461,8 +452,7 @@ function selectRowFromCSV (csvConfig, keyValue, logger) {
 }
 
 function lookupRow (lookupConfig, originalRequest, logger) {
-    const Q = require('q'),
-        from = getFrom(originalRequest, lookupConfig.key.from),
+    const from = getFrom(originalRequest, lookupConfig.key.from),
         fnMap = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
         keyValues = fnMap[lookupConfig.key.using.method](from, lookupConfig.key, logger),
         index = lookupConfig.key.index || 0;
@@ -503,8 +493,7 @@ function replaceObjectValuesIn (response, token, values, logger) {
  */
 function lookup (originalRequest, responsePromise, lookupArray, logger) {
     return responsePromise.then(response => {
-        const Q = require('q'),
-            lookupPromises = lookupArray.map(function (lookupConfig) {
+        const lookupPromises = lookupArray.map(function (lookupConfig) {
                 return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
                     replaceObjectValuesIn(response, lookupConfig.into, row, logger);
                 });
@@ -523,13 +512,12 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object}
  */
-export function execute (request, response, behaviors, logger) {
+export function execute (request:IServerRequestData, response:IMountebankResponse, behaviors, logger:ILogger) {
     if (!behaviors) {
-        return require('q')(response);
+        return Q(response);
     }
 
-    const Q = require('q'),
-        combinators = require('../util/combinators'),
+    const combinators = require('../util/combinators'),
         waitFn = behaviors.wait ?
             result => wait(request, result, behaviors.wait, logger) :
             combinators.identity,

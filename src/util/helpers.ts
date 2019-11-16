@@ -13,7 +13,7 @@ interface IIndexed {
  * @param {Object} obj - the value to test
  * @returns {boolean}
  */
-export function defined (obj:Object):Boolean {
+export function defined (obj:unknown):Boolean {
     return typeof obj !== 'undefined';
 }
 
