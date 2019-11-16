@@ -1,6 +1,6 @@
 'use strict';
 
-import {IImposter} from "./IImposter";
+import {IImposter} from "./imposters/IImposter";
 
 export interface IMountebankOptions {
     heroku: unknown;

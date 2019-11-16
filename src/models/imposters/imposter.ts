@@ -7,18 +7,18 @@ import {
     IResolver,
     IServer,
     IServerRequestData
-} from "./IProtocol";
+} from "../IProtocol";
 import {IImposter, IImposterConfig, IpValidator} from "./IImposter";
 import * as Q from "q";
-import {ILogger} from "../util/scopedLogger";
-import {IProtocolLoadOptions} from "./protocols";
-import {IStubConfig} from "./stubs/IStubConfig";
+import {ILogger} from "../../util/scopedLogger";
+import {IProtocolLoadOptions} from "../protocols";
+import {IStubConfig} from "../stubs/IStubConfig";
 import * as domain_nsp from "domain";
 import {Domain} from "domain";
-import * as helpers from '../util/helpers';
-import * as compatibility from './compatibility';
+import * as helpers from '../../util/helpers';
+import * as compatibility from '../compatibility';
 import * as imposterPrinter from './imposterPrinter';
-import {IStub} from "./stubs/IStub";
+import {IStub} from "../stubs/IStub";
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -29,7 +29,7 @@ import {IStub} from "./stubs/IStub";
  */
 function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
     return (error: any) => {
-        const errors = require('../util/errors');
+        const errors = require('../../util/errors');
 
         if (error.errno === 'EADDRINUSE') {
             deferred.reject(errors.ResourceConflictError(`Port ${port} is already in use`));
@@ -61,7 +61,7 @@ export class Imposter implements IImposter {
         protected isAllowedConnection: IpValidator) {
         compatibility.upcast(this.creationRequest);
 
-        this.logger = require('../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port));
+        this.logger = require('../../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port));
         // If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
         this.recordRequests = config.recordRequests || creationRequest.recordRequests;
     }

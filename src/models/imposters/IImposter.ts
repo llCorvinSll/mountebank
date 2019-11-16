@@ -1,10 +1,10 @@
 'use strict';
 
 import * as Q from 'q';
-import {IStubConfig} from "./stubs/IStubConfig";
-import {ILogger} from "../util/scopedLogger";
-import {IMountebankResponse, IServerRequestData} from "./IProtocol";
-import {IStub} from "./stubs/IStub";
+import {IStubConfig} from "../stubs/IStubConfig";
+import {ILogger} from "../../util/scopedLogger";
+import {IMountebankResponse, IServerRequestData} from "../IProtocol";
+import {IStub} from "../stubs/IStub";
 
 export interface IImposter {
     port: number;

@@ -1,7 +1,7 @@
 'use strict';
 
 import {ILogger} from "../util/scopedLogger";
-import {IImposter, IImposterConfig} from "../models/IImposter";
+import {IImposter, IImposterConfig} from "../models/imposters/IImposter";
 import {details, IMontebankError, ValidationError} from "../util/errors";
 import {Request, Response} from "express";
 import {IProtocolFactory, IValidation} from "../models/IProtocol";

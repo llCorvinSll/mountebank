@@ -1,7 +1,7 @@
 'use strict';
 
-import {IServer} from "./IProtocol";
-import * as helpers from '../util/helpers';
+import {IServer} from "../IProtocol";
+import * as helpers from '../../util/helpers';
 
 export function create (creationRequest, server:IServer, requests) {
     function addDetailsTo (result, baseURL) {

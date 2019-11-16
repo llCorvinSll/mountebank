@@ -3,7 +3,7 @@
 import {Request, Response} from "express";
 import {ILogger} from "../util/scopedLogger";
 import {IProtocolFactory, IValidation} from "../models/IProtocol";
-import {IImposter} from "../models/IImposter";
+import {IImposter} from "../models/imposters/IImposter";
 import {ParsedUrlQuery} from "querystring";
 import * as Q from "q";
 import {IMontebankError, ValidationError} from "../util/errors";

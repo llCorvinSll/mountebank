@@ -1,6 +1,6 @@
 'use strict';
 
-import {IImposter, IImposterConfig} from "./IImposter";
+import {IImposter, IImposterConfig} from "./imposters/IImposter";
 import {IMontebankError} from "../util/errors";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";

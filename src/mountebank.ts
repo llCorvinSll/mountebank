@@ -16,7 +16,7 @@ import * as winston from "winston";
 import {NetworkInterfaceInfo} from "os";
 import {Socket} from "net";
 import {IProtocolLoadOptions} from "./models/protocols";
-import {IpValidator} from "./models/IImposter";
+import {IpValidator} from "./models/imposters/IImposter";
 import {IProtocolFactory} from "./models/IProtocol";
 import {ImpostersController} from "./controllers/impostersController";
 import {ImposterController} from "./controllers/imposterController";

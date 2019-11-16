@@ -2,7 +2,7 @@
 
 import {ILogger} from "./scopedLogger";
 import { Request, Response } from "express";
-import {IImposter} from "../models/IImposter";
+import {IImposter} from "../models/imposters/IImposter";
 import {IStubConfig} from "../models/stubs/IStubConfig";
 
 /**

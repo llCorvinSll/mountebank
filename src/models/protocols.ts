@@ -9,8 +9,8 @@ import {
     ServerCreatorFunction,
     ServerImplCreatorFunction
 } from "./IProtocol";
-import {IImposterConfig, IpValidator} from "./IImposter";
-import {Imposter} from "./imposter";
+import {IImposterConfig, IpValidator} from "./imposters/IImposter";
+import {Imposter} from "./imposters/imposter";
 import {ResponseResolver} from "./responseResolver";
 import {StubRepository} from "./stubs/stubRepository";
 

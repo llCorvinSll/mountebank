@@ -12,7 +12,7 @@ import {IResponse} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
 import {StubRepository} from "./stubs/stubRepository";
-import {IImposterConfig} from "./IImposter";
+import {IImposterConfig} from "./imposters/IImposter";
 import {IServerRequestData, IValidation} from "./IProtocol";
 import {ResponseResolver} from "./responseResolver";
 import {IStubConfig} from "./stubs/IStubConfig";
@@ -21,7 +21,7 @@ import {IStubRepository} from "./stubs/IStubRepository";
 
 
 
-    interface IDryRunValidatorOptions {
+interface IDryRunValidatorOptions {
     allowInjection:boolean;
     testRequest:IServerRequestData;
     testProxyResponse:any;
