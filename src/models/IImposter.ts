@@ -9,6 +9,7 @@ import {IMountebankResponse, IServerRequestData} from "./IProtocol";
 export interface IImposter {
     port: number;
     url: string;
+    protocol: string;
 
     stubs():IStubConfig[];
     addStub(stub: IStubConfig):void;

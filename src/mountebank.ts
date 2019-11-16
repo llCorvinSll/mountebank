@@ -19,6 +19,7 @@ import {IProtocolLoadOptions} from "./models/protocols";
 import {IpValidator} from "./models/IImposter";
 import {IProtocolFactory} from "./models/IProtocol";
 import {ImpostersController} from "./controllers/impostersController";
+import {ImposterController} from "./controllers/imposterController";
 
 /**
  * The entry point for mountebank.  This module creates the mountebank server,
@@ -176,7 +177,7 @@ export function create (options: IMountebankOptions) {
         homeController = require('./controllers/homeController').create(releases),
         impostersController = new ImpostersController(
             protocols, imposters, logger, options.allowInjection),
-        imposterController = require('./controllers/imposterController').create(
+        imposterController = new ImposterController(
             protocols, imposters, logger, options.allowInjection),
         logsController = require('./controllers/logsController').create(options.logfile),
         configController = require('./controllers/configController').create(thisPackage.version, options),

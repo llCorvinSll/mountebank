@@ -2,7 +2,7 @@
 
 const assert = require('assert'),
     mock = require('../mock').mock,
-    Controller = require('../../src/controllers/imposterController'),
+    ImposterController = require('../../src/controllers/imposterController').ImposterController,
     FakeResponse = require('../fakes/fakeResponse'),
     Q = require('q'),
     promiseIt = require('../testHelpers').promiseIt;
@@ -16,7 +16,7 @@ describe('ImposterController', function () {
                     1: { toJSON: mock().returns('firstJSON') },
                     2: { toJSON: mock().returns('secondJSON') }
                 },
-                controller = Controller.create({}, imposters);
+                controller = new ImposterController({}, imposters);
 
             controller.get({ url: '/imposters/2', params: { id: 2 } }, response);
 
@@ -29,7 +29,7 @@ describe('ImposterController', function () {
                     1: { toJSON: mock().returns('firstJSON') },
                     2: { toJSON: mock().returns('secondJSON') }
                 },
-                controller = Controller.create({}, imposters);
+                controller = new ImposterController({}, imposters);
 
             controller.get({ url: '/imposters/2?replayable=true', params: { id: 2 } }, response);
 
@@ -43,7 +43,7 @@ describe('ImposterController', function () {
                     1: { toJSON: mock().returns('firstJSON') },
                     2: { toJSON: mock().returns('secondJSON') }
                 },
-                controller = Controller.create({}, imposters);
+                controller = new ImposterController({}, imposters);
 
             controller.get({ url: '/imposters/2?removeProxies=true', params: { id: 2 } }, response);
 
@@ -57,7 +57,7 @@ describe('ImposterController', function () {
                     1: { toJSON: mock().returns('firstJSON') },
                     2: { toJSON: mock().returns('secondJSON') }
                 },
-                controller = Controller.create({}, imposters);
+                controller = new ImposterController({}, imposters);
 
             controller.get({ url: '/imposters/2?removeProxies=true&replayable=true', params: { id: 2 } }, response);
 
@@ -71,7 +71,7 @@ describe('ImposterController', function () {
                     1: { toJSON: mock().returns('firstJSON') },
                     2: { toJSON: mock().returns('secondJSON') }
                 },
-                controller = Controller.create({}, imposters);
+                controller = new ImposterController({}, imposters);
 
             controller.get({ url: '/imposters/2?replayable=false&removeProxies=false', params: { id: 2 } }, response);
 
@@ -87,7 +87,7 @@ describe('ImposterController', function () {
                     stop: mock().returns(Q(true)),
                     toJSON: mock().returns('JSON')
                 },
-                controller = Controller.create({}, { 1: imposter });
+                controller = new ImposterController({}, { 1: imposter });
 
             return controller.del({ url: '/imposters/1', params: { id: 1 } }, response).then(() => {
                 assert(imposter.stop.wasCalled());
@@ -102,7 +102,7 @@ describe('ImposterController', function () {
                         toJSON: mock().returns('JSON')
                     }
                 },
-                controller = Controller.create({}, imposters);
+                controller = new ImposterController({}, imposters);
 
             return controller.del({ url: '/imposters/1', params: { id: 1 } }, response).then(() => {
                 assert.deepEqual(imposters, {});
@@ -112,7 +112,7 @@ describe('ImposterController', function () {
         promiseIt('should send request even if no imposter exists', function () {
             const response = FakeResponse.create(),
                 imposters = {},
-                controller = Controller.create({}, imposters);
+                controller = new ImposterController({}, imposters);
 
             return controller.del({ url: '/imposters/1', params: { id: 1 } }, response).then(() => {
                 assert.deepEqual(response.body, {});
@@ -125,7 +125,7 @@ describe('ImposterController', function () {
                     stop: mock().returns(Q(true)),
                     toJSON: mock().returns('JSON')
                 },
-                controller = Controller.create({}, { 1: imposter });
+                controller = new ImposterController({}, { 1: imposter });
 
             return controller.del({ url: '/imposters/1?replayable=true', params: { id: 1 } }, response).then(() => {
                 assert.ok(imposter.toJSON.wasCalledWith({ replayable: true, removeProxies: false }), imposter.toJSON.message());
@@ -138,7 +138,7 @@ describe('ImposterController', function () {
                     stop: mock().returns(Q(true)),
                     toJSON: mock().returns('JSON')
                 },
-                controller = Controller.create({}, { 1: imposter });
+                controller = new ImposterController({}, { 1: imposter });
 
             return controller.del({ url: '/imposters/1?removeProxies=true', params: { id: 1 } }, response).then(() => {
                 assert.ok(imposter.toJSON.wasCalledWith({ replayable: false, removeProxies: true }), imposter.toJSON.message());
@@ -151,7 +151,7 @@ describe('ImposterController', function () {
                     stop: mock().returns(Q(true)),
                     toJSON: mock().returns('JSON')
                 },
-                controller = Controller.create({}, { 1: imposter });
+                controller = new ImposterController({}, { 1: imposter });
 
             return controller.del({ url: '/imposters/1?removeProxies=true&replayable=true', params: { id: 1 } }, response).then(() => {
                 assert.ok(imposter.toJSON.wasCalledWith({ replayable: true, removeProxies: true }), imposter.toJSON.message());
@@ -164,7 +164,7 @@ describe('ImposterController', function () {
                     stop: mock().returns(Q(true)),
                     toJSON: mock().returns('JSON')
                 },
-                controller = Controller.create({}, { 1: imposter });
+                controller = new ImposterController({}, { 1: imposter });
 
             return controller.del({ url: '/imposters/1', params: { id: 1 } }, response).then(() => {
                 assert.ok(imposter.toJSON.wasCalledWith({ replayable: false, removeProxies: false }), imposter.toJSON.message());
@@ -177,7 +177,7 @@ describe('ImposterController', function () {
                     toJSON: mock().returns('JSON'),
                     resetProxies: mock()
                 },
-                controller = Controller.create({}, { 1: imposter });
+                controller = new ImposterController({}, { 1: imposter });
 
             return controller.resetProxies({ url: '/imposters/1/requests', params: { id: 1 } }, response).then(() => {
                 assert(imposter.resetProxies.wasCalled());
@@ -193,7 +193,7 @@ describe('ImposterController', function () {
                     overwriteStubs: mock()
                 },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({}, { 1: imposter }, logger, false);
+                controller = new ImposterController({}, { 1: imposter }, logger, false);
 
             return controller.putStubs({ params: { id: 1 }, body: {} }, response).then(() => {
                 assert.strictEqual(response.statusCode, 400);
@@ -209,7 +209,7 @@ describe('ImposterController', function () {
                     overwriteStubs: mock()
                 },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({}, { 1: imposter }, logger, false),
+                controller = new ImposterController({}, { 1: imposter }, logger, false),
                 request = {
                     params: { id: 1 },
                     body: { stubs: 1 }
@@ -229,7 +229,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1 },
                     body: { stubs: [{ responses: [{ invalid: 1 }] }] }
@@ -249,7 +249,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1 },
                     body: { stubs: [{ responses: [{ inject: '() => {}' }] }] }
@@ -274,7 +274,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1, stubIndex: 'test' },
                     body: { stubs: [{ responses: [{ is: 'response' }] }] }
@@ -300,7 +300,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1, stubIndex: -1 },
                     body: { stubs: [{ responses: [{ is: 'response' }] }] }
@@ -326,7 +326,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1, stubIndex: 3 },
                     body: { stubs: [{ responses: [{ is: 'response' }] }] }
@@ -352,7 +352,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1, stubIndex: 0 },
                     body: { responses: [{ INVALID: 'response' }] }
@@ -379,7 +379,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1, stubIndex: 0 },
                     body: { responses: [{ inject: '() => {}' }] }
@@ -408,7 +408,7 @@ describe('ImposterController', function () {
                 },
                 Protocol = { testRequest: {} },
                 logger = require('../fakes/fakeLogger').create(),
-                controller = Controller.create({ test: Protocol }, imposters, logger, false),
+                controller = new ImposterController({ test: Protocol }, imposters, logger, false),
                 request = {
                     params: { id: 1, stubIndex: 3 },
                     body: { stubs: [{ responses: [{ is: 'response' }] }] }

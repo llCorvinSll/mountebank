@@ -74,6 +74,8 @@ export class Imposter implements IImposter {
     private readonly recordRequests: boolean = false;
     private imposterState = {};
     private printer:any;
+    //TODO: not required field
+    public protocol:string;
 
     public init(): Q.Promise<IImposter> {
         this.domain = domain_nsp.create();
