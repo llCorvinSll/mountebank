@@ -76,6 +76,8 @@ export interface IServerRequestData {
     ip?: string;
     timestamp?:string;
     isDryRun?:boolean;
+
+    [key:string]:string|undefined|unknown;
 }
 
 

@@ -10,4 +10,7 @@ export interface IStub {
     recordMatch?: (responce?: any) => void;
 
     matches?:unknown[];
+
+    _links?:string;
+
 }

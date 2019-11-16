@@ -20,8 +20,8 @@ import {IServerRequestData} from "./IProtocol";
  * @param {Object} request - the request to upcast
  */
 function upcastShellTransformToArray (request: any) {
-    (request.stubs || []).forEach(stub => {
-        (stub.responses || []).forEach(response => {
+    (request.stubs || []).forEach((stub:any) => {
+        (stub.responses || []).forEach((response:any) => {
             if (response._behaviors && response._behaviors.shellTransform &&
                 typeof response._behaviors.shellTransform === 'string') {
                 response._behaviors.shellTransform = [response._behaviors.shellTransform];
@@ -42,8 +42,8 @@ function upcastTcpProxyDestinationToUrl (request: any) {
 
     const isObject = require('../util/helpers').isObject;
 
-    (request.stubs || []).forEach(stub => {
-        (stub.responses || []).forEach(response => {
+    (request.stubs || []).forEach((stub:any) => {
+        (stub.responses || []).forEach((response:any) => {
             const proxy = response.proxy;
             if (proxy && isObject(proxy.to) && proxy.to.host && proxy.to.port) {
                 proxy.to = `tcp://${proxy.to.host}:${proxy.to.port}` as toDeclaration;

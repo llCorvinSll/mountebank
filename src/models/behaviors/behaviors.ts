@@ -276,7 +276,7 @@ function getKeyIgnoringCase (obj:object, expectedKey:string):string {
     }) as string;
 }
 
-function getFrom (obj:IServerRequestData, from) {
+function getFrom (obj:any, from) {
     if (typeof obj === 'undefined') {
         return undefined;
     }

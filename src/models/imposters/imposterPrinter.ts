@@ -3,6 +3,7 @@
 import {IServer, IServerRequestData} from "../IProtocol";
 import * as helpers from '../../util/helpers';
 import {IImposterConfig, ImposterPrintOptions} from "./IImposter";
+import {IStub} from "../stubs/IStub";
 
 
 export class ImposterPrinter {
@@ -42,7 +43,7 @@ export class ImposterPrinter {
         return result;
     }
 
-    private addDetailsTo (result, baseURL) {
+    private addDetailsTo (result:any, baseURL:string) {
         if (this.creationRequest.name) {
             result.name = this.creationRequest.name;
         }
@@ -62,13 +63,13 @@ export class ImposterPrinter {
         }
     }
 
-    private removeNonEssentialInformationFrom (result) {
-        result.stubs.forEach(stub => {
+    private removeNonEssentialInformationFrom (result:any) {
+        result.stubs.forEach((stub:IStub) => {
             /* eslint-disable no-underscore-dangle */
             if (stub.matches) {
                 delete stub.matches;
             }
-            stub.responses.forEach(response => {
+            (stub.responses || []).forEach(response => {
                 if (helpers.defined(response.is) && helpers.defined(response.is._proxyResponseTime)) {
                     delete response.is._proxyResponseTime;
                 }
@@ -80,12 +81,12 @@ export class ImposterPrinter {
         delete result._links;
     }
 
-    private removeProxiesFrom (result) {
-        result.stubs.forEach(stub => {
+    private removeProxiesFrom (result:any) {
+        result.stubs.forEach((stub:IStub) => {
             // eslint-disable-next-line no-prototype-builtins
-            stub.responses = stub.responses.filter(response => !response.hasOwnProperty('proxy'));
+            stub.responses = (stub.responses || []).filter(response => !response.hasOwnProperty('proxy'));
         });
-        result.stubs = result.stubs.filter(stub => stub.responses.length > 0);
+        result.stubs = result.stubs.filter((stub:IStub) => (stub.responses || []).length > 0);
     }
 
 }
