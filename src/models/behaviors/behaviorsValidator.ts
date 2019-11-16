@@ -4,6 +4,7 @@ import {IMontebankError} from "../../util/errors";
 import * as exceptions from '../../util/errors';
 import * as helpers from '../../util/helpers';
 import * as util from 'util';
+import {IBehaviorsConfig} from "./IBehaviorsConfig";
 
 
 
@@ -15,7 +16,7 @@ export class BehaviorsValidator {
      * @param {Object} validationSpec - the specification to validate against
      * @returns {Object} The array of errors
      */
-    public validate (config, validationSpec) {
+    public validate (config:IBehaviorsConfig|undefined, validationSpec) {
         const errors:IMontebankError[] = [];
 
         Object.keys(config || {}).forEach(key => {
