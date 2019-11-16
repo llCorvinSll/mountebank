@@ -1,5 +1,7 @@
 import {IRequest, toDeclaration} from "./IRequest";
 import {IStub} from "./stubs/IStub";
+import {ILogger} from "../util/scopedLogger";
+import {IServerRequestData} from "./IProtocol";
 
 'use strict';
 
@@ -61,8 +63,10 @@ export function upcast (request: any) {
 
 
 interface IConfig {
-    request: IRequest;
-    [key: string]: IRequest|string|IStub;
+    request: IServerRequestData;
+    state:unknown;
+    logger:ILogger;
+    [key: string]: IRequest|string|IStub|unknown;
 }
 
 /**

@@ -3,17 +3,22 @@
 import {ILogger} from "../util/scopedLogger";
 import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
 import {IServerRequestData} from "./IProtocol";
+import * as errors from "../util/errors";
+import * as helpers from '../util/helpers';
+import * as combinators from '../util/combinators';
+import * as  stringify from 'json-stable-stringify';
+import * as compatibility from './compatibility';
+import * as xpath from './xpath';
+import * as jsonpath from './jsonpath';
 
-/**
+
+    /**
  * All the PREDICATES that determine whether a stub matches a request
  * @module
  */
 
 function sortObjects (a: any, b: any): number {
-    const stringify = require('json-stable-stringify'),
-        isObject = require('../util/helpers').isObject;
-
-    if (isObject(a) && isObject(b)) {
+    if (helpers.isObject(a) && helpers.isObject(b)) {
         // Make best effort at sorting arrays of objects to make
         // deepEquals order-independent
         return sortObjects(stringify(a), stringify(b));
@@ -27,15 +32,13 @@ function sortObjects (a: any, b: any): number {
 }
 
 function forceStrings (value: any): any {
-    const isObject = require('../util/helpers').isObject;
-
     if (value === null) {
         return 'null';
     }
     else if (Array.isArray(value)) {
         return value.map(forceStrings) as any;
     }
-    else if (isObject(value)) {
+    else if (helpers.isObject(value)) {
         return Object.keys(value).reduce((accumulator, key) => {
             accumulator[key] = forceStrings(value[key]);
             return accumulator;
@@ -52,7 +55,6 @@ function forceStrings (value: any): any {
 // @ts-ignore
 function select (type, selectFn, encoding: string) {
     if (encoding === 'base64') {
-        const errors = require('../util/errors');
         throw errors.ValidationError(`the ${type} predicate parameter is not allowed in binary mode`);
     }
 
@@ -88,17 +90,13 @@ function transformObject (obj: any, transform: (inp: any) => any) {
 }
 
 function selectXPath (config: IXPathConfig, encoding: string, text: string) {
-    const xpath = require('./xpath'),
-        combinators = require('../util/combinators'),
-        selectFn = combinators.curry(xpath.select, config.selector, config.ns, text);
+    const selectFn = combinators.curry(xpath.select, config.selector, config.ns, text);
 
     return orderIndependent(select('xpath', selectFn, encoding));
 }
 
 function selectTransform (config: IPredicate, options: INormalizeOptions) {
-    const combinators = require('../util/combinators'),
-        helpers = require('../util/helpers'),
-        cloned = helpers.clone(config);
+    const cloned = helpers.clone(config);
 
     if (config.jsonpath) {
         const stringTransform = options.shouldForceStrings ? forceStrings : combinators.identity;
@@ -128,13 +126,11 @@ function lowercase (text: string): string {
 }
 
 function caseTransform (config: IPredicate) {
-    const combinators = require('../util/combinators');
     return config.caseSensitive ? combinators.identity : lowercase;
 }
 
 function exceptTransform (config: IPredicate) {
-    const combinators = require('../util/combinators'),
-        exceptRegexOptions = config.caseSensitive ? 'g' : 'gi';
+    const exceptRegexOptions = config.caseSensitive ? 'g' : 'gi';
 
     if (config.except) {
         return (text: string) => text.replace(new RegExp(config.except, exceptRegexOptions), '');
@@ -145,7 +141,6 @@ function exceptTransform (config: IPredicate) {
 }
 
 function encodingTransform (encoding: string) {
-    const combinators = require('../util/combinators');
     if (encoding === 'base64') {
         return (text: string) => Buffer.from(text, 'base64').toString();
     }
@@ -169,24 +164,20 @@ function tryJSON (value: string, predicateConfig: IPredicate) {
 }
 
 function selectJSONPath (config: IJsonPathConfig, encoding: string, predicateConfig: IPredicate, stringTransform: (inp: string) => string, text: string) {
-    const jsonpath = require('./jsonpath'),
-        combinators = require('../util/combinators'),
-        possibleJSON = stringTransform(tryJSON(text, predicateConfig)),
-        selectFn = combinators.curry(jsonpath.select, config.selector, possibleJSON);
+    const possibleJSON = stringTransform(tryJSON(text, predicateConfig));
+    const selectFn = combinators.curry(jsonpath.select, config.selector, possibleJSON);
 
     return orderIndependent(select('jsonpath', selectFn, encoding));
 }
 
 // @ts-ignore
 function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
-    const combinators = require('../util/combinators'),
-        apply = (fns: Function) => combinators.compose.apply(null, fns),
-        isObject = require('../util/helpers').isObject;
+    const apply = (fns: Function) => combinators.compose.apply(null, fns);
 
     if (Array.isArray(obj)) {
         return apply(arrayTransforms)(obj.map(element => transformAll(element, keyTransforms, valueTransforms, arrayTransforms)));
     }
-    else if (isObject(obj)) {
+    else if (helpers.isObject(obj)) {
         return Object.keys(obj).reduce((accumulator, key) => {
             accumulator[apply(keyTransforms)(key)] = transformAll(obj[key], keyTransforms, valueTransforms, arrayTransforms);
             return accumulator;
@@ -237,7 +228,6 @@ function normalize (obj, config: IPredicate, options: INormalizeOptions) {
 
 // @ts-ignore
 function testPredicate (expected, actual, predicateConfig: IPredicate, predicateFn) {
-    const helpers = require('../util/helpers');
     if (!helpers.defined(actual)) {
         actual = '';
     }
@@ -269,7 +259,6 @@ function expectedMatchesAtLeastOneValueInActualArray (expected: any, actualArray
 }
 
 function expectedLeftOffArraySyntaxButActualIsArrayOfObjects (expected: any, actual: any, fieldName: string) {
-    const helpers = require('../util/helpers');
     return !Array.isArray(expected[fieldName]) && !helpers.defined(actual[fieldName]) && Array.isArray(actual);
 }
 
@@ -285,8 +274,6 @@ function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredi
     }
 
     return Object.keys(expected).every(fieldName => {
-        const isObject = require('../util/helpers').isObject;
-
         if (bothArrays(expected[fieldName], actual[fieldName])) {
             return allExpectedArrayValuesMatchActualArray(
                 expected[fieldName], actual[fieldName], predicateConfig, predicateFn);
@@ -311,7 +298,7 @@ function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredi
             // in the actual array
             return expectedMatchesAtLeastOneValueInActualArray(expected, actual, predicateConfig, predicateFn);
         }
-        else if (isObject(expected[fieldName])) {
+        else if (helpers.isObject(expected[fieldName])) {
             return predicateSatisfied(expected[fieldName], actual[fieldName], predicateConfig, predicateFn);
         }
         else {
@@ -332,13 +319,11 @@ function create (operator: string, predicateFn: (expected: string, actual: strin
 
 function deepEquals (predicate: IPredicate, request: IServerRequestData, encoding: string) {
     const expected = normalize(forceStrings(predicate.deepEquals), predicate, { encoding: encoding }),
-        actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true }),
-        stringify = require('json-stable-stringify'),
-        isObject = require('../util/helpers').isObject;
+        actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true });
 
     return Object.keys(expected).every(fieldName => {
         // Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
-        if (isObject(expected[fieldName]) && typeof actual[fieldName] === 'string') {
+        if (helpers.isObject(expected[fieldName]) && typeof actual[fieldName] === 'string') {
             const possibleJSON = tryJSON(actual[fieldName], predicate);
             actual[fieldName] = normalize(forceStrings(possibleJSON), predicate, { encoding: encoding });
         }
@@ -351,14 +336,12 @@ function matches (predicate: IPredicate, request: IServerRequestData, encoding: 
     // a regular expression with upper case metacharacters like \W and \S
     // However, we need to maintain the case transform for keys like http header names (issue #169)
     // eslint-disable-next-line no-unneeded-ternary
-    const caseSensitive = predicate.caseSensitive ? true : false, // convert to boolean even if undefined
-        helpers = require('../util/helpers'),
+    const caseSensitive = !!predicate.caseSensitive, // convert to boolean even if undefined
         clone = helpers.merge(predicate, { caseSensitive: true, keyCaseSensitive: caseSensitive }),
         noexcept = helpers.merge(clone, { except: '' }),
         expected = normalize(predicate.matches, noexcept, { encoding: encoding }),
         actual = normalize(request, clone, { encoding: encoding, withSelectors: true }),
-        options = caseSensitive ? '' : 'i',
-        errors = require('../util/errors');
+        options = caseSensitive ? '' : 'i';
 
     if (encoding === 'base64') {
         throw errors.ValidationError('the matches predicate is not allowed in binary mode');
@@ -388,18 +371,15 @@ function inject (predicate: IPredicate, request: IServerRequestData, encoding: s
         return true;
     }
 
-    const helpers = require('../util/helpers'),
-        config = {
+    const config = {
             request: helpers.clone(request),
             state: imposterState,
             logger: logger
-        },
-        compatibility = require('./compatibility');
+        };
 
     compatibility.downcastInjectionConfig(config);
 
-    const injected = `(${predicate.inject})(config, logger, imposterState);`,
-        errors = require('../util/errors');
+    const injected = `(${predicate.inject})(config, logger, imposterState);`;
 
     try {
         return eval(injected);
@@ -450,10 +430,8 @@ const PREDICATES: { [key: string]: PredicateFunction } = {
  * @returns {boolean}
  */
 export function evaluate (predicate: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown): boolean {
-    const predicateFn = Object.keys(predicate).find(key => Object.keys(PREDICATES).indexOf(key) >= 0),
-        errors = require('../util/errors'),
-        helpers = require('../util/helpers'),
-        clone:IPredicate = helpers.clone(predicate);
+    const predicateFn = Object.keys(predicate).find(key => Object.keys(PREDICATES).indexOf(key) >= 0);
+    const clone:IPredicate = helpers.clone(predicate);
 
     if (predicateFn) {
         return PREDICATES[predicateFn](clone, request, encoding, logger, imposterState);

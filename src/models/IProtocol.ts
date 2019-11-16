@@ -71,6 +71,7 @@ export interface IServerRequestData {
     headers: any;
     body: string;
     form?: any | undefined;
+    data?:unknown;
 
     ip?: string;
     timestamp?:string;

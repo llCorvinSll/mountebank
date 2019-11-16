@@ -57,8 +57,8 @@ export function clone<T> (obj:T):T {
  * and overrides, the values for overrides will be used
  * @returns {Object}
  */
-export function merge (defaults:Object & IIndexed, overrides:Object & IIndexed):Object {
-    const result:Object & IIndexed = clone(defaults);
+export function merge<T1 extends IIndexed, T2 extends IIndexed>(defaults:T1, overrides:T2):T1 & T2 {
+    const result:any = clone(defaults);
     Object.keys(overrides).forEach(key => {
         if (typeof overrides[key] === 'object' && overrides[key] !== null) {
             result[key] = merge(result[key] || {}, overrides[key]);
