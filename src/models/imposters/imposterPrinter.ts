@@ -2,8 +2,9 @@
 
 import {IServer} from "../IProtocol";
 import * as helpers from '../../util/helpers';
+import {IImposterConfig} from "./IImposter";
 
-export function create (creationRequest, server:IServer, requests) {
+export function create (creationRequest:IImposterConfig, server:IServer, requests) {
     function addDetailsTo (result, baseURL) {
         if (creationRequest.name) {
             result.name = creationRequest.name;
@@ -50,7 +51,7 @@ export function create (creationRequest, server:IServer, requests) {
         result.stubs = result.stubs.filter(stub => stub.responses.length > 0);
     }
 
-    function toJSON (numberOfRequests, options):any {
+    function toJSON (numberOfRequests:number, options):any {
         // I consider the order of fields represented important.  They won't matter for parsing,
         // but it makes a nicer user experience for developers viewing the JSON to keep the most
         // relevant information at the top

@@ -189,7 +189,7 @@ export class ResponseResolver implements IResolver {
 
                 // Run behaviors here to persist decorated response
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
-            }).then((response) => {
+            }).then((response:IMountebankResponse) => {
                 this.recordProxyResponse(responseConfig, request, response, logger);
                 return Q(response);
             });
