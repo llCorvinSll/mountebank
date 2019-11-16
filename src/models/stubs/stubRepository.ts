@@ -7,22 +7,13 @@ import {IStubConfig} from "./IStubConfig";
 import {IMountebankResponse, IServerRequestData} from "../IProtocol";
 import * as helpers from "../../util/helpers";
 import * as predicates from '../predicates';
+import {IStub} from "./IStub";
+import {IStubRepository} from "./IStubRepository";
 
 /**
  * Maintains all stubs for an imposter
  * @module
  */
-
-export interface IStubRepository {
-    stubs: () => IStubConfig[];
-    addStub(stub: IStubConfig, beforeResponse?: IMountebankResponse):void;
-    addStubAtIndex(index: string, newStub: IStubConfig): void;
-    overwriteStubs(newStubs: IStubConfig[]): void;
-    overwriteStubAtIndex(index: string, newStub: IStubConfig):void;
-    deleteStubAtIndex(index: string):void;
-    getResponseFor(request: IServerRequestData, logger: ILogger, imposterState: unknown):IMountebankResponse;
-    resetProxies():void;
-}
 
 /**
  * Creates the repository
@@ -34,7 +25,7 @@ export class StubRepository implements IStubRepository {
 
     }
 
-    protected _stubs:IStubConfig[] = [];
+    protected _stubs:IStub[] = [];
 
     /**
      * Returns the outside representation of the stubs
@@ -42,7 +33,7 @@ export class StubRepository implements IStubRepository {
      * @returns {Object} - The stubs
      */
     public stubs() {
-        const result = helpers.clone(this._stubs);
+        const result:IStub[] = helpers.clone(this._stubs) as any;
 
         for (let i = 0; i < this._stubs.length; i += 1) {
             delete result[i].statefulResponses;
@@ -112,10 +103,11 @@ export class StubRepository implements IStubRepository {
         return i;
     }
 
-    private decorate (stub: IStubConfig) {
-        stub.statefulResponses = this.repeatTransform(stub.responses as IMountebankResponse[]);
-        stub.addResponse = response => { stub.responses && stub.responses.push(response); };
-        return stub;
+    private decorate (stub: IStubConfig):IStub {
+        const res:any = stub;
+        res.statefulResponses = this.repeatTransform(stub.responses as IMountebankResponse[]);
+        res.addResponse = response => { stub.responses && stub.responses.push(response); };
+        return res;
     }
 
     private repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
@@ -165,7 +157,7 @@ export class StubRepository implements IStubRepository {
      * @returns {Object} - Promise resolving to the response
      */
     public getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
-        const stub: IStubConfig = this.findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
+        const stub: IStub = this.findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
             responseConfig:IMountebankResponse = (stub.statefulResponses as IMountebankResponse[]).shift() as IMountebankResponse,
             cloned = helpers.clone(responseConfig);
 
@@ -205,7 +197,7 @@ export class StubRepository implements IStubRepository {
         return list.map(predicate).every(result => result);
     }
 
-    private findFirstMatch (request: IServerRequestData, logger: ILogger, imposterState: unknown): IStubConfig | undefined {
+    private findFirstMatch (request: IServerRequestData, logger: ILogger, imposterState: unknown): IStub | undefined {
         if (this._stubs.length === 0) {
             return undefined;
         }

@@ -4,13 +4,14 @@ import * as Q from 'q';
 import {IStubConfig} from "./stubs/IStubConfig";
 import {ILogger} from "../util/scopedLogger";
 import {IMountebankResponse, IServerRequestData} from "./IProtocol";
+import {IStub} from "./stubs/IStub";
 
 export interface IImposter {
     port: number;
     url: string;
     protocol: string;
 
-    stubs():IStubConfig[];
+    stubs():IStub[];
     addStub(stub: IStubConfig):void;
     toJSON(options?:any):string;
     resetProxies():void;

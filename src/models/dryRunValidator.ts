@@ -11,14 +11,17 @@ import {ILogger} from "../util/scopedLogger";
 import {IResponse} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
-import {IStubRepository, StubRepository} from "./stubs/stubRepository";
+import {StubRepository} from "./stubs/stubRepository";
 import {IImposterConfig} from "./IImposter";
 import {IServerRequestData, IValidation} from "./IProtocol";
 import {ResponseResolver} from "./responseResolver";
 import {IStubConfig} from "./stubs/IStubConfig";
+import * as helpers from "../util/helpers";
+import {IStubRepository} from "./stubs/IStubRepository";
 
 
-interface IDryRunValidatorOptions {
+
+    interface IDryRunValidatorOptions {
     allowInjection:boolean;
     testRequest:IServerRequestData;
     testProxyResponse:any;
@@ -38,8 +41,7 @@ export function create (options: IDryRunValidatorOptions) {
     function stubForResponse (originalStub: IStubConfig, response: IResponse, withPredicates: boolean) {
         // Each dry run only validates the first response, so we
         // explode the number of stubs to dry run each response separately
-        const helpers = require('../util/helpers'),
-            clonedStub = helpers.clone(originalStub),
+        const clonedStub = helpers.clone(originalStub),
             clonedResponse = helpers.clone(response);
         clonedStub.responses = [clonedResponse];
 

@@ -1,14 +1,15 @@
 import {IPredicate} from "../IPredicate";
 import {IBehaviors, IResponse} from "../IRequest";
+import {IMountebankResponse} from "../IProtocol";
 
 export interface IStub {
     responses?:IResponse[];
-    predicates?: {[key: string]:IPredicate};
-    statefulResponses: IResponse[];
+    predicates?: IPredicate[];
+    statefulResponses?: IMountebankResponse[];
     addResponse?: (resp: IResponse) => void;
     recordMatch?: (responce?: any) => void;
 
-
+    matches?:unknown[];
     _behaviors?: IBehaviors;
     proxy?: {
         mode: string;

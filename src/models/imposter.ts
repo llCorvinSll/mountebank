@@ -18,6 +18,7 @@ import {Domain} from "domain";
 import * as helpers from '../util/helpers';
 import * as compatibility from './compatibility';
 import * as imposterPrinter from './imposterPrinter';
+import {IStub} from "./stubs/IStub";
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -148,7 +149,7 @@ export class Imposter implements IImposter {
         this.server.stubs.addStub(stub, beforeResponse);
     };
 
-    public stubs(): IStubConfig[] {
+    public stubs(): IStub[] {
         return this.server.stubs.stubs();
     }
 

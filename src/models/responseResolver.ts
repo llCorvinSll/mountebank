@@ -2,7 +2,6 @@
 
 import {IRequest, IResponse} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
-import {IStubRepository} from "./stubs/stubRepository";
 import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
 import {IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
@@ -15,6 +14,7 @@ import * as compatibility from './compatibility';
 import * as xpath from './xpath';
 import * as errors from '../util/errors';
 import * as stringify from 'json-stable-stringify';
+import {IStubRepository} from "./stubs/IStubRepository";
 
 
 interface IPendingProxyResolution {

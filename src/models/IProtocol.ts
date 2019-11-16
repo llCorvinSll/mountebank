@@ -6,7 +6,8 @@ import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
 import {IProxyConfig} from "./stubs/IStubConfig";
 import {IBehaviors} from "./IRequest";
-import {IStubRepository} from "./stubs/stubRepository";
+import {IStubRepository} from "./stubs/IStubRepository";
+
 
 export interface IProtocol {
     port:number;
