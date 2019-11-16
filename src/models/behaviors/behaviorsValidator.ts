@@ -1,8 +1,8 @@
 'use strict';
 
-import {IMontebankError} from "../util/errors";
-import * as exceptions from '../util/errors';
-import * as helpers from '../util/helpers';
+import {IMontebankError} from "../../util/errors";
+import * as exceptions from '../../util/errors';
+import * as helpers from '../../util/helpers';
 import * as util from 'util';
 
 

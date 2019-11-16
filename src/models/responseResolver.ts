@@ -6,7 +6,7 @@ import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
 import {IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
 import {IJsonPathConfig, IPredicate, IXPathConfig} from "./predicates/IPredicate";
-import * as behaviors from "./behaviors";
+import * as behaviors from "./behaviors/behaviors";
 import {IProxyConfig, IStubConfig} from "./stubs/IStubConfig";
 import * as  helpers from '../util/helpers';
 import * as jsonpath from './jsonpath';

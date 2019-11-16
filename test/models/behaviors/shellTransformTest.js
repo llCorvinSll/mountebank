@@ -3,7 +3,7 @@
 const assert = require('assert'),
     util = require('util'),
     promiseIt = require('../../testHelpers').promiseIt,
-    behaviors = require('../../../src/models/behaviors'),
+    behaviors = require('../../../src/models/behaviors/behaviors'),
     Logger = require('../../fakes/fakeLogger'),
     fs = require('fs');
 

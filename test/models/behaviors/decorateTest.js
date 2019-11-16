@@ -2,7 +2,7 @@
 
 const assert = require('assert'),
     promiseIt = require('../../testHelpers').promiseIt,
-    behaviors = require('../../../src/models/behaviors'),
+    behaviors = require('../../../src/models/behaviors/behaviors'),
     Logger = require('../../fakes/fakeLogger');
 
 describe('behaviors', function () {

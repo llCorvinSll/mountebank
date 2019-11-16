@@ -19,7 +19,7 @@ import {IStubConfig} from "./stubs/IStubConfig";
 import * as helpers from "../util/helpers";
 import {IStubRepository} from "./stubs/IStubRepository";
 import * as combinators from "../util/combinators";
-import * as behaviors from "./behaviors";
+import * as behaviors from "./behaviors/behaviors";
 
 
 

@@ -2,10 +2,10 @@
 
 import {BehaviorsValidator} from "./behaviorsValidator";
 import * as Q from "q";
-import {clone, defined, isObject} from "../util/helpers";
-import * as errors from "../util/errors";
-import {IMountebankResponse, IServerRequestData} from "./IProtocol";
-import {ILogger} from "../util/scopedLogger";
+import {clone, defined, isObject} from "../../util/helpers";
+import * as errors from "../../util/errors";
+import {IMountebankResponse, IServerRequestData} from "../IProtocol";
+import {ILogger} from "../../util/scopedLogger";
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -233,7 +233,7 @@ function decorate (originalRequest, responsePromise, fn, logger) {
                 logger
             },
             injected = `(${fn})(config, response, logger);`,
-            compatibility = require('./compatibility');
+            compatibility = require('../compatibility');
 
         compatibility.downcastInjectionConfig(config);
 
@@ -319,7 +319,7 @@ function regexValue (from, config, logger) {
 
 function xpathValue (from, config, logger) {
     const selectionFn = () => {
-        const xpath = require('./xpath');
+        const xpath = require('../xpath');
         return xpath.select(config.using.selector, config.using.ns, from, logger);
     };
     return getMatches(selectionFn, config.using.selector, logger);
@@ -327,7 +327,7 @@ function xpathValue (from, config, logger) {
 
 function jsonpathValue (from, config, logger) {
     const selectionFn = () => {
-        const jsonpath = require('./jsonpath');
+        const jsonpath = require('../jsonpath');
         return jsonpath.select(config.using.selector, from, logger);
     };
     return getMatches(selectionFn, config.using.selector, logger);
@@ -517,7 +517,7 @@ export function execute (request:IServerRequestData, response:IMountebankRespons
         return Q(response);
     }
 
-    const combinators = require('../util/combinators'),
+    const combinators = require('../../util/combinators'),
         waitFn = behaviors.wait ?
             result => wait(request, result, behaviors.wait, logger) :
             combinators.identity,

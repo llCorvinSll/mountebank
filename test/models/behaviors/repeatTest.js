@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert'),
-    behaviors = require('../../../src/models/behaviors');
+    behaviors = require('../../../src/models/behaviors/behaviors');
 
 describe('behaviors', function () {
     describe('#repeat', function () {
