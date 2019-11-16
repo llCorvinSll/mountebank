@@ -1,4 +1,4 @@
-import {IPredicate} from "../IPredicate";
+import {IPredicate} from "../predicates/IPredicate";
 import {IResponse} from "../IRequest";
 import {IMountebankResponse} from "../IProtocol";
 

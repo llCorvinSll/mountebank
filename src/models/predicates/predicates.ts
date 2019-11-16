@@ -1,15 +1,15 @@
 'use strict';
 
-import {ILogger} from "../util/scopedLogger";
+import {ILogger} from "../../util/scopedLogger";
 import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
-import {IServerRequestData} from "./IProtocol";
-import * as errors from "../util/errors";
-import * as helpers from '../util/helpers';
-import * as combinators from '../util/combinators';
+import {IServerRequestData} from "../IProtocol";
+import * as errors from "../../util/errors";
+import * as helpers from '../../util/helpers';
+import * as combinators from '../../util/combinators';
 import * as  stringify from 'json-stable-stringify';
-import * as compatibility from './compatibility';
-import * as xpath from './xpath';
-import * as jsonpath from './jsonpath';
+import * as compatibility from '../compatibility';
+import * as xpath from '../xpath';
+import * as jsonpath from '../jsonpath';
 
 
     /**

@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert'),
-    predicates = require('../../../src/models/predicates'),
+    predicates = require('../../../src/models/predicates/predicates'),
     util = require('util');
 
 describe('predicates', function () {

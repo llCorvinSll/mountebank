@@ -5,7 +5,7 @@ import {ILogger} from "../util/scopedLogger";
 import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
 import {IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
-import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
+import {IJsonPathConfig, IPredicate, IXPathConfig} from "./predicates/IPredicate";
 import * as behaviors from "./behaviors";
 import {IProxyConfig, IStubConfig} from "./stubs/IStubConfig";
 import * as  helpers from '../util/helpers';

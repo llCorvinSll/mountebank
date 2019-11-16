@@ -2,11 +2,11 @@
 
 import {ILogger} from "../../util/scopedLogger";
 import {IResponse} from "../IRequest";
-import {IPredicate} from "../IPredicate";
+import {IPredicate} from "../predicates/IPredicate";
 import {IStubConfig} from "./IStubConfig";
 import {IMountebankResponse, IServerRequestData} from "../IProtocol";
 import * as helpers from "../../util/helpers";
-import * as predicates from '../predicates';
+import * as predicates from '../predicates/predicates';
 import {IStub} from "./IStub";
 import {IStubRepository} from "./IStubRepository";
 
