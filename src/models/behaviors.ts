@@ -1,5 +1,7 @@
 'use strict';
 
+import {BehaviorsValidator} from "./behaviorsValidator";
+
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
  * @module
@@ -95,7 +97,7 @@ const fromSchema = {
  * @returns {Object} The array of errors
  */
 export function validate (config) {
-    const validator = require('./behaviorsValidator').create();
+    const validator = new BehaviorsValidator();
     return validator.validate(config, validations);
 }
 
