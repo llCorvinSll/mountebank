@@ -2,6 +2,7 @@
 
 import {ILogger} from "../util/scopedLogger";
 import { JSONPath } from 'jsonpath-plus';
+import {isObject} from "../util/helpers";
 
 /**
  * Shared logic for xpath selector
@@ -16,8 +17,6 @@ import { JSONPath } from 'jsonpath-plus';
  * @returns {Object}
  */
 export function select (selector: string, possibleJSON: string, logger: ILogger): string | undefined {
-    const isObject = require('../util/helpers').isObject;
-
     try {
         const json = isObject(possibleJSON) ? possibleJSON : JSON.parse(possibleJSON),
             result = JSONPath(selector, json, undefined, undefined);

@@ -2,6 +2,8 @@
 
 import {ILogger} from "../util/scopedLogger";
 import {SelectedValue} from "xpath";
+import * as errors from '../util/errors';
+import * as helpers from '../util/helpers';
 
 /**
  * Shared logic for xpath selector
@@ -9,9 +11,6 @@ import {SelectedValue} from "xpath";
  */
 
 function xpathSelect (selectFn: (selector: string, doc: Document) => SelectedValue[], selector: string, doc: Document): SelectedValue[] {
-    const errors = require('../util/errors'),
-        helpers = require('../util/helpers');
-
     if (!helpers.defined(doc)) {
         return [];
     }

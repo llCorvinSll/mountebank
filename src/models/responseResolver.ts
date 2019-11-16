@@ -76,7 +76,7 @@ function selectionValue (nodes) {
 }
 
 
-function deepEqual (obj1: object, obj2: object) {
+function deepEqual (obj1: unknown, obj2: unknown) {
     return stringify(obj1) === stringify(obj2);
 }
 
@@ -247,7 +247,7 @@ export class ResponseResolver implements IResolver {
             stubList = this.stubs.stubs();
 
         for (let index = this.stubIndexFor(responseConfig) + 1; index < stubList.length; index += 1) {
-            if (deepEqual(predicates, stubList[index].predicates as IPredicate[])) {
+            if (deepEqual(predicates, stubList[index].predicates)) {
                 return index;
             }
         }
