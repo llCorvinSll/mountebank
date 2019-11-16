@@ -166,23 +166,24 @@ function loadProtocols (options: IMountebankOptions, baseURL: string, logger: IL
  * @returns {Object} An object with a close method to stop the server
  */
 export function create (options: IMountebankOptions) {
-    const deferred = Q.defer(),
-        app = express(),
-        imposters = options.imposters || {},
-        hostname = options.host || 'localhost',
-        baseURL = `http://${hostname}:${options.port}`,
-        logger = createLogger(options),
-        isAllowedConnection = createIPVerification(options),
-        protocols = loadProtocols(options, baseURL, logger, isAllowedConnection),
-        homeController = require('./controllers/homeController').create(releases),
-        impostersController = new ImpostersController(
-            protocols, imposters, logger, options.allowInjection),
-        imposterController = new ImposterController(
-            protocols, imposters, logger, options.allowInjection),
-        logsController = require('./controllers/logsController').create(options.logfile),
-        configController = require('./controllers/configController').create(thisPackage.version, options),
-        feedController = require('./controllers/feedController').create(releases, options),
-        validateImposterExists = middleware.createImposterValidator(imposters);
+    const deferred = Q.defer();
+    const app = express();
+    const imposters = options.imposters || {};
+    const hostname = options.host || 'localhost';
+    const baseURL = `http://${hostname}:${options.port}`;
+    const logger = createLogger(options);
+    const isAllowedConnection = createIPVerification(options);
+    const protocols = loadProtocols(options, baseURL, logger, isAllowedConnection);
+    const impostersController = new ImpostersController(
+            protocols, imposters, logger, options.allowInjection);
+    const imposterController = new ImposterController(
+            protocols, imposters, logger, options.allowInjection);
+    const validateImposterExists = middleware.createImposterValidator(imposters);
+
+    const homeController = require('./controllers/homeController').create(releases);
+    const logsController = require('./controllers/logsController').create(options.logfile);
+    const configController = require('./controllers/configController').create(thisPackage.version, options);
+    const feedController = require('./controllers/feedController').create(releases, options);
 
     app.use(middleware.useAbsoluteUrls(options.port));
     app.use(middleware.logger(logger, ':method :url'));
