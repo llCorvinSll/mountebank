@@ -1,22 +1,59 @@
 'use strict';
 
-import {IServer} from "../IProtocol";
+import {IServer, IServerRequestData} from "../IProtocol";
 import * as helpers from '../../util/helpers';
-import {IImposterConfig} from "./IImposter";
+import {IImposterConfig, ImposterPrintOptions} from "./IImposter";
 
-export function create (creationRequest:IImposterConfig, server:IServer, requests) {
-    function addDetailsTo (result, baseURL) {
-        if (creationRequest.name) {
-            result.name = creationRequest.name;
+
+export class ImposterPrinter {
+    constructor(private creationRequest:IImposterConfig, private server:IServer, private requests:IServerRequestData[]) {
+
+    }
+
+    public toJSON (numberOfRequests:number, options:ImposterPrintOptions):any {
+        // I consider the order of fields represented important.  They won't matter for parsing,
+        // but it makes a nicer user experience for developers viewing the JSON to keep the most
+        // relevant information at the top
+        const result:any = {
+                protocol: this.creationRequest.protocol,
+                port: this.server.port,
+                numberOfRequests: numberOfRequests
+            },
+            baseURL = `/imposters/${this.server.port}`;
+
+        options = options || {};
+
+        if (!options.list) {
+            this.addDetailsTo(result, baseURL);
         }
-        result.recordRequests = Boolean(creationRequest.recordRequests);
 
-        Object.keys(server.metadata).forEach(key => {
-            result[key] = server.metadata[key];
+        result._links = {
+            self: { href: baseURL },
+            stubs: { href: `${baseURL}/stubs` }
+        };
+
+        if (options.replayable) {
+            this.removeNonEssentialInformationFrom(result);
+        }
+        if (options.removeProxies) {
+            this.removeProxiesFrom(result);
+        }
+
+        return result;
+    }
+
+    private addDetailsTo (result, baseURL) {
+        if (this.creationRequest.name) {
+            result.name = this.creationRequest.name;
+        }
+        result.recordRequests = Boolean(this.creationRequest.recordRequests);
+
+        Object.keys(this.server.metadata).forEach(key => {
+            result[key] = this.server.metadata[key];
         });
 
-        result.requests = requests;
-        result.stubs = server.stubs.stubs();
+        result.requests = this.requests;
+        result.stubs = this.server.stubs.stubs();
 
         for (let i = 0; i < result.stubs.length; i += 1) {
             result.stubs[i]._links = {
@@ -25,7 +62,7 @@ export function create (creationRequest:IImposterConfig, server:IServer, request
         }
     }
 
-    function removeNonEssentialInformationFrom (result) {
+    private removeNonEssentialInformationFrom (result) {
         result.stubs.forEach(stub => {
             /* eslint-disable no-underscore-dangle */
             if (stub.matches) {
@@ -43,7 +80,7 @@ export function create (creationRequest:IImposterConfig, server:IServer, request
         delete result._links;
     }
 
-    function removeProxiesFrom (result) {
+    private removeProxiesFrom (result) {
         result.stubs.forEach(stub => {
             // eslint-disable-next-line no-prototype-builtins
             stub.responses = stub.responses.filter(response => !response.hasOwnProperty('proxy'));
@@ -51,37 +88,4 @@ export function create (creationRequest:IImposterConfig, server:IServer, request
         result.stubs = result.stubs.filter(stub => stub.responses.length > 0);
     }
 
-    function toJSON (numberOfRequests:number, options):any {
-        // I consider the order of fields represented important.  They won't matter for parsing,
-        // but it makes a nicer user experience for developers viewing the JSON to keep the most
-        // relevant information at the top
-        const result:any = {
-                protocol: creationRequest.protocol,
-                port: server.port,
-                numberOfRequests: numberOfRequests
-            },
-            baseURL = `/imposters/${server.port}`;
-
-        options = options || {};
-
-        if (!options.list) {
-            addDetailsTo(result, baseURL);
-        }
-
-        result._links = {
-            self: { href: baseURL },
-            stubs: { href: `${baseURL}/stubs` }
-        };
-
-        if (options.replayable) {
-            removeNonEssentialInformationFrom(result);
-        }
-        if (options.removeProxies) {
-            removeProxiesFrom(result);
-        }
-
-        return result;
-    }
-
-    return { toJSON };
 }

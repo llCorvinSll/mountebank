@@ -8,7 +8,7 @@ import {
     IServer,
     IServerRequestData
 } from "../IProtocol";
-import {IImposter, IImposterConfig, IpValidator} from "./IImposter";
+import {IImposter, IImposterConfig, ImposterPrintOptions, IpValidator} from "./IImposter";
 import * as Q from "q";
 import {ILogger} from "../../util/scopedLogger";
 import {IProtocolLoadOptions} from "../protocols";
@@ -17,8 +17,8 @@ import * as domain_nsp from "domain";
 import {Domain} from "domain";
 import * as helpers from '../../util/helpers';
 import * as compatibility from '../compatibility';
-import * as imposterPrinter from './imposterPrinter';
 import {IStub} from "../stubs/IStub";
+import {ImposterPrinter} from "./imposterPrinter";
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -105,7 +105,7 @@ export class Imposter implements IImposter {
 
                     this.resolver = server.resolver;
 
-                    this.printer = imposterPrinter.create(this.creationRequest, this.server, this.requests);
+                    this.printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
 
                     if (this.creationRequest.stubs) {
                         this.creationRequest.stubs.forEach((st) => this.server.stubs.addStub(st));
@@ -126,7 +126,7 @@ export class Imposter implements IImposter {
         return '/imposters/' + this.server.port;
     }
 
-    public toJSON(options?: any): string {
+    public toJSON(options?:ImposterPrintOptions): string {
         return this.printer.toJSON(this.numberOfRequests, options);
     }
 

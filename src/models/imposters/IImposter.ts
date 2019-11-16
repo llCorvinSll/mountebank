@@ -13,7 +13,7 @@ export interface IImposter {
 
     stubs():IStub[];
     addStub(stub: IStubConfig):void;
-    toJSON(options?:any):string;
+    toJSON(options?:ImposterPrintOptions):string;
     resetProxies():void;
     stop():Q.Promise<unknown>;
     deleteStubAtIndex(index:string):void;
@@ -23,6 +23,12 @@ export interface IImposter {
 
     getResponseFor(request: IServerRequestData, requestDetails: unknown): Q.Promise<IMountebankResponse>;
     getProxyResponseFor(proxyResponse: any, proxyResolutionKey: any):Q.Promise<any>;
+}
+
+export interface ImposterPrintOptions {
+    list?:boolean;
+    replayable?:boolean;
+    removeProxies?:boolean;
 }
 
 export type IpValidator = (ip: string | undefined, logger: ILogger) => boolean;
@@ -39,5 +45,4 @@ export interface IImposterConfig {
     endOfRequestResolver: {
         inject: boolean
     }
-
 }
