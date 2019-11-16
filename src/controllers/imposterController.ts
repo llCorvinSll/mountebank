@@ -7,15 +7,15 @@ import {IImposter} from "../models/IImposter";
 import {ParsedUrlQuery} from "querystring";
 import * as Q from "q";
 import {IMontebankError, ValidationError} from "../util/errors";
-import {IStub} from "../models/IRequest";
 import * as url from "url";
 import * as helpers from "../util/helpers";
 import * as exceptions from '../util/errors';
 import * as compatibility from "../models/compatibility";
+import {IStubConfig} from "../models/stubs/IStubConfig";
 
 
 
-    function queryBoolean (query: ParsedUrlQuery, key: string) {
+function queryBoolean (query: ParsedUrlQuery, key: string) {
     if (!helpers.defined(query[key])) {
         return false;
     }
@@ -198,7 +198,7 @@ export class ImposterController {
      */
     public putStubs = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id],
-            newStubs = request.body.stubs,
+            newStubs:IStubConfig[] = request.body.stubs,
             errors:IMontebankError[] = [];
 
         ImposterController.validateStubs(newStubs, errors);
@@ -218,7 +218,7 @@ export class ImposterController {
         }
     }
 
-    private validate (imposter:IImposter, newStubs:IStub[]):Q.Promise<IValidation> {
+    private validate (imposter:IImposter, newStubs:IStubConfig[]):Q.Promise<IValidation> {
         const request = helpers.clone(imposter);
 
         request.stubs = newStubs as any;
@@ -236,7 +236,7 @@ export class ImposterController {
     }
 
 
-    private static validateStubs (stubs:IStub[], errors: IMontebankError[]) {
+    private static validateStubs (stubs:IStubConfig[], errors: IMontebankError[]) {
         if (!helpers.defined(stubs)) {
             errors.push(ValidationError("'stubs' is a required field"));
         }
@@ -266,7 +266,7 @@ export class ImposterController {
      */
     public putStub = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id],
-            newStub = request.body,
+            newStub:IStubConfig = request.body,
             errors:IMontebankError[] = [];
 
         this.validateStubIndex(request.params.stubIndex, imposter, errors);
@@ -306,7 +306,7 @@ export class ImposterController {
      */
     public postStub = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id],
-            newStub = request.body.stub,
+            newStub:IStubConfig = request.body.stub,
             index = typeof request.body.index === 'undefined' ? imposter.stubs().length : request.body.index,
             errors = [];
 

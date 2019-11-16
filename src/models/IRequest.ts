@@ -1,6 +1,7 @@
 'use strict';
 
-import {IPredicate} from "./IPredicate";
+
+import {IStub} from "./stubs/IStub";
 
 export interface IRequest {
     protocol?: string;
@@ -12,22 +13,6 @@ export interface IRequest {
     [key: string]: IStub[] | string | boolean | undefined;
     body?: string;
     path?: string;
-}
-
-export interface IStub {
-    responses?:IResponse[];
-    predicates?: {[key: string]:IPredicate};
-    statefulResponses: IResponse[];
-    addResponse?: (resp: IResponse) => void;
-    recordMatch?: (responce?: any) => void;
-
-
-    _behaviors?: IBehaviors;
-    proxy?: {
-        mode: string;
-    },
-    is?: any;
-    inject?: string;
 }
 
 export interface ICopyDescriptor {
