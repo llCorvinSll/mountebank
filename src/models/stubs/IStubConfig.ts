@@ -1,6 +1,5 @@
 import {IPredicate} from "../IPredicate";
-import {IBehaviors, IResponse} from "../IRequest";
-import {IMountebankResponse} from "../IProtocol";
+import {IResponse} from "../IRequest";
 
 
 export interface IProxyConfig {
@@ -13,10 +12,9 @@ export interface IProxyConfig {
 export interface IStubConfig {
     responses?:IResponse[];
     predicates?: IPredicate[];
-    statefulResponses?: IMountebankResponse[];
-    proxy?: IProxyConfig;
-    _behaviors?: IBehaviors;
+    // proxy?: IProxyConfig;
+    // _behaviors?: IBehaviors;
 
-    is?:any;
-    inject?:unknown;
+    // is?:any;
+    // inject?:unknown;
 }

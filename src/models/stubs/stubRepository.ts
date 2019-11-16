@@ -104,7 +104,7 @@ export class StubRepository implements IStubRepository {
     }
 
     private decorate (stub: IStubConfig):IStub {
-        const res:any = stub;
+        const res:IStub = stub as any;
         res.statefulResponses = this.repeatTransform(stub.responses as IMountebankResponse[]);
         res.addResponse = response => { stub.responses && stub.responses.push(response); };
         return res;
@@ -157,13 +157,13 @@ export class StubRepository implements IStubRepository {
      * @returns {Object} - Promise resolving to the response
      */
     public getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
-        const stub: IStub = this.findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
-            responseConfig:IMountebankResponse = (stub.statefulResponses as IMountebankResponse[]).shift() as IMountebankResponse,
-            cloned = helpers.clone(responseConfig);
+        const stub: IStub = this.findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] };
+        const responseConfig:IMountebankResponse = stub.statefulResponses.shift() as IMountebankResponse;
+        const cloned = helpers.clone(responseConfig);
 
         logger.debug(`generating response from ${JSON.stringify(responseConfig)}`);
 
-        (stub.statefulResponses as IMountebankResponse[]).push(responseConfig);
+        stub.statefulResponses.push(responseConfig);
 
         cloned.recordMatch = (response?: any) => {
             const clonedResponse = helpers.clone(response),
