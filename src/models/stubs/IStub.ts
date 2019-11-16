@@ -10,10 +10,4 @@ export interface IStub {
     recordMatch?: (responce?: any) => void;
 
     matches?:unknown[];
-    // _behaviors?: IBehaviors;
-    // proxy?: {
-    //     mode: string;
-    // },
-    // // is?: any;
-    // inject?: string;
 }

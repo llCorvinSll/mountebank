@@ -12,9 +12,4 @@ export interface IProxyConfig {
 export interface IStubConfig {
     responses?:IResponse[];
     predicates?: IPredicate[];
-    // proxy?: IProxyConfig;
-    // _behaviors?: IBehaviors;
-
-    // is?:any;
-    // inject?:unknown;
 }
