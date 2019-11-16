@@ -2,6 +2,7 @@
 
 
 import {IStub} from "./stubs/IStub";
+import {IBehaviorsConfig} from "./behaviors/IBehaviorsConfig";
 
 export interface IRequest {
     protocol?: string;
@@ -15,55 +16,18 @@ export interface IRequest {
     path?: string;
 }
 
-export interface ICopyDescriptor {
-    from:string;
-    using: IUsingConfig;
-    into: {};
-}
-
-export interface IUsingConfig {
-    method: string;
-    ns: string;
-    selector: string;
-    options: any;
-}
-
-export interface ILookupDescriptor {
-    into: string
-    key: {
-        from: string;
-        index:number;
-        using: {
-            method: string;
-        }
-    };
-    fromDataSource: {
-        csv:string;
-    };
-}
-
-
-export interface IBehaviors {
-    shellTransform:never[];
-    wait:(() => number) | string;
-    copy: ICopyDescriptor[];
-    lookup:ILookupDescriptor[];
-    repeat: boolean;
-    decorate:never;
-}
-
 type SetMetadataFunction = (responseType: any, metadata: any) => void;
 
 export interface IResponse {
     proxy?:IProxy;
-    _behaviors?: IBehaviors;
+    _behaviors?: IBehaviorsConfig;
     setMetadata?: SetMetadataFunction;
     is?: {
         _proxyResponseTime?: string;
     } & any;
 
     _proxyResponseTime?: number;
-    [key: string]:IProxy | IBehaviors | undefined | SetMetadataFunction | unknown;
+    [key: string]:IProxy | IBehaviorsConfig | undefined | SetMetadataFunction | unknown;
 }
 
 export interface IProxy {

@@ -6,6 +6,7 @@ import {clone, defined, isObject} from "../../util/helpers";
 import * as errors from "../../util/errors";
 import {IMountebankResponse, IServerRequestData} from "../IProtocol";
 import {ILogger} from "../../util/scopedLogger";
+import {IBehaviorsConfig} from "./IBehaviorsConfig";
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -115,7 +116,7 @@ export function validate (config) {
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object} A promise resolving to the response
  */
-function wait (request, responsePromise, millisecondsOrFn, logger) {
+function wait (request:IServerRequestData, responsePromise, millisecondsOrFn, logger:ILogger) {
     if (request.isDryRun) {
         return responsePromise;
     }
@@ -200,7 +201,7 @@ function execShell (command, request, response, logger) {
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function shellTransform (request, responsePromise, commandArray, logger) {
+function shellTransform (request:IServerRequestData, responsePromise, commandArray, logger:ILogger) {
     if (request.isDryRun) {
         return responsePromise;
     }
@@ -221,7 +222,7 @@ function shellTransform (request, responsePromise, commandArray, logger) {
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function decorate (originalRequest, responsePromise, fn, logger) {
+function decorate (originalRequest:IServerRequestData, responsePromise, fn, logger:ILogger) {
     if (originalRequest.isDryRun === true) {
         return responsePromise;
     }
@@ -380,7 +381,7 @@ function replaceArrayValuesIn (response, token, values, logger) {
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function copy (originalRequest, responsePromise, copyArray, logger) {
+function copy (originalRequest:IServerRequestData, responsePromise, copyArray, logger:ILogger) {
     return responsePromise.then(response => {
 
         copyArray.forEach(function (copyConfig) {
@@ -491,7 +492,7 @@ function replaceObjectValuesIn (response, token, values, logger) {
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function lookup (originalRequest, responsePromise, lookupArray, logger) {
+function lookup (originalRequest:IServerRequestData, responsePromise, lookupArray, logger:ILogger) {
     return responsePromise.then(response => {
         const lookupPromises = lookupArray.map(function (lookupConfig) {
                 return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
@@ -512,7 +513,7 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object}
  */
-export function execute (request:IServerRequestData, response:IMountebankResponse, behaviors, logger:ILogger) {
+export function execute (request:IServerRequestData, response:IMountebankResponse, behaviors:IBehaviorsConfig | undefined, logger:ILogger): Q.Promise<IMountebankResponse> {
     if (!behaviors) {
         return Q(response);
     }

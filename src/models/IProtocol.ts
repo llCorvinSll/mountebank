@@ -5,8 +5,8 @@ import {IMontebankError} from "../util/errors";
 import * as Q from "q";
 import {ILogger} from "../util/scopedLogger";
 import {IProxyConfig} from "./stubs/IStubConfig";
-import {IBehaviors} from "./IRequest";
 import {IStubRepository} from "./stubs/IStubRepository";
+import {IBehaviorsConfig} from "./behaviors/IBehaviorsConfig";
 
 
 export interface IProtocol {
@@ -96,7 +96,7 @@ export interface IMountebankResponse {
     code?: string;
 
 
-    _behaviors?: IBehaviors;
+    _behaviors?: IBehaviorsConfig;
     _proxyResponseTime?:number;
 
     is?: any;
