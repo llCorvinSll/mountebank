@@ -18,10 +18,12 @@ import {ResponseResolver} from "./responseResolver";
 import {IStubConfig} from "./stubs/IStubConfig";
 import * as helpers from "../util/helpers";
 import {IStubRepository} from "./stubs/IStubRepository";
+import * as combinators from "../util/combinators";
+import * as behaviors from "./behaviors";
 
 
 
-interface IDryRunValidatorOptions {
+    interface IDryRunValidatorOptions {
     allowInjection:boolean;
     testRequest:IServerRequestData;
     testProxyResponse:any;
@@ -83,8 +85,7 @@ export function create (options: IDryRunValidatorOptions) {
     }
 
     function dryRun (stub: IStubConfig, encoding: string, logger: ILogger) {
-        const combinators = require('../util/combinators'),
-            dryRunLogger: ILogger = {
+        const dryRunLogger: ILogger = {
                 debug: combinators.noop,
                 info: combinators.noop,
                 warn: combinators.noop,
@@ -167,7 +168,6 @@ export function create (options: IDryRunValidatorOptions) {
 
     function addBehaviorErrors (stub: IStubConfig, errors: IMontebankError[]) {
         stub.responses && stub.responses.forEach(response => {
-            const behaviors = require('./behaviors');
             addAllTo(errors, behaviors.validate(response._behaviors));
         });
     }
