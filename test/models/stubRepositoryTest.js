@@ -2,7 +2,7 @@
 
 const assert = require('assert'),
     mock = require('../mock').mock,
-    StubRepository = require('../../src/models/stubs/stubRepository').StubRepository;
+    StubRepository = require('../../src/models/stubs/StubRepository').StubRepository;
 
 describe('stubRepository', function () {
     function jsonWithoutFunctions (obj) {
