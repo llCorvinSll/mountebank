@@ -9,6 +9,7 @@ import * as helpers from "../../util/helpers";
 import * as predicates from '../predicates/predicates';
 import {IStub} from "./IStub";
 import {IStubRepository} from "./IStubRepository";
+import { Stub } from "./Stub";
 
 /**
  * Maintains all stubs for an imposter
@@ -104,34 +105,7 @@ export class StubRepository implements IStubRepository {
     }
 
     private decorate (stub: IStubConfig):IStub {
-        const res:IStub = stub as any;
-        res.statefulResponses = this.repeatTransform(stub.responses as IMountebankResponse[]);
-        res.addResponse = response => { stub.responses && stub.responses.push(response); };
-        return res;
-    }
-
-    private repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
-        const result = [];
-        let response, repeats;
-
-        for (let i = 0; i < responses.length; i += 1) {
-            response = responses[i];
-            repeats = this.repeatsFor(response);
-            for (let j = 0; j < repeats; j += 1) {
-                // @ts-ignore
-                result.push(response);
-            }
-        }
-        return result;
-    }
-
-    private repeatsFor (response: IMountebankResponse) {
-        if (response._behaviors && response._behaviors.repeat) {
-            return response._behaviors.repeat;
-        }
-        else {
-            return 1;
-        }
+        return new Stub(stub);
     }
 
     //#endregion

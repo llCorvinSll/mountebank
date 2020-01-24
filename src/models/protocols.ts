@@ -12,7 +12,7 @@ import {
 import {IImposterConfig, IpValidator} from "./imposters/IImposter";
 import {Imposter} from "./imposters/imposter";
 import {ResponseResolver} from "./responseResolver";
-import {StubRepository} from "./stubs/stubRepository";
+import {StubRepository} from "./stubs/StubRepository";
 
 
 export interface IProtocolLoadOptions {

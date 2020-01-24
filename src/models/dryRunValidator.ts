@@ -11,7 +11,7 @@ import {ILogger} from "../util/scopedLogger";
 import {IResponse} from "./IRequest";
 import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
 import * as Q from "q";
-import {StubRepository} from "./stubs/stubRepository";
+import {StubRepository} from "./stubs/StubRepository";
 import {IImposterConfig} from "./imposters/IImposter";
 import {IServerRequestData, IValidation} from "./IProtocol";
 import {ResponseResolver} from "./responseResolver";
