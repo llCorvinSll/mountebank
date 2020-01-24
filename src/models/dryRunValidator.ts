@@ -136,7 +136,8 @@ export function create (options: IDryRunValidatorOptions) {
 
                 return response.inject || hasDecorator || hasWaitFunction || hasPredicateGeneratorInjection(response);
             }),
-            hasPredicateInjections = Object.keys(stub.predicates || {}).some(predicate => stub.predicates && stub.predicates[predicate].inject),
+            hasPredicateInjections = Object.keys(stub.predicates || {})
+                .some(predicate => stub.predicates && stub.predicates[parseInt(predicate, 10)].inject),
             hasAddDecorateBehaviorInProxy = stub.responses && stub.responses.some(response => response.proxy && response.proxy.addDecorateBehavior);
         return hasResponseInjections || hasPredicateInjections || hasAddDecorateBehaviorInProxy;
     }
@@ -168,7 +169,7 @@ export function create (options: IDryRunValidatorOptions) {
 
     function addBehaviorErrors (stub: IStubConfig, errors: IMontebankError[]) {
         stub.responses && stub.responses.forEach(response => {
-            addAllTo(errors, behaviors.validate(response._behaviors));
+            addAllTo(errors, behaviors.validate(response._behaviors!));
         });
     }
 

@@ -2,18 +2,25 @@
 
 import {BehaviorsValidator} from "./behaviorsValidator";
 import * as Q from "q";
+import * as fs from "fs";
+import * as csv_parse from "csv-parse";
 import {clone, defined, isObject} from "../../util/helpers";
 import * as errors from "../../util/errors";
 import {IMountebankResponse, IServerRequestData} from "../IProtocol";
 import {ILogger} from "../../util/scopedLogger";
 import {
     IBehaviorsConfig,
-    ICopyDescriptor,
-    ILookupDescriptor,
+    ICopyDescriptor, ICsvConfig,
+    ILookupDescriptor, ILookupInfokey, IUsingConfig,
+    IUsingConfigOptions,
     IWaitDescriptor
 } from "./IBehaviorsConfig";
 import { exec } from "child_process";
 import * as util from 'util';
+import {HashMap} from "../../util/types";
+
+import * as xpath from "../xpath";
+import * as jsonpath from "../jsonpath";
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -105,15 +112,16 @@ const fromSchema = {
     };
 
 
+type valueExtractor = (from: any, config: IUsingConfig | ICopyDescriptor | ILookupInfokey, logger: ILogger) => any
 
-const fnMap = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue };
+const fnMap: HashMap<valueExtractor> = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue };
 
 /**
  * Validates the behavior configuration and returns all errors
  * @param {Object} config - The behavior configuration
  * @returns {Object} The array of errors
  */
-export function validate (config:IBehaviorsConfig|undefined) {
+export function validate (config:IBehaviorsConfig) {
     const validator = new BehaviorsValidator();
     return validator.validate(config, validations);
 }
@@ -276,16 +284,17 @@ function getKeyIgnoringCase (obj:object, expectedKey:string):string {
     }) as string;
 }
 
-function getFrom (obj:any, from) {
+function getFrom (obj:HashMap<HashMap | any>, from:HashMap<HashMap | any> | string): any {
     if (typeof obj === 'undefined') {
         return undefined;
-    }
-    else if (isObject(from)) {
+    } else if (isObject(from)) {
         const keys = Object.keys(from);
-        return getFrom(obj[keys[0]], from[keys[0]]);
+        const objElement = obj[keys[0]];
+        const fromElement = (from as HashMap)[keys[0]];
+        return getFrom(objElement, fromElement);
     }
     else {
-        const result = obj[getKeyIgnoringCase(obj, from)];
+        const result = obj[getKeyIgnoringCase(obj, from as string)];
 
         // Some request fields, like query parameters, can be multi-valued
         if (Array.isArray(result)) {
@@ -297,7 +306,7 @@ function getFrom (obj:any, from) {
     }
 }
 
-function regexFlags (options) {
+function regexFlags (options:IUsingConfigOptions): string {
     let result = '';
     if (options && options.ignoreCase) {
         result += 'i';
@@ -308,7 +317,7 @@ function regexFlags (options) {
     return result;
 }
 
-function getMatches (selectionFn, selector, logger:ILogger) {
+function getMatches (selectionFn: () => Array<any> | undefined, selector: string, logger:ILogger): Array<any> {
     const matches = selectionFn();
 
     if (matches && matches.length > 0) {
@@ -320,29 +329,27 @@ function getMatches (selectionFn, selector, logger:ILogger) {
     }
 }
 
-function regexValue (from, config, logger:ILogger) {
+function regexValue (from: any, config, logger:ILogger) {
     const regex = new RegExp(config.using.selector, regexFlags(config.using.options)),
         selectionFn = () => regex.exec(from);
     return getMatches(selectionFn, regex, logger);
 }
 
-function xpathValue (from, config, logger:ILogger) {
+function xpathValue (from: any, config, logger:ILogger) {
     const selectionFn = () => {
-        const xpath = require('../xpath');
         return xpath.select(config.using.selector, config.using.ns, from, logger);
     };
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function jsonpathValue (from, config, logger:ILogger) {
+function jsonpathValue (from: any, config, logger:ILogger) {
     const selectionFn = () => {
-        const jsonpath = require('../jsonpath');
         return jsonpath.select(config.using.selector, from, logger);
     };
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function globalStringReplace (str, substring, newSubstring, logger:ILogger) {
+function globalStringReplace (str:string, substring: string, newSubstring: string, logger:ILogger) {
     if (substring !== newSubstring) {
         logger.debug('Replacing %s with %s', JSON.stringify(substring), JSON.stringify(newSubstring));
         return str.split(substring).join(newSubstring);
@@ -352,7 +359,7 @@ function globalStringReplace (str, substring, newSubstring, logger:ILogger) {
     }
 }
 
-function globalObjectReplace (obj, replacer) {
+function globalObjectReplace (obj:HashMap|any, replacer:(v: any) => any) {
     Object.keys(obj).forEach(key => {
         if (typeof obj[key] === 'string') {
             obj[key] = replacer(obj[key]);
@@ -367,8 +374,7 @@ function replaceArrayValuesIn (response, token, values, logger:ILogger) {
     const replacer = field => {
         values.forEach(function (replacement, index) {
             // replace ${TOKEN}[1] with indexed element
-            const util = require('util'),
-                indexedToken = util.format('%s[%s]', token, index);
+            const indexedToken = util.format('%s[%s]', token, index);
             field = globalStringReplace(field, indexedToken, replacement, logger);
         });
         if (values.length > 0) {
@@ -393,9 +399,9 @@ function copy (originalRequest:IServerRequestData, responsePromise:ResponsePromi
     return responsePromise.then(response => {
 
         copyArray.forEach(function (copyConfig) {
-            const from = getFrom(originalRequest, copyConfig.from),
-                using = copyConfig.using || {},
-                values = fnMap[using.method](from, copyConfig, logger);
+            const from = getFrom(originalRequest, copyConfig.from);
+            const using = copyConfig.using || {};
+            const values = fnMap[using.method](from, copyConfig, logger);
 
             replaceArrayValuesIn(response, copyConfig.into, values, logger);
         });
@@ -403,34 +409,33 @@ function copy (originalRequest:IServerRequestData, responsePromise:ResponsePromi
     });
 }
 
-function containsKey (headers, keyColumn) {
+function containsKey (headers: HashMap<string>, keyColumn: string) {
     const key = Object.values(headers).find(value => value === keyColumn);
     return defined(key);
 }
 
-function createRowObject (headers, rowArray) {
-    const row = {};
+function createRowObject (headers: HashMap<string>, rowArray: string[]) {
+    const row: HashMap<string> = {};
     rowArray.forEach(function (value, index) {
         row[headers[index]] = value;
     });
     return row;
 }
 
-function selectRowFromCSV (csvConfig, keyValue, logger:ILogger) {
-    const fs = require('fs'),
-        delimiter = csvConfig.delimiter || ',',
+function selectRowFromCSV (csvConfig: ICsvConfig, keyValue: string, logger:ILogger) {
+    const delimiter = csvConfig.delimiter || ',',
         inputStream = fs.createReadStream(csvConfig.path),
-        parser = require('csv-parse')({ delimiter: delimiter }),
+        parser = csv_parse({ delimiter: delimiter }),
         pipe = inputStream.pipe(parser),
         deferred = Q.defer();
-    let headers;
+    let headers: any;
 
-    inputStream.on('error', e => {
+    inputStream.on('error', (e: any) => {
         logger.error('Cannot read ' + csvConfig.path + ': ' + e);
         deferred.resolve({});
     });
 
-    pipe.on('data', function (rowArray) {
+    pipe.on('data', function (rowArray: string[]) {
         if (!defined(headers)) {
             headers = rowArray;
             const keyOnHeader = containsKey(headers, csvConfig.keyColumn);
@@ -447,7 +452,7 @@ function selectRowFromCSV (csvConfig, keyValue, logger:ILogger) {
         }
     });
 
-    pipe.on('error', e => {
+    pipe.on('error', (e: any) => {
         logger.debug('Error: ' + e);
         deferred.resolve({});
     });
@@ -459,10 +464,10 @@ function selectRowFromCSV (csvConfig, keyValue, logger:ILogger) {
     return deferred.promise;
 }
 
-function lookupRow (lookupConfig:ILookupDescriptor, originalRequest, logger:ILogger) {
-    const from = getFrom(originalRequest, lookupConfig.key.from),
-        keyValues = fnMap[lookupConfig.key.using.method](from, lookupConfig.key, logger),
-        index = lookupConfig.key.index || 0;
+function lookupRow (lookupConfig:ILookupDescriptor, originalRequest: any, logger:ILogger) {
+    const from = getFrom(originalRequest, lookupConfig.key.from);
+    const keyValues = fnMap[lookupConfig.key.using.method](from, lookupConfig.key, logger);
+    const index = lookupConfig.key.index || 0;
 
     if (lookupConfig.fromDataSource.csv) {
         return selectRowFromCSV(lookupConfig.fromDataSource.csv, keyValues[index], logger);
@@ -472,8 +477,8 @@ function lookupRow (lookupConfig:ILookupDescriptor, originalRequest, logger:ILog
     }
 }
 
-function replaceObjectValuesIn (response, token, values, logger:ILogger) {
-    const replacer = field => {
+function replaceObjectValuesIn (response: any, token: string, values: HashMap<string>, logger:ILogger) {
+    const replacer = (field: string) => {
         Object.keys(values).forEach(key => {
             const util = require('util');
 
@@ -501,7 +506,7 @@ function replaceObjectValuesIn (response, token, values, logger:ILogger) {
 function lookup (originalRequest:IServerRequestData, responsePromise:ResponsePromise, lookupArray:ILookupDescriptor[], logger:ILogger) {
     return responsePromise.then(response => {
         const lookupPromises = lookupArray.map(function (lookupConfig) {
-                return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
+                return lookupRow(lookupConfig, originalRequest, logger).then(function (row: HashMap<string>) {
                     replaceObjectValuesIn(response, lookupConfig.into, row, logger);
                 });
             });

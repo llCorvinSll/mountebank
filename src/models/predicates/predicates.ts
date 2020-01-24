@@ -10,6 +10,7 @@ import * as  stringify from 'json-stable-stringify';
 import * as compatibility from '../compatibility';
 import * as xpath from '../xpath';
 import * as jsonpath from '../jsonpath';
+import {HashMap} from "../../util/types";
 
 
     /**
@@ -31,7 +32,7 @@ function sortObjects (a: any, b: any): number {
     }
 }
 
-function forceStrings (value: any): any {
+function forceStrings (value: HashMap<HashMap | any>): any {
     if (value === null) {
         return 'null';
     }
@@ -179,7 +180,7 @@ function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
     }
     else if (helpers.isObject(obj)) {
         return Object.keys(obj).reduce((accumulator, key) => {
-            accumulator[apply(keyTransforms)(key)] = transformAll(obj[key], keyTransforms, valueTransforms, arrayTransforms);
+            accumulator[apply(keyTransforms)(key)] = transformAll((obj as HashMap)[key], keyTransforms, valueTransforms, arrayTransforms);
             return accumulator;
         }, {} as any);
     }

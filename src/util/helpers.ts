@@ -24,7 +24,7 @@ export function defined (obj:unknown):Boolean {
  * @param {Object} obj - the value to test
  * @returns {boolean}
  */
-export function isObject (obj:Object|null|undefined): obj is object {
+export function isObject (obj:Object|null|undefined): boolean {
     return typeof obj === 'object' && obj !== null;
 }
 

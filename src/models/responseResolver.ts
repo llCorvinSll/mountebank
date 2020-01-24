@@ -183,7 +183,7 @@ export class ResponseResolver implements IResolver {
         }
 
         if (this.inProcessProxy) {
-            return (this.proxy as any).to(responseConfig.proxy.to, request, responseConfig.proxy, requestDetails).then(response => {
+            return this.proxy!.to(responseConfig.proxy.to, request, responseConfig.proxy, requestDetails).then(response => {
                 // eslint-disable-next-line no-underscore-dangle
                 response._proxyResponseTime = new Date().getTime() - startTime;
 
@@ -279,9 +279,7 @@ export class ResponseResolver implements IResolver {
         }
     }
 
-    // @ts-ignore
     private predicatesFor (request: IServerRequestData, matchers, logger: ILogger) {
-        // @ts-ignore
         const predicates = [];
 
         // @ts-ignore

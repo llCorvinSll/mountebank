@@ -7,6 +7,7 @@ export interface IBehaviorsConfig {
     lookup:ILookupDescriptor[];
     repeat: boolean;
     decorate:string;
+    [key: string]: string[] | IWaitDescriptor | ICopyDescriptor[] | ILookupDescriptor[] | boolean | string;
 }
 
 export type IWaitDescriptor = (() => number) | string;
@@ -17,23 +18,36 @@ export interface ICopyDescriptor {
     into: {};
 }
 
+export interface ICsvConfig {
+    delimiter: string;
+    path: string;
+    keyColumn: string;
+}
+
+export interface ILookupInfokey {
+    from: string;
+    index: number;
+    using: {
+        method: string;
+    };
+}
+
 export interface ILookupDescriptor {
     into: string
-    key: {
-        from: string;
-        index:number;
-        using: {
-            method: string;
-        }
-    };
+    key: ILookupInfokey;
     fromDataSource: {
-        csv:string;
+        csv: ICsvConfig
     };
+}
+
+export interface IUsingConfigOptions {
+    ignoreCase: boolean;
+    multiline: boolean;
 }
 
 export interface IUsingConfig {
     method: string;
     ns: string;
     selector: string;
-    options: any;
+    options: IUsingConfigOptions;
 }
