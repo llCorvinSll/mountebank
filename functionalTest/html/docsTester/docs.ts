@@ -1,18 +1,22 @@
 'use strict';
 
-const api = require('../../api/api').create(),
-    JSDOM = require('jsdom').JSDOM,
-    DocsTestScenario = require('./docsTestScenario'),
-    Q = require('q'),
-    assert = require('assert');
+import * as Q from "q";
+import * as assert from "assert";
+import {DOMWindow, JSDOM} from 'jsdom';
+import {DocsTestScenario, ISubElement} from './docsTestScenario';
+import {HashMap} from "../../../src/util/types";
+import stringify = require("json-stable-stringify");
+
+const api = require('../../api/api').create();
+
 
 /**
  * All DOM parsing happens here, including processing the special HTML tags
  */
 
-function getDOM (endpoint) {
-    const deferred = Q.defer(),
-        url = api.url + endpoint;
+function getDOM (endpoint: string): Q.Promise<DOMWindow> {
+    const deferred = Q.defer<DOMWindow>();
+    const url = api.url + endpoint;
 
     JSDOM.fromURL(url).then(dom => {
         deferred.resolve(dom.window);
@@ -23,7 +27,7 @@ function getDOM (endpoint) {
     return deferred.promise;
 }
 
-function asArray (iterable) {
+function asArray (iterable: HTMLCollectionOf<Element>) {
     const result = [];
     for (let i = 0; i < iterable.length; i += 1) {
         result.push(iterable[i]);
@@ -31,19 +35,19 @@ function asArray (iterable) {
     return result;
 }
 
-function subElements (parentElement, tagName) {
+function subElements (parentElement: Element | Document, tagName: string): ISubElement[] {
     return asArray(parentElement.getElementsByTagName(tagName)).map(element => {
-        const attributes = {};
+        const attributes: HashMap<string> = {};
         element.getAttributeNames().forEach(attributeName => {
-            attributes[attributeName] = element.attributes[attributeName].value;
+            attributes[attributeName] = element.attributes[attributeName as any].value;
         });
 
         return {
-            subElements: subTagName => subElements(element, subTagName),
+            subElements: (subTagName: string) => subElements(element, subTagName),
             attributes: attributes,
-            attributeValue: attributeName => attributes[attributeName] || '',
-            text: () => element.textContent.trim(),
-            setText: newText => {
+            attributeValue: (attributeName: string) => attributes[attributeName] || '',
+            text: () => element.textContent!.trim(),
+            setText: (newText: string) => {
                 element.textContent = newText;
             }
         };
@@ -55,16 +59,16 @@ function subElements (parentElement, tagName) {
  * Allows you to show different data than what is actually needed for the test
  * Wrap it in <change to='replacement-value'>display-value</change>
  */
-function processChangeCommands (element) {
-    const codeElement = element.subElements('code')[0],
-        substitutions = codeElement.subElements('change');
+function processChangeCommands (element: ISubElement) {
+    const codeElement = element.subElements('code')[0];
+    const substitutions = codeElement.subElements('change');
     substitutions.forEach(changeElement => {
-        changeElement.setText(changeElement.attributeValue('to'));
+        changeElement.setText!(changeElement.attributeValue('to'));
     });
-    return codeElement.text();
+    return codeElement.text!();
 }
 
-function normalizeJSON (possibleJSON) {
+function normalizeJSON (possibleJSON: string) {
     try {
         return JSON.stringify(JSON.parse(possibleJSON), null, 2);
     }
@@ -78,27 +82,27 @@ function normalizeJSON (possibleJSON) {
  * Allows you to format the JSON however you want in the docs
  * This function ensures whitespace normalization
  */
-function normalizeJSONSubstrings (text) {
+function normalizeJSONSubstrings (text: string) {
     // [\S\s] because . doesn't match newlines
     const jsonPattern = /\{[\S\s]*\}/;
     if (jsonPattern.test(text)) {
-        const prettyPrintedJSON = normalizeJSON(jsonPattern.exec(text)[0]);
+        const prettyPrintedJSON = normalizeJSON(jsonPattern.exec(text)![0]);
         text = text.replace(jsonPattern, prettyPrintedJSON);
     }
     return text;
 }
 
-function linesOf (text) {
+function linesOf (text: string) {
     return text.replace(/\r/g, '').split('\n');
 }
 
-function collectVolatileLines (responseElement) {
-    const responseLines = linesOf(responseElement.text());
+function collectVolatileLines (responseElement: ISubElement) {
+    const responseLines = linesOf(responseElement.text!());
 
     return responseElement.subElements('volatile').map(volatileElement => {
-        const index = responseLines.findIndex(line => line.indexOf(volatileElement.text()) >= 0),
+        const index = responseLines.findIndex(line => line.indexOf(volatileElement.text!()) >= 0),
             startOfPattern = `^${responseLines[index].replace(/^\s+/, '\\s+')}`,
-            pattern = `${startOfPattern.replace(volatileElement.text(), '(.+)')}$`;
+            pattern = `${startOfPattern.replace(volatileElement.text!(), '(.+)')}$`;
 
         // Another volatile pattern may have the exact same data as this // one
         // (esp. with timestamps). Without removing, we'll miss the second line
@@ -114,33 +118,62 @@ function collectVolatileLines (responseElement) {
  * same line. Comparisons are done by line to make the HTML read better:
  * you can have multiple volatile lines for the same logical pattern
  */
-function replaceVolatileData (text, volatileLines) {
+function replaceVolatileData (text: string, volatileLines: RegExp[]) {
     return volatileLines.reduce((accumulator, volatileLinePattern) => {
-        const textLines = linesOf(accumulator),
-            // Skip ones that have already been replaced
-            lineIndex = textLines.findIndex(line => !/VOLATILE/.test(line) && volatileLinePattern.test(line));
+        const textLines = linesOf(accumulator);
+        // Skip ones that have already been replaced
+        const lineIndex = textLines.findIndex(line => !/696969696969696969/.test(line) && volatileLinePattern.test(line));
         if (lineIndex >= 0) {
             const matches = volatileLinePattern.exec(textLines[lineIndex]);
-            textLines[lineIndex] = textLines[lineIndex].replace(matches[1], 'VOLATILE');
+            textLines[lineIndex] = textLines[lineIndex].replace(matches![1], '696969696969696969');
         }
         return textLines.join('\n');
     }, text);
 }
 
-function normalize (text, responseElement) {
-    const trimmed = (text || '').trim(),
-        normalizedJSON = normalizeJSONSubstrings(trimmed),
-        normalizedVolatility = replaceVolatileData(normalizedJSON, collectVolatileLines(responseElement));
-
-    return normalizedVolatility;
+function stabilizeJSON (possibleJSON: string) {
+    try {
+        return stringify(JSON.parse(possibleJSON), {space: "  "});
+    }
+    catch (e) {
+        console.log('WARNING: FAILED STABILIZING BECAUSE OF INVALID JSON');
+        return possibleJSON;
+    }
 }
 
-function isPartialComparison (responseElement) {
+function stabilizeJSONSubstrings (text: string) {
+    // [\S\s] because . doesn't match newlines
+    const jsonPattern = /\{[\S\s]*\}/;
+    if (jsonPattern.test(text)) {
+        const prettyPrintedJSON = stabilizeJSON(jsonPattern.exec(text)![0]);
+        text = text.replace(jsonPattern, prettyPrintedJSON);
+    }
+    return text;
+}
+
+function normalize (text: string, responseElement: ISubElement) {
+    const trimmed = (text || '').trim();
+    const normalizedJSON = normalizeJSONSubstrings(trimmed);
+    const volatileLines = collectVolatileLines(responseElement);
+    const sanitized_value = replaceVolatileData(normalizedJSON, volatileLines);
+
+    return stabilizeJSONSubstrings(sanitized_value);
+}
+
+function isPartialComparison (responseElement: ISubElement) {
     return responseElement.attributeValue('partial') === 'true';
 }
 
-function setDifference (partialExpectedLines, actualLines) {
-    const difference = [];
+
+interface IDifference {
+    index: number;
+    missingLine: string;
+    previous: string;
+    next: string;
+}
+
+function setDifference (partialExpectedLines: string[], actualLines: string[]) {
+    const difference: IDifference[] = [];
     let lastIndex = -1;
 
     // Track index in closure to ensure two equivalent lines in partialExpected don't match
@@ -151,7 +184,7 @@ function setDifference (partialExpectedLines, actualLines) {
             matchIndex > lastIndex &&
                 (expectedLine.trim() === actualLine.trim() || `${expectedLine.trim()},` === actualLine.trim()));
         if (matchedIndex < 0) {
-            difference.push({
+            difference.push(<IDifference>{
                 index: index,
                 missingLine: expectedLine,
                 previous: partialExpectedLines.slice(Math.max(0, index - 10), index).join('\n'),
@@ -172,9 +205,9 @@ function setDifference (partialExpectedLines, actualLines) {
  * If you want to validate the response for the request, add a
  * <assertResponse</assertResponse> tag around the response text
  */
-function createStepSpecFrom (stepElement) {
-    const stepSpec = stepElement.attributes,
-        responseElements = stepElement.subElements('assertResponse');
+function createStepSpecFrom (stepElement: ISubElement): ISubElement {
+    const stepSpec = stepElement.attributes as ISubElement;
+    const responseElements = stepElement.subElements('assertResponse');
 
     stepSpec.requestText = processChangeCommands(stepElement);
     stepSpec.assertValid = () => {};
@@ -183,9 +216,9 @@ function createStepSpecFrom (stepElement) {
         const responseElement = responseElements[0],
             expectedResponse = processChangeCommands(responseElement);
 
-        stepSpec.assertValid = (actualResponse, failureMessage) => {
-            const actual = normalize(actualResponse, responseElement),
-                expected = normalize(expectedResponse, responseElement);
+        stepSpec.assertValid = (actualResponse: string, failureMessage: string) => {
+            const actual = normalize(actualResponse, responseElement);
+            const expected = normalize(expectedResponse, responseElement);
 
             if (isPartialComparison(responseElement)) {
                 assert.deepEqual(setDifference(linesOf(expected), linesOf(actual)), [], failureMessage);
@@ -198,9 +231,9 @@ function createStepSpecFrom (stepElement) {
     return stepSpec;
 }
 
-function createScenarioFrom (testElement, endpoint) {
-    const scenarioName = testElement.attributeValue('name'),
-        scenario = DocsTestScenario.create(endpoint, scenarioName);
+function createScenarioFrom (testElement: ISubElement, endpoint: string): DocsTestScenario {
+    const scenarioName = testElement.attributeValue('name');
+    const scenario = new DocsTestScenario(endpoint, scenarioName);
 
     testElement.subElements('step').forEach(stepElement => {
         scenario.addStep(createStepSpecFrom(stepElement));
@@ -212,12 +245,12 @@ function createScenarioFrom (testElement, endpoint) {
 /*
  * Each scenario is wrapped in a <testScenario name='scenario-name></testScenario> tag
  */
-function getScenarios (endpoint) {
-    const deferred = Q.defer();
+export function getScenarios (endpoint: string) {
+    const deferred = Q.defer<HashMap<DocsTestScenario>>();
 
     getDOM(endpoint).done(window => {
-        const testElements = subElements(window.document, 'testScenario'),
-            testScenarios = {};
+        const testElements = subElements(window.document, 'testScenario');
+        const testScenarios: HashMap<DocsTestScenario> = {};
 
         testElements.forEach(testElement => {
             const scenarioName = testElement.attributeValue('name');
@@ -228,5 +261,3 @@ function getScenarios (endpoint) {
 
     return deferred.promise;
 }
-
-module.exports = { getScenarios };

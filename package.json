@@ -96,7 +96,9 @@
   ],
   "dependencies": {
     "@types/express": "^4.17.1",
+    "@types/jsdom": "^12.2.4",
     "@types/json-stable-stringify": "^1.0.32",
+    "@types/mocha": "^5.2.7",
     "@types/q": "^1.5.2",
     "@types/xmldom": "^0.1.29",
     "cors": "~2.8.4",
@@ -143,6 +145,7 @@
     "nc": "^1.0.2",
     "rimraf": "^3.0.0",
     "time-grunt": "2.0.0",
+    "ts-node": "^8.6.2",
     "typescript": "^3.7.2",
     "w3cjs": "~0.4.0"
   },

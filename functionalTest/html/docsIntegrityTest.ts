@@ -1,13 +1,14 @@
 'use strict';
 
-const Q = require('q'),
-    promiseIt = require('../testHelpers').promiseIt,
-    tcpIsInProcess = require('../testHelpers').isInProcessImposter('tcp'),
-    docs = require('./docsTester/docs'),
-    isWindows = require('os').platform().indexOf('win') === 0,
-    timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 3000);
+import * as  Q from "q";
+import {promiseIt, isInProcessImposter} from '../testHelpers';
+import * as  docs from './docsTester/docs';
 
-function validateDocs (page) {
+const tcpIsInProcess = isInProcessImposter('tcp');
+const isWindows = require('os').platform().indexOf('win') === 0;
+const timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || '3000', 10);
+
+function validateDocs (page: string) {
     promiseIt(`${page} should be up-to-date`, function () {
         return docs.getScenarios(page).then(testScenarios => {
             const tests = Object.keys(testScenarios).map(testName => testScenarios[testName].assertValid());

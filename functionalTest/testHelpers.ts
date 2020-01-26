@@ -1,25 +1,26 @@
 'use strict';
 
+import * as fs from 'fs';
+
+
 // Like mocha-as-promised, but more explicit.
 // Many times I'd forget to add the errback, making
 // tests harder to fix when they failed because I'd
 // miss the assertion message.
-function wrap (test, that) {
+function wrap (test: Mocha.Func, that: { name: string }): Mocha.Func {
     return done => test.apply(that, []).done(() => { done(); }, done);
 }
 
-function promiseIt (what, test) {
+export function promiseIt (what: string, test: Mocha.Func) {
     return it(what, wrap(test, { name: what }));
 }
 
-promiseIt.only = (what, test) => it.only(what, wrap(test, { name: what }));
+promiseIt.only = (what: string, test: Mocha.Func) => it.only(what, wrap(test, { name: what }));
 
-function xpromiseIt () {}
+export function xpromiseIt () {}
 xpromiseIt.only = () => {};
 
-function isOutOfProcessImposter (protocol) {
-    const fs = require('fs');
-
+export function isOutOfProcessImposter (protocol: string): boolean {
     if (fs.existsSync('protocols.json')) {
         const protocols = require(process.cwd() + '/protocols.json');
         return Object.keys(protocols).indexOf(protocol) >= 0;
@@ -29,8 +30,6 @@ function isOutOfProcessImposter (protocol) {
     }
 }
 
-function isInProcessImposter (protocol) {
+export function isInProcessImposter (protocol: string): boolean {
     return !isOutOfProcessImposter(protocol);
 }
-
-module.exports = { xpromiseIt, promiseIt, isOutOfProcessImposter, isInProcessImposter };

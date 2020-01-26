@@ -1,10 +1,16 @@
 'use strict';
 
-const Q = require('q'),
-    util = require('util'),
-    httpClient = require('../../../api/http/baseHttpClient').create('http');
+import * as  Q from 'q';
+import * as util from 'util';
+import {HashMap} from "../../../../src/util/types";
+import * as stringify from "json-stable-stringify";
+import {ISubElement} from "../docsTestScenario";
+const httpClient = require('../../../api/http/baseHttpClient').create('http');
 
-function parseHeader (line) {
+function parseHeader (line: string): {
+    key: string;
+    value: string;
+} {
     const parts = line.split(':');
     return {
         key: parts[0].trim(),
@@ -12,13 +18,23 @@ function parseHeader (line) {
     };
 }
 
-function parse (text) {
-    const lines = text.split('\n'),
-        firstLineParts = lines[0].split(' '),
-        spec = {
+
+interface ISpec {
+    method:string;
+    path:string;
+    headers:HashMap<string>;
+    body:string;
+    hostname?:string;
+    port?:number;
+}
+
+function parse (text: string) {
+    const lines = text.split('\n');
+    const firstLineParts = lines[0].split(' ');
+    const spec:ISpec = {
             method: firstLineParts[0],
             path: firstLineParts[1],
-            headers: {},
+            headers: <HashMap<string>>{},
             body: ''
         };
 
@@ -39,8 +55,8 @@ function parse (text) {
     return spec;
 }
 
-function messageFor (statusCode) {
-    const codes = {
+function messageFor (statusCode:number) {
+    const codes: HashMap<string> = {
         200: 'OK',
         201: 'Created',
         400: 'Bad Request',
@@ -57,13 +73,13 @@ function messageFor (statusCode) {
     }
 }
 
-function properCase (text) {
+function properCase (text:string) {
     const parts = text.split('-'),
         properCasedParts = parts.map(name => name.substring(0, 1).toUpperCase() + name.substring(1));
     return properCasedParts.join('-');
 }
 
-function format (response) {
+function format (response: any) {
     let result = util.format('HTTP/1.1 %s %s', response.statusCode, messageFor(response.statusCode));
     Object.keys(response.headers).forEach(header => {
         result += util.format('\n%s: %s', properCase(header), response.headers[header]);
@@ -80,15 +96,13 @@ function format (response) {
     return result;
 }
 
-function runStep (spec) {
-    const deferred = Q.defer(),
-        requestSpec = parse(spec.requestText);
+export function runStep (spec: ISubElement) {
+    const deferred = Q.defer();
+    const requestSpec = parse(spec.requestText!);
 
-    httpClient.responseFor(requestSpec).done(response => {
+    httpClient.responseFor(requestSpec).done((response: string) => {
         deferred.resolve(format(response));
     });
 
     return deferred.promise;
 }
-
-module.exports = { runStep };
