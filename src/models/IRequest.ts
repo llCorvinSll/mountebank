@@ -3,6 +3,7 @@
 
 import {IStub} from "./stubs/IStub";
 import {IBehaviorsConfig} from "./behaviors/IBehaviorsConfig";
+import {IJsonPathConfig, IXPathConfig} from "./predicates/IPredicate";
 
 export interface IRequest {
     protocol?: string;
@@ -37,8 +38,17 @@ export interface IProxy {
     _proxyResponseTime?: string;
 }
 
+export interface IMatch {
+    [key : string]: any;
+}
+
 export interface IPredicateGenerator {
     inject?:boolean;
+    xpath?: IXPathConfig;
+    jsonpath?: IJsonPathConfig;
+    predicateOperator?: string;
+    matches?: IMatch;
+    [key: string]: boolean | IXPathConfig | IJsonPathConfig | string | IMatch | undefined;
 }
 
 export type toDeclaration = {

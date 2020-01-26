@@ -21,7 +21,7 @@ export interface IPredicate {
     and: IPredicate[];
     inject: IPredicateConfig;
 
-    // [key: string]: IPredicateConfig| boolean | undefined;
+    [key: string]: IPredicateConfig| boolean | undefined;
 }
 
 export interface IPredicateConfig {

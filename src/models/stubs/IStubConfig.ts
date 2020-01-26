@@ -1,11 +1,11 @@
 import {IPredicate} from "../predicates/IPredicate";
-import {IResponse} from "../IRequest";
+import {IPredicateGenerator, IResponse} from "../IRequest";
 
 
 export interface IProxyConfig {
     mode: string;
     to: string;
-    predicateGenerators?: unknown[];
+    predicateGenerators?: IPredicateGenerator[];
     [key: string]: string | object | unknown[] | undefined;
 }
 

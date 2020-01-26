@@ -21,6 +21,7 @@ import {HashMap} from "../../util/types";
 
 import * as xpath from "../xpath";
 import * as jsonpath from "../jsonpath";
+import {IMatch} from "../IRequest";
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -317,7 +318,7 @@ function regexFlags (options:IUsingConfigOptions): string {
     return result;
 }
 
-function getMatches (selectionFn: () => Array<any> | undefined, selector: string, logger:ILogger): Array<any> {
+function getMatches (selectionFn: () => Array<any> | undefined, selector: string | RegExp, logger:ILogger): Array<IMatch> {
     const matches = selectionFn();
 
     if (matches && matches.length > 0) {
@@ -329,22 +330,22 @@ function getMatches (selectionFn: () => Array<any> | undefined, selector: string
     }
 }
 
-function regexValue (from: any, config, logger:ILogger) {
+function regexValue (from: any, config: ILookupInfokey, logger:ILogger) {
     const regex = new RegExp(config.using.selector, regexFlags(config.using.options)),
-        selectionFn = () => regex.exec(from);
+        selectionFn: () => any[] = () => regex.exec(from) as any[];
     return getMatches(selectionFn, regex, logger);
 }
 
-function xpathValue (from: any, config, logger:ILogger) {
+function xpathValue (from: any, config: ILookupInfokey, logger:ILogger) {
     const selectionFn = () => {
         return xpath.select(config.using.selector, config.using.ns, from, logger);
     };
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function jsonpathValue (from: any, config, logger:ILogger) {
-    const selectionFn = () => {
-        return jsonpath.select(config.using.selector, from, logger);
+function jsonpathValue (from: any, config: ILookupInfokey, logger:ILogger) {
+    const selectionFn: () => any[] = () => {
+        return jsonpath.select(config.using.selector, from, logger) as unknown as any[];
     };
     return getMatches(selectionFn, config.using.selector, logger);
 }
@@ -370,8 +371,8 @@ function globalObjectReplace (obj:HashMap|any, replacer:(v: any) => any) {
     });
 }
 
-function replaceArrayValuesIn (response, token, values, logger:ILogger) {
-    const replacer = field => {
+function replaceArrayValuesIn (response: IMountebankResponse, token: string, values: any[], logger:ILogger) {
+    const replacer = (field: string) => {
         values.forEach(function (replacement, index) {
             // replace ${TOKEN}[1] with indexed element
             const indexedToken = util.format('%s[%s]', token, index);
@@ -403,7 +404,7 @@ function copy (originalRequest:IServerRequestData, responsePromise:ResponsePromi
             const using = copyConfig.using || {};
             const values = fnMap[using.method](from, copyConfig, logger);
 
-            replaceArrayValuesIn(response, copyConfig.into, values, logger);
+            replaceArrayValuesIn(response, copyConfig.into as string, values, logger);
         });
         return Q(response);
     });

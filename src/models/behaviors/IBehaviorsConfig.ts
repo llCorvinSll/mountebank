@@ -15,7 +15,7 @@ export type IWaitDescriptor = (() => number) | string;
 export interface ICopyDescriptor {
     from:string;
     using: IUsingConfig;
-    into: {};
+    into: {} | string;
 }
 
 export interface ICsvConfig {
@@ -29,6 +29,9 @@ export interface ILookupInfokey {
     index: number;
     using: {
         method: string;
+        selector: string;
+        options: IUsingConfigOptions;
+        ns: string;
     };
 }
 

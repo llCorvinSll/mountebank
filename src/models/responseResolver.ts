@@ -1,6 +1,6 @@
 'use strict';
 
-import {IRequest, IResponse} from "./IRequest";
+import {IPredicateGenerator, IRequest, IResponse} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
 import * as Q from "q";
 import {InjectionError, ValidationError} from "../util/errors";
@@ -279,8 +279,8 @@ export class ResponseResolver implements IResolver {
         }
     }
 
-    private predicatesFor (request: IServerRequestData, matchers, logger: ILogger) {
-        const predicates = [];
+    private predicatesFor (request: IServerRequestData, matchers: IPredicateGenerator[], logger: ILogger) {
+        const predicates: IPredicate[] = [];
 
         // @ts-ignore
         matchers.forEach(matcher => {
@@ -316,10 +316,10 @@ export class ResponseResolver implements IResolver {
                     basePredicate[key] = matcher[key];
                 }
                 if (key === 'xpath') {
-                    valueOf = field => xpathValue(matcher.xpath, field, logger);
+                    valueOf = field => xpathValue(matcher.xpath!, field, logger);
                 }
                 else if (key === 'jsonpath') {
-                    valueOf = field => jsonpathValue(matcher.jsonpath, field, logger);
+                    valueOf = field => jsonpathValue(matcher.jsonpath!, field, logger);
                 }
                 else if (key === 'predicateOperator') {
                     hasPredicateOperator = true;
@@ -327,9 +327,9 @@ export class ResponseResolver implements IResolver {
                 }
             });
 
-            Object.keys(matcher.matches).forEach(fieldName => {
-                const matcherValue = matcher.matches[fieldName],
-                    predicate = helpers.clone(basePredicate);
+            Object.keys(matcher.matches!).forEach(fieldName => {
+                const matcherValue = matcher.matches![fieldName];
+                const predicate = helpers.clone(basePredicate);
                 if (matcherValue === true && !hasPredicateOperator) {
                     predicate.deepEquals = {};
                     // @ts-ignore
@@ -340,7 +340,7 @@ export class ResponseResolver implements IResolver {
                     predicate[matcher.predicateOperator] = this.buildExists(request, fieldName, matcherValue, request);
                 }
                 else if (hasPredicateOperator && matcher.predicateOperator !== 'exists') {
-                    predicate[matcher.predicateOperator] = valueOf(request);
+                    predicate[matcher.predicateOperator!] = valueOf(request);
                 }
                 else {
                     predicate.equals = {};

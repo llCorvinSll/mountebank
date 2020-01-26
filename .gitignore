@@ -14,20 +14,16 @@ troubleshooting/
 protocols.json
 .tscache
 
+*.js.map
+
 src/controllers/**/*.js
-src/controllers/**/*.js.map
 
 src/util/**/*.js
-src/util/**/*.js.map
 
 src/models/behaviors/**/*.js
-src/models/behaviors/**/*.js.map
 
 src/models/imposters/**/*.js
-src/models/imposters/**/*.js.map
 
 src/models/predicates/**/*.js
-src/models/predicates/**/*.js.map
 
 src/models/stubs/**/*.js
-src/models/stubs/**/*.js.map
