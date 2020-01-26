@@ -34,9 +34,14 @@ describe('responseResolver', function () {
     }
 
     describe('#resolve', function () {
+        let stubs;
+
+        beforeEach(() => {
+            stubs = new StubRepository('utf8', true);
+        });
+
         promiseIt('should resolve "is" without transformation', function () {
             const proxy = {},
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 responseConfig = { is: 'value' };
@@ -48,7 +53,6 @@ describe('responseResolver', function () {
 
         promiseIt('should resolve "proxy" by delegating to the proxy for in process resolution', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create();
 
@@ -66,8 +70,7 @@ describe('responseResolver', function () {
         });
 
         promiseIt('should resolve "proxy" by returning proxy configuration for out of process resolution', function () {
-            const stubs = new StubRepository('utf8'),
-                resolver = new ResponseResolver(stubs, null, 'CALLBACK URL'),
+            const resolver = new ResponseResolver(stubs, null, 'CALLBACK URL'),
                 logger = Logger.create();
 
             // Call through the stubRepository to have it add the setMetadata function
@@ -85,7 +88,6 @@ describe('responseResolver', function () {
 
         promiseIt('should default to "proxyOnce" mode', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create();
 
@@ -100,7 +102,6 @@ describe('responseResolver', function () {
 
         promiseIt('should change unrecognized mode to "proxyOnce" mode', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create();
 
@@ -115,7 +116,6 @@ describe('responseResolver', function () {
 
         promiseIt('should resolve proxy in proxyOnce mode by adding a new "is" stub to the front of the list', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create();
 
@@ -136,7 +136,6 @@ describe('responseResolver', function () {
 
         promiseIt('should support adding wait behavior to newly created stub for in process imposters', function () {
             const proxy = { to: mock().returns(Q.delay(100).then(() => Q({ data: 'value' }))) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 request = {};
@@ -165,7 +164,6 @@ describe('responseResolver', function () {
             }
 
             const proxy = { to: proxyReturn },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 request = {};
@@ -193,7 +191,6 @@ describe('responseResolver', function () {
         promiseIt('should run behaviors on proxy response before recording it', function () {
             const decorateFunc = (request, response) => { response.data += '-DECORATED'; };
             const proxy = { to: mock().returns(Q({ data: 'RESPONSE' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -217,7 +214,6 @@ describe('responseResolver', function () {
         promiseIt('should support adding decorate behavior to newly created stub', function () {
             const decorateFunc = '(request, response) => {}';
             const proxy = { to: mock().returns(Q({ data: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 request = {};
@@ -237,7 +233,6 @@ describe('responseResolver', function () {
         promiseIt('should support adding decorate behavior to newly created response in proxyAlways mode', function () {
             const decorateFunc = '(request, response) => {}';
             const proxy = { to: mock().returns(Q({ data: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 request = {};
@@ -262,7 +257,6 @@ describe('responseResolver', function () {
 
         promiseIt('should resolve "proxy" and remember full objects as "deepEquals" predicates', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -279,6 +273,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: {
                                 key: {
@@ -290,6 +285,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [{
                             proxy: { to: 'where', mode: 'proxyOnce', predicateGenerators: [{ matches: { key: true } }] }
                         }]
@@ -300,7 +296,6 @@ describe('responseResolver', function () {
 
         promiseIt('should resolve "proxy" and remember nested keys as "equals" predicates', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -318,10 +313,12 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{ equals: { key: { nested: { first: 'one' } } } }],
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [{
                             proxy: {
                                 to: 'where',
@@ -336,7 +333,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add predicate parameters from predicateGenerators', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -358,6 +354,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { key: 'Test' },
                             caseSensitive: true,
@@ -366,6 +363,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -374,7 +372,6 @@ describe('responseResolver', function () {
 
         promiseIt('should choose predicate operator from predicateGenerators', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -396,12 +393,14 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             contains: { key: 'Test' }
                         }],
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -410,7 +409,6 @@ describe('responseResolver', function () {
 
         promiseIt('should format exists matcher from predicateOperator', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -432,12 +430,14 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             exists: { key: true }
                         }],
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -446,7 +446,6 @@ describe('responseResolver', function () {
 
         promiseIt('should format exists matcher from predicateOperator with nested match', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -468,12 +467,14 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             exists: { key: { nested: true } }
                         }],
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -483,7 +484,6 @@ describe('responseResolver', function () {
 
         promiseIt('should support "inject" predicateGenerators', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -503,6 +503,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { key: 'Test' },
                             caseSensitive: true
@@ -514,6 +515,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -523,7 +525,6 @@ describe('responseResolver', function () {
         promiseIt('should log "inject" predicateGenerator exceptions', function () {
             const errorsLogged = [],
                 proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -555,7 +556,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add xpath predicate parameter in predicateGenerators with one match', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -575,6 +575,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: 'Harry Potter' },
                             xpath: { selector: '//title' }
@@ -582,6 +583,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -590,7 +592,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add xpath predicate parameter in predicateGenerators with one match and a nested match key', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -610,6 +611,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             equals: { parent: { child: 'Harry Potter' } },
                             xpath: { selector: '//title' }
@@ -617,6 +619,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -625,7 +628,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add xpath predicate parameter in predicateGenerators with multiple matches', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -653,6 +655,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: ['Harry Potter', 'The Hobbit', 'Game of Thrones'] },
                             xpath: {
@@ -663,6 +666,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -671,7 +675,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add xpath predicate parameter in predicateGenerators even if no xpath match', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -691,6 +694,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: '' },
                             xpath: { selector: '//title' }
@@ -698,6 +702,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -706,7 +711,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add xpath predicate parameter in predicateGenerators even if scalar xpath match', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -726,6 +730,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: 2 },
                             xpath: { selector: 'count(//title)' }
@@ -733,6 +738,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -741,7 +747,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add xpath predicate parameter in predicateGenerators even if boolean match', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -761,6 +766,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: false },
                             xpath: { selector: 'boolean(//title)' }
@@ -768,6 +774,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -776,7 +783,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add jsonpath predicate parameter in predicateGenerators with one match', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -796,6 +802,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: 'Harry Potter' },
                             jsonpath: { selector: '$..title' }
@@ -803,6 +810,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -811,7 +819,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add jsonpath predicate parameter in predicateGenerators with multiple matches', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -839,6 +846,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: ['Harry Potter', 'The Hobbit', 'Game of Thrones'] },
                             jsonpath: { selector: '$.books[*].title' }
@@ -846,6 +854,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -854,7 +863,6 @@ describe('responseResolver', function () {
 
         promiseIt('should add jsonpath predicate parameter in predicateGenerators with no match', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -874,6 +882,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: '' },
                             jsonpath: { selector: '$..title' }
@@ -881,6 +890,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -889,7 +899,6 @@ describe('responseResolver', function () {
 
         promiseIt('should log warning if request not JSON', function () {
             const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                stubs = new StubRepository('utf8'),
                 resolver = new ResponseResolver(stubs, proxy),
                 logger = Logger.create(),
                 response = {
@@ -909,6 +918,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.deepEqual(stubList(stubs), [
                     {
+                        _uuid: 'stub',
                         predicates: [{
                             deepEquals: { field: '' },
                             jsonpath: { selector: '$..title' }
@@ -916,6 +926,7 @@ describe('responseResolver', function () {
                         responses: [{ is: { key: 'value' } }]
                     },
                     {
+                        _uuid: 'stub',
                         responses: [response]
                     }
                 ]);
@@ -924,8 +935,7 @@ describe('responseResolver', function () {
         });
 
         promiseIt('should allow "inject" response', function () {
-            const stubs = new StubRepository('utf8'),
-                resolver = new ResponseResolver(stubs, {}),
+            const resolver = new ResponseResolver(stubs, {}),
                 logger = Logger.create(),
                 fn = request => request.data + ' injected',
                 responseConfig = { inject: fn.toString() },
@@ -937,8 +947,7 @@ describe('responseResolver', function () {
         });
 
         promiseIt('should log injection exceptions', function () {
-            const stubs = new StubRepository('utf8'),
-                resolver = new ResponseResolver(stubs, {}),
+            const resolver = new ResponseResolver(stubs, {}),
                 logger = Logger.create(),
                 fn = () => {
                     throw Error('BOOM!!!');

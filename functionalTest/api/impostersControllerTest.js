@@ -4,6 +4,7 @@ const assert = require('assert'),
     api = require('./api').create(),
     promiseIt = require('../testHelpers').promiseIt,
     port = api.port + 1,
+    sanitizeBody = require('../testUtils/sanitize').sanitizeBody,
     client = require('./http/baseHttpClient').create('http');
 
 describe('POST /imposters', function () {
@@ -129,8 +130,9 @@ describe('DELETE /imposters', function () {
             assert.strictEqual(response.statusCode, 201);
             return api.del('/imposters?removeProxies=true&replayable=false');
         }).then(response => {
+            const sanitizedBody = sanitizeBody(response);
             assert.strictEqual(response.statusCode, 200);
-            assert.deepEqual(response.body, {
+            assert.deepEqual(sanitizedBody, {
                 imposters: [
                     {
                         protocol: 'http',
@@ -140,6 +142,7 @@ describe('DELETE /imposters', function () {
                         numberOfRequests: 0,
                         requests: [],
                         stubs: [{
+                            _uuid: '696969696969',
                             responses: [{ is: { body: 'Hello, World!' } }],
                             _links: { self: { href: `${api.url}/imposters/${isImposter.port}/stubs/0` } }
                         }],

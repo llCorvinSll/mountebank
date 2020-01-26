@@ -6,6 +6,7 @@ const assert = require('assert'),
     promiseIt = require('../../testHelpers').promiseIt,
     port = api.port + 1,
     timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 2000),
+    sanitizeBody = require('../../testUtils/sanitize').sanitizeBody,
     helpers = require('../../../src/util/helpers');
 
 ['http', 'https'].forEach(protocol => {
@@ -470,17 +471,21 @@ const assert = require('assert'),
                         ]
                     }))
                     .then(response => {
+                        const sanitizedBody = sanitizeBody(response);
                         assert.strictEqual(response.statusCode, 200);
-                        assert.deepEqual(response.body.stubs, [
+                        assert.deepEqual(sanitizedBody.stubs, [
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'FIRST' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/0` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'ORIGINAL' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/1` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'THIRD' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/2` } }
                             }
@@ -511,18 +516,22 @@ const assert = require('assert'),
                         return api.put(`/imposters/${port}/stubs/1`, changedStub);
                     })
                     .then(response => {
+                        const sanitizedBody = sanitizeBody(response);
                         assert.strictEqual(response.statusCode, 200);
-                        assert.deepEqual(response.body.stubs, [
+                        assert.deepEqual(sanitizedBody.stubs, [
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'first' } }],
                                 predicates: [{ equals: { path: '/first' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/0` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'CHANGED' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/1` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'third' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/2` } }
                             }
@@ -552,13 +561,16 @@ const assert = require('assert'),
                         return api.del(`/imposters/${port}/stubs/1`);
                     })
                     .then(response => {
+                        const sanitizedBody = sanitizeBody(response);
                         assert.strictEqual(response.statusCode, 200);
-                        assert.deepEqual(response.body.stubs, [
+                        assert.deepEqual(sanitizedBody.stubs, [
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/0` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'third' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/1` } }
                             }
@@ -588,17 +600,21 @@ const assert = require('assert'),
                         return api.post(`/imposters/${port}/stubs`, { index: 1, stub: newStub });
                     })
                     .then(response => {
+                        const sanitizedBody = sanitizeBody(response);
                         assert.strictEqual(response.statusCode, 200);
-                        assert.deepEqual(response.body.stubs, [
+                        assert.deepEqual(sanitizedBody.stubs, [
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/0` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'SECOND' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/1` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'third' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/2` } }
                             }
@@ -628,17 +644,21 @@ const assert = require('assert'),
                         return api.post(`/imposters/${port}/stubs`, { stub: newStub });
                     })
                     .then(response => {
+                        const sanitizedBody = sanitizeBody(response);
                         assert.strictEqual(response.statusCode, 200);
-                        assert.deepEqual(response.body.stubs, [
+                        assert.deepEqual(sanitizedBody.stubs, [
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/0` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'third' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/1` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: 'LAST' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/2` } }
                             }

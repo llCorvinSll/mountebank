@@ -9,6 +9,7 @@ const assert = require('assert'),
     isInProcessImposter = require('../../testHelpers').isInProcessImposter,
     port = api.port + 1,
     isWindows = require('os').platform().indexOf('win') === 0,
+    sanitizeBody = require('../../testUtils/sanitize').sanitizeBody,
     timeout = isWindows ? 10000 : parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 2000),
     airplaneMode = process.env.MB_AIRPLANE_MODE === 'true';
 
@@ -445,11 +446,9 @@ describe('http proxy stubs', function () {
                 assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body));
                 return client.get('/first', port);
             }).then(() => client.get('/second', port)).then(() => client.get('/first', port)).then(() => api.del(`/imposters/${originServerPort}`)).then(() => api.get('/imposters?replayable=true&removeProxies=true')).then(response => {
-                const actual = JSON.stringify(response.body),
-                    withDateRemoved = actual.replace(/"Date":"[^"]+"/g, '"Date":"NOW"'),
-                    actualWithoutEphemeralData = JSON.parse(withDateRemoved);
+                const sanitizedBody = sanitizeBody(response);
 
-                assert.deepEqual(actualWithoutEphemeralData, {
+                assert.deepEqual(sanitizedBody, {
                     imposters: [
                         {
                             protocol: 'http',
@@ -768,8 +767,12 @@ describe('http proxy stubs', function () {
                 response.body.stubs.forEach(stub => {
                     delete stub.matches;
                     delete stub._links;
+                    // eslint-disable-next-line no-underscore-dangle
+                    delete stub._uuid;
                 });
-                assert.deepEqual(proxyRequest.stubs, response.body.stubs, JSON.stringify(response.body.stubs, null, 2));
+
+                const sanitizedBody = sanitizeBody(response);
+                assert.deepEqual(proxyRequest.stubs, sanitizedBody.stubs, JSON.stringify(response.body.stubs, null, 2));
             })
             .finally(() => api.del('/imposters'));
     });

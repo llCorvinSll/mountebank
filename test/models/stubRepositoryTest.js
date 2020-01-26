@@ -91,23 +91,23 @@ describe('stubRepository', function () {
 
     describe('#stubs', function () {
         it('should not allow changing state in stubRepository', function () {
-            const stubs = new StubRepository('utf8'),
+            const stubs = new StubRepository('utf8', true),
                 stub = { responses: [] };
 
             stubs.addStub(stub);
             stubs.stubs()[0].responses.push('RESPONSE');
 
-            assert.deepEqual(jsonWithoutFunctions(stubs.stubs()), [{ responses: [] }]);
+            assert.deepEqual(jsonWithoutFunctions(stubs.stubs()), [{ _uuid: 'stub', responses: [] }]);
         });
 
         it('should support adding responses', function () {
-            const stubs = new StubRepository('utf8'),
+            const stubs = new StubRepository('utf8', true),
                 stub = { responses: [] };
 
             stubs.addStub(stub);
             stubs.stubs()[0].addResponse('RESPONSE');
 
-            assert.deepEqual(jsonWithoutFunctions(stubs.stubs()), [{ responses: ['RESPONSE'] }]);
+            assert.deepEqual(jsonWithoutFunctions(stubs.stubs()), [{ _uuid: 'stub', responses: ['RESPONSE'] }]);
         });
     });
 

@@ -54,7 +54,9 @@ export class ImposterPrinter {
         });
 
         result.requests = this.requests;
-        result.stubs = this.server.stubs.stubs();
+        result.stubs = this.server.stubs.stubs().map((stub) => {
+            return JSON.parse(JSON.stringify(stub));
+        });
 
         for (let i = 0; i < result.stubs.length; i += 1) {
             result.stubs[i]._links = {
@@ -69,6 +71,10 @@ export class ImposterPrinter {
             if (stub.matches) {
                 delete stub.matches;
             }
+
+            delete stub.uuid;
+            delete (stub as any)._uuid;
+
             (stub.responses || []).forEach(response => {
                 if (helpers.defined(response.is) && helpers.defined(response.is._proxyResponseTime)) {
                     delete response.is._proxyResponseTime;

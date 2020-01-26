@@ -7,6 +7,7 @@ const assert = require('assert'),
     mb = require('../../mb').create(port + 1),
     timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 4000),
     BaseHttpClient = require('./baseHttpClient'),
+    sanitizeBody = require('../../testUtils/sanitize').sanitizeBody,
     headersHelper = require('../../../src/models/http/headersHelper');
 
 ['http', 'https'].forEach(protocol => {
@@ -158,13 +159,16 @@ const assert = require('assert'),
                 return api.post('/imposters', request)
                     .then(() => api.get(`/imposters/${port}`))
                     .then(response => {
+                        const sanitizedBody = sanitizeBody(response);
                         assert.strictEqual(response.statusCode, 200);
-                        assert.deepEqual(response.body.stubs, [
+                        assert.deepEqual(sanitizedBody.stubs, [
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: '1' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/0` } }
                             },
                             {
+                                _uuid: '696969696969',
                                 responses: [{ is: { body: '2' } }],
                                 _links: { self: { href: `${api.url}/imposters/${port}/stubs/1` } }
                             }
@@ -182,15 +186,17 @@ const assert = require('assert'),
                     .then(() => client.get('/second?q=2', port))
                     .then(() => api.get(`/imposters/${port}`))
                     .then(response => {
-                        const stubs = JSON.stringify(response.body.stubs),
-                            withTimeRemoved = stubs.replace(/"timestamp":"[^"]+"/g, '"timestamp":"NOW"'),
-                            withClientPortRemoved = withTimeRemoved.replace(
-                                /"requestFrom":"[a-f:.\d]+"/g, '"requestFrom":"HERE"'),
-                            actualWithoutEphemeralData = JSON.parse(withClientPortRemoved),
-                            requestHeaders = { accept: 'application/json', Host: `localhost:${port}`, Connection: 'keep-alive' };
+                        const stubs = JSON.stringify(response.body.stubs);
+                        const withTimeRemoved = stubs.replace(/"timestamp":"[^"]+"/g, '"timestamp":"NOW"');
+                        const withClientPortRemoved = withTimeRemoved
+                            .replace(/"requestFrom":"[a-f:.\d]+"/g, '"requestFrom":"HERE"')
+                            .replace(/"_uuid":"[\S]+?"/g, '"_uuid":"696969696969"');
+                        const actualWithoutEphemeralData = JSON.parse(withClientPortRemoved);
+                        const requestHeaders = { accept: 'application/json', Host: `localhost:${port}`, Connection: 'keep-alive' };
 
                         assert.deepEqual(actualWithoutEphemeralData, [{
                             responses: [{ is: { body: '1' } }, { is: { body: '2' } }],
+                            _uuid: '696969696969',
                             matches: [
                                 {
                                     timestamp: 'NOW',
@@ -239,7 +245,9 @@ const assert = require('assert'),
                     .then(() => client.get('/second?q=2', port))
                     .then(() => mb.get(`/imposters/${port}`))
                     .then(response => {
-                        assert.deepEqual(response.body.stubs, [{
+                        const sanitizedBody = sanitizeBody(response);
+                        assert.deepEqual(sanitizedBody.stubs, [{
+                            _uuid: '696969696969',
                             responses: [{ is: { body: '1' } }, { is: { body: '2' } }],
                             _links: { self: { href: `${mb.url}/imposters/${port}/stubs/0` } }
                         }]);
@@ -305,13 +313,17 @@ const assert = require('assert'),
                     assert.strictEqual(response.statusCode, 201);
                     return api.del(`/imposters/${imposter.port}?removeProxies=true&replayable=true`);
                 }).then(response => {
+                    const sanitizedBody = sanitizeBody(response);
+
                     assert.strictEqual(response.statusCode, 200);
-                    assert.deepEqual(response.body, {
+                    assert.deepEqual(sanitizedBody, {
                         protocol: 'http',
                         port: port + 1,
                         name: imposter.name,
                         recordRequests: false,
-                        stubs: [{ responses: [{ is: { body: 'Hello, World!' } }] }]
+                        stubs: [{
+                            responses: [{ is: { body: 'Hello, World!' } }]
+                        }]
                     });
                 });
             });

@@ -10,6 +10,7 @@ import * as predicates from '../predicates/predicates';
 import {IStub} from "./IStub";
 import {IStubRepository} from "./IStubRepository";
 import { Stub } from "./Stub";
+import {uniqueId} from "lodash";
 
 /**
  * Maintains all stubs for an imposter
@@ -22,7 +23,7 @@ import { Stub } from "./Stub";
  * @returns {Object}
  */
 export class StubRepository implements IStubRepository {
-    public constructor(private encoding:string) {
+    public constructor(private encoding:string, private static_uuids: boolean = false) {
 
     }
 
@@ -105,7 +106,13 @@ export class StubRepository implements IStubRepository {
     }
 
     private decorate (stub: IStubConfig):IStub {
-        return new Stub(stub);
+        let uuid = uniqueId("stub");
+
+        if (this.static_uuids) {
+            uuid = "stub";
+        }
+
+        return new Stub(stub, uuid);
     }
 
     //#endregion

@@ -11,6 +11,7 @@ export interface IStub {
 
     matches?:unknown[];
 
+    uuid?:string;
     _links?:string;
 
 }

@@ -5,7 +5,9 @@ const assert = require('assert'),
     tcp = require('./tcpClient'),
     promiseIt = require('../../testHelpers').promiseIt,
     port = api.port + 1,
+    sanitizeBody = require('../../testUtils/sanitize').sanitizeBody,
     timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 2000);
+
 
 describe('tcp imposter', function () {
     this.timeout(timeout);
@@ -44,13 +46,16 @@ describe('tcp imposter', function () {
             return api.post('/imposters', request)
                 .then(() => api.get(`/imposters/${port}`))
                 .then(response => {
+                    const sanitizedBody = sanitizeBody(response);
                     assert.strictEqual(response.statusCode, 200);
-                    assert.deepEqual(response.body.stubs, [
+                    assert.deepEqual(sanitizedBody.stubs, [
                         {
+                            _uuid: '696969696969',
                             responses: [{ is: { data: '1' } }],
                             _links: { self: { href: `${api.url}/imposters/${port}/stubs/0` } }
                         },
                         {
+                            _uuid: '696969696969',
                             responses: [{ is: { data: '2' } }],
                             _links: { self: { href: `${api.url}/imposters/${port}/stubs/1` } }
                         }
@@ -93,12 +98,10 @@ describe('tcp imposter', function () {
                 .then(() => tcp.send('second', port))
                 .then(() => api.get(`/imposters/${port}`))
                 .then(response => {
-                    const stubs = JSON.stringify(response.body.stubs),
-                        withTimeRemoved = stubs.replace(/"timestamp":"[^"]+"/g, '"timestamp":"NOW"'),
-                        withClientPortRemoved = withTimeRemoved.replace(/"requestFrom":"[a-f:.\d]+"/g, '"requestFrom":"HERE"'),
-                        actualWithoutEphemeralData = JSON.parse(withClientPortRemoved);
+                    const sanitizedBody = sanitizeBody(response);
 
-                    assert.deepEqual(actualWithoutEphemeralData, [{
+                    assert.deepEqual(sanitizedBody.stubs, [{
+                        _uuid: '696969696969',
                         responses: [{ is: { data: '1' } }, { is: { data: '2' } }],
                         matches: [
                             {

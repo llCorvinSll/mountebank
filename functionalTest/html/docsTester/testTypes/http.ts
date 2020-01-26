@@ -3,7 +3,6 @@
 import * as  Q from 'q';
 import * as util from 'util';
 import {HashMap} from "../../../../src/util/types";
-import * as stringify from "json-stable-stringify";
 import {ISubElement} from "../docsTestScenario";
 const httpClient = require('../../../api/http/baseHttpClient').create('http');
 

@@ -6,13 +6,17 @@ import {IStubConfig} from "./IStubConfig";
 
 
 export class Stub implements IStub {
-    constructor(config:IStubConfig) {
+    constructor(config:IStubConfig, private _uuid: string) {
         this.responses = config.responses || [];
         this.statefulResponses = this.repeatTransform(config.responses as IMountebankResponse[]);
 
         if (config.predicates) {
             this.predicates = config.predicates;
         }
+    }
+
+    public get uuid() {
+        return this._uuid;
     }
 
     _links:string;

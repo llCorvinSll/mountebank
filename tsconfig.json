@@ -11,7 +11,8 @@
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "node",
         "types": [
-            "node"
+            "node",
+            "mocha"
         ]
     }
 }
