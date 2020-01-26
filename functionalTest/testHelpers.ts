@@ -7,15 +7,15 @@ import * as fs from 'fs';
 // Many times I'd forget to add the errback, making
 // tests harder to fix when they failed because I'd
 // miss the assertion message.
-function wrap (test: Mocha.Func, that: { name: string }): Mocha.Func {
-    return done => test.apply(that, []).done(() => { done(); }, done);
+function wrap (test: any, that: { name: string }): any {
+    return (done: any) => test.apply(that, []).done(() => { done(); }, done);
 }
 
-export function promiseIt (what: string, test: Mocha.Func) {
+export function promiseIt (what: string, test: any) {
     return it(what, wrap(test, { name: what }));
 }
 
-promiseIt.only = (what: string, test: Mocha.Func) => it.only(what, wrap(test, { name: what }));
+promiseIt.only = (what: string, test: any) => it.only(what, wrap(test, { name: what }));
 
 export function xpromiseIt () {}
 xpromiseIt.only = () => {};

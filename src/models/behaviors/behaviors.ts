@@ -534,19 +534,19 @@ export function execute (request:IServerRequestData, response:IMountebankRespons
 
     const combinators = require('../../util/combinators'),
         waitFn = behaviors.wait ?
-            (result:ResponsePromise) => wait(request, result, behaviors.wait, logger) :
+            (result:ResponsePromise) => wait(request, result, behaviors.wait!, logger) :
             combinators.identity,
         copyFn = behaviors.copy ?
-            (result:ResponsePromise) => copy(request, result, behaviors.copy, logger) :
+            (result:ResponsePromise) => copy(request, result, behaviors.copy!, logger) :
             combinators.identity,
         lookupFn = behaviors.lookup ?
-            (result:ResponsePromise) => lookup(request, result, behaviors.lookup, logger) :
+            (result:ResponsePromise) => lookup(request, result, behaviors.lookup!, logger) :
             combinators.identity,
         shellTransformFn = behaviors.shellTransform ?
-            (result:ResponsePromise) => shellTransform(request, result, behaviors.shellTransform, logger) :
+            (result:ResponsePromise) => shellTransform(request, result, behaviors.shellTransform!, logger) :
             combinators.identity,
         decorateFn = behaviors.decorate ?
-            (result:ResponsePromise) => decorate(request, result, behaviors.decorate, logger) :
+            (result:ResponsePromise) => decorate(request, result, behaviors.decorate!, logger) :
             combinators.identity;
 
     logger.debug('using stub response behavior ' + JSON.stringify(behaviors));

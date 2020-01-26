@@ -1,16 +1,16 @@
 'use strict';
 
-const middleware = require('../../src/util/middleware'),
-    assert = require('assert'),
-    mock = require('../mock').mock,
-    FakeResponse = require('../fakes/fakeResponse');
+const middleware = require('../../src/util/middleware');
+const assert = require('assert');
+const mock = require('../mock').mock;
+const FakeResponse = require('../fakes/fakeResponse').FakeResponse;
 
 describe('middleware', function () {
     let request, response, next;
 
     beforeEach(() => {
         request = { headers: {}, params: {} };
-        response = new FakeResponse()();
+        response = new FakeResponse();
         next = mock();
     });
 
