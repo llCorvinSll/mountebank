@@ -1,7 +1,7 @@
 'use strict';
 
-const Q = require('q'),
-    helpers = require('../../../src/util/helpers');
+const Q = require('q');
+const helpers = require('../../../src/util/helpers');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 

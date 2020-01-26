@@ -10,7 +10,7 @@ describe('middleware', function () {
 
     beforeEach(() => {
         request = { headers: {}, params: {} };
-        response = FakeResponse.create();
+        response = new FakeResponse()();
         next = mock();
     });
 

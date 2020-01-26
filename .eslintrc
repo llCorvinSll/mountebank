@@ -108,7 +108,6 @@
         "space-infix-ops": [2, {"int32Hint": false}],
         "space-unary-ops": [1, { "words": true, "nonwords": false }],
         "spaced-comment": [2, "always"],
-        "strict": [2, "global"],
         "valid-jsdoc": [2, {"requireReturn": false, "requireReturnDescription": false}],
         "yoda": 2,
 

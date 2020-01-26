@@ -27,3 +27,5 @@ src/models/imposters/**/*.js
 src/models/predicates/**/*.js
 
 src/models/stubs/**/*.js
+
+test/controllers/**/*.js

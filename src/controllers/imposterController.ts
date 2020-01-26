@@ -39,8 +39,8 @@ export class ImposterController {
     public constructor(
         private protocols: {[key: string]: IProtocolFactory},
         private imposters: { [key: string]: IImposter },
-        private logger:ILogger,
-        private allowInjection:boolean) {
+        private logger?:ILogger,
+        private allowInjection?:boolean) {
 
     }
 
@@ -81,7 +81,7 @@ export class ImposterController {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing
      */
-    public del = (request: Request, response: Response) => {
+    public del = (request: Request, response: Response):Q.Promise<boolean|void> => {
         const imposter: IImposter = this.imposters[request.params.id],
             query = url.parse(request.url, true).query,
             options = { replayable: queryBoolean(query, 'replayable'), removeProxies: queryBoolean(query, 'removeProxies') };
@@ -246,7 +246,7 @@ export class ImposterController {
     }
 
     private respondWithValidationErrors (response:Response, validationErrors:IMontebankError[], statusCode = 400) {
-        this.logger.error(`error changing stubs: ${JSON.stringify(exceptions.details(validationErrors as any))}`);
+        this.logger!.error(`error changing stubs: ${JSON.stringify(exceptions.details(validationErrors as any))}`);
         response.statusCode = statusCode;
         response.send({ errors: validationErrors });
         return Q();

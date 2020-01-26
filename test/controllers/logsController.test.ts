@@ -1,24 +1,26 @@
-'use strict';
-
-const Controller = require('../../src/controllers/logsController'),
-    assert = require('assert'),
-    fs = require('fs'),
-    FakeResponse = require('../fakes/fakeResponse');
+import * as Controller from '../../src/controllers/logsController';
+import * as fs from 'fs';
+import {FakeResponse} from '../fakes/fakeResponse';
 
 describe('logsController', function () {
     describe('#get', function () {
-        after(() => {
+        let response: any;
+        let controller: any;
+
+        afterEach(() => {
             fs.unlinkSync('logsControllerTest.log');
         });
 
+        beforeEach(() => {
+            response = new FakeResponse();
+            controller = Controller.create('logsControllerTest.log');
+        })
+
         it('should return full contents of logfile as JSON array by default', function () {
-            const response = FakeResponse.create(),
-                controller = Controller.create('logsControllerTest.log');
-
             fs.writeFileSync('logsControllerTest.log', '{"key": "first"}\n{"key": "second"}\n');
-            controller.get({ url: '/logs' }, response);
+            controller.get({ url: '/logs' } as any, response);
 
-            assert.deepEqual(response.body, {
+            expect(response.body).toEqual({
                 logs: [
                     { key: 'first' },
                     { key: 'second' }
@@ -27,13 +29,10 @@ describe('logsController', function () {
         });
 
         it('should return entries starting with startIndex', function () {
-            const response = FakeResponse.create(),
-                controller = Controller.create('logsControllerTest.log');
-
             fs.writeFileSync('logsControllerTest.log', '{"key": "first"}\n{"key": "second"}\n{"key": "third"}');
             controller.get({ url: '/logs?startIndex=1' }, response);
 
-            assert.deepEqual(response.body, {
+            expect(response.body).toEqual({
                 logs: [
                     { key: 'second' },
                     { key: 'third' }
@@ -42,13 +41,10 @@ describe('logsController', function () {
         });
 
         it('should return entries starting with startIndex and ending with endIndex', function () {
-            const response = FakeResponse.create(),
-                controller = Controller.create('logsControllerTest.log');
-
             fs.writeFileSync('logsControllerTest.log', '{"key": "first"}\n{"key": "second"}\n{"key": "third"}');
             controller.get({ url: '/logs?startIndex=0&endIndex=1' }, response);
 
-            assert.deepEqual(response.body, {
+            expect(response.body).toEqual({
                 logs: [
                     { key: 'first' },
                     { key: 'second' }

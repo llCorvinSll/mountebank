@@ -79,7 +79,8 @@
     "restart": "bin/mb restart",
     "stop": "bin/mb stop",
     "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "prepare": "npm run snyk-protect",
+    "test": "jest"
   },
   "keywords": [
     "test",
@@ -129,6 +130,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.6",
     "@types/errorhandler": "0.0.32",
+    "@types/jest": "^24.9.1",
     "@typescript-eslint/parser": "^2.3.0",
     "firebase-tools": "^7.0.0",
     "fs-extra": "8.1.0",
@@ -143,12 +145,14 @@
     "grunt-mountebank": "1.0.7",
     "grunt-ts": "^6.0.0-beta.22",
     "istanbul": "0.4.5",
+    "jest": "^25.1.0",
     "jsdoc": "^3.5.5",
     "jsdom": "~15.1.0",
     "mocha": "6.2.1",
     "nc": "^1.0.2",
     "rimraf": "^3.0.0",
     "time-grunt": "2.0.0",
+    "ts-jest": "^25.0.0",
     "ts-node": "^8.6.2",
     "typescript": "^3.7.2",
     "w3cjs": "~0.4.0"

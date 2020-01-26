@@ -31,7 +31,7 @@ export class ImpostersController {
     public constructor(
         private protocols: {[key: string]: IProtocolFactory},
         private imposters: { [key: string]: IImposter },
-        private logger: ILogger,
+        private logger: ILogger | undefined,
         private allowInjection: boolean) {
     }
 
@@ -71,7 +71,7 @@ export class ImpostersController {
         const protocol = request.body.protocol,
             validationPromise = this.validate(request.body);
 
-        this.logger.debug(this.requestDetails(request));
+        this.logger!.debug(this.requestDetails(request));
 
         return validationPromise.then(validation => {
             if (validation.isValid) {
@@ -124,11 +124,11 @@ export class ImpostersController {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing purposes
      */
-    public put = (request: Request, response: Response) => {
+    public put = (request: Request, response: Response): Q.Promise<any> => {
         const requestImposters: IImposterConfig[] = request.body.imposters || [],
             validationPromises: Q.Promise<IValidation>[] = requestImposters.map((imposter: IImposterConfig) => this.validate(imposter));
 
-        this.logger.debug(this.requestDetails(request));
+        this.logger!.debug(this.requestDetails(request));
 
         if (!('imposters' in request.body)) {
             this.respondWithValidationErrors(response, [
@@ -222,13 +222,13 @@ export class ImpostersController {
 
     private respondWithValidationErrors(response: Response, validationErrors: IMontebankError[]) {
         // TODO: wrong typing for details()
-        this.logger.error(`error creating imposter: ${JSON.stringify(details(validationErrors as any))}`);
+        this.logger!.error(`error creating imposter: ${JSON.stringify(details(validationErrors as any))}`);
         response.statusCode = 400;
         response.send({errors: validationErrors});
     }
 
     private respondWithCreationError(response: Response, error: IMontebankError) {
-        this.logger.error(`error creating imposter: ${JSON.stringify(details(error))}`);
+        this.logger!.error(`error creating imposter: ${JSON.stringify(details(error))}`);
         response.statusCode = (error.code === 'insufficient access') ? 403 : 400;
         response.send({errors: [error]});
     }
