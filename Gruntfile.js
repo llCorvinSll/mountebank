@@ -17,7 +17,8 @@ module.exports = grunt => {
     const tsSrcSet = [
         '**/*.ts',
         '!node_modules/**',
-        '!dist/**'
+        '!dist/**',
+        '!test/**'
     ];
 
     grunt.initConfig({

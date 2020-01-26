@@ -80,7 +80,7 @@
     "stop": "bin/mb stop",
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect",
-    "test": "jest"
+    "test": "jest --coverage -w 1"
   },
   "keywords": [
     "test",

@@ -402,7 +402,7 @@ function toString (value: any): string {
     }
 }
 
-type PredicateFunction = (clone: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposter: unknown) => boolean;
+type PredicateFunction = (clone: IPredicate, request: IServerRequestData, encoding?: string, logger?: ILogger, imposter?: unknown) => boolean;
 
 
 const PREDICATES: { [key: string]: PredicateFunction } = {
@@ -430,7 +430,7 @@ const PREDICATES: { [key: string]: PredicateFunction } = {
  * @param {Object} imposterState - The current state for the imposter
  * @returns {boolean}
  */
-export function evaluate (predicate: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown): boolean {
+export function evaluate (predicate: IPredicate, request: IServerRequestData, encoding?: string, logger?: ILogger, imposterState?: unknown): boolean {
     const predicateFn = Object.keys(predicate).find(key => Object.keys(PREDICATES).indexOf(key) >= 0);
     const clone:IPredicate = helpers.clone(predicate);
 
