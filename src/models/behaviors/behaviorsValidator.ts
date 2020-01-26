@@ -115,10 +115,10 @@ export class BehaviorsValidator {
             else if (typeSpec.enum && !BehaviorsValidator.matchesEnum(field, typeSpec.enum)) {
                 addErrorFn(path, util.format('must be one of [%s]', typeSpec.enum.join(', ')));
             }
-            else if (typeSpec.nonNegativeInteger && field as any < 0) {
+            else if (typeSpec.nonNegativeInteger && parseInt(field as any) < 0) {
                 addErrorFn(path, 'must be an integer greater than or equal to 0');
             }
-            else if (typeSpec.positiveInteger && field as any <= 0) {
+            else if (typeSpec.positiveInteger && parseInt(field as any) <= 0) {
                 addErrorFn(path, 'must be an integer greater than 0');
             }
 

@@ -1,13 +1,13 @@
 'use strict';
 
 export interface IBehaviorsConfig {
-    shellTransform:string[];
-    wait:IWaitDescriptor;
-    copy: ICopyDescriptor[];
-    lookup:ILookupDescriptor[];
-    repeat: boolean;
-    decorate:string;
-    [key: string]: string[] | IWaitDescriptor | ICopyDescriptor[] | ILookupDescriptor[] | boolean | string;
+    shellTransform?:string[];
+    wait?:IWaitDescriptor;
+    copy?: ICopyDescriptor[];
+    lookup?:ILookupDescriptor[];
+    repeat?: boolean;
+    decorate?:string;
+    [key: string]: string[] | IWaitDescriptor | ICopyDescriptor[] | ILookupDescriptor[] | boolean | string | undefined;
 }
 
 export type IWaitDescriptor = (() => number) | string;

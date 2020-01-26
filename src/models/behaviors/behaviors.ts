@@ -141,8 +141,8 @@ function wait (request:IServerRequestData, responsePromise:ResponsePromise, mill
         return responsePromise;
     }
 
-    const util = require('util'),
-        fn = util.format('(%s)()', millisecondsOrFn);
+    const util = require('util');
+    const fn = util.format('(%s)()', millisecondsOrFn);
     let milliseconds = parseInt(millisecondsOrFn as string);
 
     if (isNaN(milliseconds)) {
