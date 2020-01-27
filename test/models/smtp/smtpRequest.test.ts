@@ -1,20 +1,17 @@
-'use strict';
-
-const assert = require('assert'),
-    SmtpRequest = require('../../../src/models/smtp/smtpRequest'),
-    promiseIt = require('../../testHelpers').promiseIt;
+const SmtpRequest = require('../../../src/models/smtp/smtpRequest');
+import {Readable} from 'stream';
 
 describe('smtpRequest', function () {
     describe('#createFrom', function () {
-        promiseIt('should parse SMTP data', function () {
+        it('should parse SMTP data', function () {
             let session = {
-                    remoteAddress: 'RemoteAddress',
-                    envelope: {
-                        mailFrom: { address: 'EnvelopeFrom' },
-                        rcptTo: [{ address: 'EnvelopeTo' }]
-                    }
-                },
-                stream = new require('stream').Readable();
+                remoteAddress: 'RemoteAddress',
+                envelope: {
+                    mailFrom: {address: 'EnvelopeFrom'},
+                    rcptTo: [{address: 'EnvelopeTo'}]
+                }
+            };
+            let stream = new Readable();
             stream._read = () => {}; // eslint-disable-line no-underscore-dangle
             stream.push('From: From <from@mb.org>\r\n');
             stream.push('To: To1 <to1@mb.org>\r\n');
@@ -27,8 +24,8 @@ describe('smtpRequest', function () {
             stream.push('\r\nBody');
             stream.push(null);
 
-            return SmtpRequest.createFrom({ source: stream, session: session }).then(smtpRequest => {
-                assert.deepEqual(smtpRequest, {
+            return SmtpRequest.createFrom({ source: stream, session: session }).then((smtpRequest: any) => {
+                expect(smtpRequest).toEqual({
                     requestFrom: 'RemoteAddress',
                     envelopeFrom: 'EnvelopeFrom',
                     envelopeTo: ['EnvelopeTo'],

@@ -32,3 +32,5 @@ test/controllers/**/*.js
 test/models/behaviors/**/*.js
 test/models/http/**/*.js
 test/models/predicates/**/*.js
+test/models/smtp/**/*.js
+test/models/tcp/**/*.js
