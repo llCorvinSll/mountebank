@@ -1,7 +1,4 @@
-'use strict';
-
-const assert = require('assert'),
-    compatibility = require('../../src/models/compatibility');
+import * as compatibility from '../../src/models/compatibility';
 
 describe('compatibility', function () {
     describe('#upcast', function () {
@@ -16,7 +13,7 @@ describe('compatibility', function () {
 
             compatibility.upcast(request);
 
-            assert.deepEqual(request, {
+            expect(request).toEqual({
                 stubs: [{
                     responses: [{
                         _behaviors: { shellTransform: ['command'] }
@@ -46,7 +43,7 @@ describe('compatibility', function () {
 
             compatibility.upcast(request);
 
-            assert.deepEqual(request, {
+            expect(request).toEqual({
                 protocol: 'tcp',
                 stubs: [
                     {
@@ -68,23 +65,23 @@ describe('compatibility', function () {
 
     describe('#downcastInjectionConfig', function () {
         it('should do nothing for new protocol request formats', function () {
-            const config = {
+            const config: any = {
                 request: { key: 'value' }
             };
 
             compatibility.downcastInjectionConfig(config);
 
-            assert.deepEqual(config, { request: { key: 'value' } });
+            expect(config).toEqual({ request: { key: 'value' } });
         });
 
         it('should add all request fields for backwards compatibility', function () {
-            const config = {
+            const config: any = {
                 request: { method: 'GET', path: '/' }
             };
 
             compatibility.downcastInjectionConfig(config);
 
-            assert.deepEqual(config, {
+            expect(config).toEqual({
                 request: { method: 'GET', path: '/' },
                 method: 'GET',
                 path: '/'

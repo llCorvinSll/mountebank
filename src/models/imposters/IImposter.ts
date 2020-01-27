@@ -35,14 +35,14 @@ export type IpValidator = (ip: string | undefined, logger: ILogger) => boolean;
 
 
 export interface IImposterConfig {
-    port: number;
-    protocol: string;
-    host: string;
-    name: string;
-    mode: string;
-    recordRequests: boolean;
-    stubs: IStubConfig[];
-    endOfRequestResolver: {
+    port?: number;
+    protocol?: string;
+    host?: string;
+    name?: string;
+    mode?: string;
+    recordRequests?: boolean;
+    stubs?: IStubConfig[];
+    endOfRequestResolver?: {
         inject: boolean
     }
 }

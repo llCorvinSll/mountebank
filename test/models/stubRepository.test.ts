@@ -1,11 +1,7 @@
-'use strict';
-
-const assert = require('assert'),
-    mock = require('../mock').mock,
-    StubRepository = require('../../src/models/stubs/StubRepository').StubRepository;
+import {StubRepository} from '../../src/models/stubs/StubRepository';
 
 describe('stubRepository', function () {
-    function jsonWithoutFunctions (obj) {
+    function jsonWithoutFunctions (obj: any) {
         return JSON.parse(JSON.stringify(obj));
     }
 
@@ -21,7 +17,7 @@ describe('stubRepository', function () {
             stubs.addStub({ responses: [{ is: 'TEST' }] }, { is: 'fourth' });
             const responses = stubs.stubs().map(stub => stub.responses);
 
-            assert.deepEqual(responses, [
+            expect(responses).toEqual([
                 [{ is: 'first' }, { is: 'second' }],
                 [{ is: 'TEST' }],
                 [{ is: 'third' }, { is: 'fourth' }]
@@ -42,7 +38,7 @@ describe('stubRepository', function () {
 
             const responses = stubs.stubs().map(stub => stub.responses);
 
-            assert.deepEqual(responses, [
+            expect(responses).toEqual([
                 [{ is: 'fifth' }, { is: 'sixth' }]
             ]);
         });
@@ -57,11 +53,11 @@ describe('stubRepository', function () {
 
             stubs.addStub(firstStub);
             stubs.addStub(secondStub);
-            stubs.overwriteStubAtIndex(1, thirdStub);
+            stubs.overwriteStubAtIndex('1', thirdStub);
 
             const responses = stubs.stubs().map(stub => stub.responses);
 
-            assert.deepEqual(responses, [
+            expect(responses).toEqual([
                 [{ is: 'first' }, { is: 'second' }],
                 [{ is: 'fifth' }, { is: 'sixth' }]
             ]);
@@ -79,10 +75,10 @@ describe('stubRepository', function () {
             stubs.addStub(secondStub);
             stubs.addStub(thirdStub);
 
-            stubs.deleteStubAtIndex(0);
+            stubs.deleteStubAtIndex('0');
             const responses = stubs.stubs().map(stub => stub.responses);
 
-            assert.deepEqual(responses, [
+            expect(responses).toEqual([
                 [{ is: 'third' }, { is: 'fourth' }],
                 [{ is: 'fifth' }, { is: 'sixth' }]
             ]);
@@ -95,9 +91,9 @@ describe('stubRepository', function () {
                 stub = { responses: [] };
 
             stubs.addStub(stub);
-            stubs.stubs()[0].responses.push('RESPONSE');
+            stubs.stubs()[0].responses!.push('RESPONSE' as any);
 
-            assert.deepEqual(jsonWithoutFunctions(stubs.stubs()), [{ _uuid: 'stub', responses: [] }]);
+            expect(jsonWithoutFunctions(stubs.stubs())).toEqual([{ _uuid: 'stub', responses: [] }]);
         });
 
         it('should support adding responses', function () {
@@ -105,107 +101,109 @@ describe('stubRepository', function () {
                 stub = { responses: [] };
 
             stubs.addStub(stub);
-            stubs.stubs()[0].addResponse('RESPONSE');
+            stubs.stubs()[0].addResponse!('RESPONSE' as any);
 
-            assert.deepEqual(jsonWithoutFunctions(stubs.stubs()), [{ _uuid: 'stub', responses: ['RESPONSE'] }]);
+            expect(jsonWithoutFunctions(stubs.stubs())).toEqual([{ _uuid: 'stub', responses: ['RESPONSE'] }]);
         });
     });
 
     describe('#getResponseFor', function () {
         it('should return default response if no match', function () {
-            const stubs = new StubRepository('utf8'),
-                logger = { debug: mock() };
+            const stubs = new StubRepository('utf8');
+            const logger: any = {debug: jest.fn()};
 
             const responseConfig = stubs.getResponseFor({ field: 'value' }, logger, {});
 
-            assert.deepEqual(responseConfig.is, {});
+            expect(responseConfig.is).toEqual({});
         });
 
         it('should always match if no predicate', function () {
-            const stubs = new StubRepository('utf8'),
-                logger = { debug: mock() },
-                stub = { responses: [{ is: 'first stub' }] };
+            const stubs = new StubRepository('utf8');
+            const logger: any = {debug: jest.fn()};
+            const stub = {responses: [{is: 'first stub'}]};
 
             stubs.addStub(stub);
             const responseConfig = stubs.getResponseFor({ field: 'value' }, logger, {});
 
-            assert.strictEqual(responseConfig.is, 'first stub');
+            expect(responseConfig.is).toEqual('first stub');
         });
 
         it('should return first match', function () {
-            const stubs = new StubRepository('utf8'),
-                logger = { debug: mock() },
-                firstStub = { predicates: [{ equals: { field: '1' } }], responses: [{ is: 'first stub' }] },
-                secondStub = { predicates: [{ equals: { field: '2' } }], responses: [{ is: 'second stub' }] },
-                thirdStub = { predicates: [{ equals: { field: '2' } }], responses: [{ is: 'third stub' }] };
+            const stubs = new StubRepository('utf8');
+            const logger: any = {debug: jest.fn()};
+            const firstStub = {predicates: [{equals: {field: '1'}}], responses: [{is: 'first stub'}]};
+            const secondStub = {predicates: [{equals: {field: '2'}}], responses: [{is: 'second stub'}]};
+            const thirdStub = {predicates: [{equals: {field: '2'}}], responses: [{is: 'third stub'}]};
 
             stubs.addStub(firstStub);
             stubs.addStub(secondStub);
             stubs.addStub(thirdStub);
             const responseConfig = stubs.getResponseFor({ field: '2' }, logger, {});
 
-            assert.strictEqual(responseConfig.is, 'second stub');
+            expect(responseConfig.is).toEqual('second stub');
         });
 
         it('should return responses in order, looping around', function () {
-            const stubs = new StubRepository('utf8'),
-                logger = { debug: mock() },
-                stub = { responses: [{ is: 'first response' }, { is: 'second response' }] };
+            const stubs = new StubRepository('utf8');
+            const logger: any = {debug: jest.fn()};
+            const stub = {responses: [{is: 'first response'}, {is: 'second response'}]};
 
             stubs.addStub(stub);
 
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'first response');
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'second response');
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'first response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('first response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('second response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('first response');
         });
 
         it('should support recording matches', function () {
-            const stubs = new StubRepository('utf8'),
-                logger = { debug: mock() },
-                matchingRequest = { field: 'value' },
-                mismatchingRequest = { field: 'other' },
-                stub = { predicates: [{ equals: { field: 'value' } }], responses: [{ is: 'first response' }] };
+            const stubs = new StubRepository('utf8');
+            const logger: any = {debug: jest.fn()};
+            const matchingRequest = {field: 'value'};
+            const mismatchingRequest = {field: 'other'};
+            const stub = {predicates: [{equals: {field: 'value'}}], responses: [{is: 'first response'}]};
 
             stubs.addStub(stub);
-            stubs.getResponseFor(matchingRequest, logger, {}).recordMatch('MATCHED');
-            stubs.getResponseFor(mismatchingRequest, logger, {}).recordMatch('MISMATCHED');
-            const matches = stubs.stubs()[0].matches;
-            matches.forEach(match => { match.timestamp = 'NOW'; });
+            stubs.getResponseFor(matchingRequest, logger, {}).recordMatch!('MATCHED');
+            stubs.getResponseFor(mismatchingRequest, logger, {}).recordMatch!('MISMATCHED');
+            const matches = stubs.stubs()[0].matches!;
+            matches.forEach((match: any) => { match.timestamp = 'NOW'; });
 
-            assert.deepEqual(matches, [{ request: matchingRequest, response: 'MATCHED', timestamp: 'NOW' }]);
+            expect(matches).toEqual([{ request: matchingRequest, response: 'MATCHED', timestamp: 'NOW' }]);
         });
 
         it('should only record match once for given response', function () {
-            const stubs = new StubRepository('utf8'),
-                logger = { debug: mock() },
-                stub = { responses: [{ is: 'response' }] };
+            const stubs = new StubRepository('utf8');
+            const logger: any = {debug: jest.fn()};
+            const stub = {responses: [{is: 'response'}]};
 
             stubs.addStub(stub);
             const responseConfig = stubs.getResponseFor({}, logger, {});
-            responseConfig.recordMatch('FIRST');
-            responseConfig.recordMatch('SECOND');
-            const matches = stubs.stubs()[0].matches;
-            matches.forEach(match => { match.timestamp = 'NOW'; });
+            responseConfig.recordMatch!('FIRST');
+            responseConfig.recordMatch!('SECOND');
+            const matches = stubs.stubs()[0].matches!;
+            matches.forEach((match: any) => { match.timestamp = 'NOW'; });
 
-            assert.deepEqual(matches, [{ request: {}, response: 'FIRST', timestamp: 'NOW' }]);
+            expect(matches).toEqual([{ request: {}, response: 'FIRST', timestamp: 'NOW' }]);
         });
 
         it('should repeat a response and continue looping', function () {
-            const stubs = new StubRepository('utf8'),
-                logger = { debug: mock() },
-                stub = { responses: [
-                    { is: 'first response', _behaviors: { repeat: 2 } },
-                    { is: 'second response' }
-                ] };
+            const stubs = new StubRepository('utf8');
+            const logger: any = {debug: jest.fn()};
+            const stub: any = {
+                responses: [
+                    {is: 'first response', _behaviors: {repeat: 2}},
+                    {is: 'second response'}
+                ]
+            };
 
             stubs.addStub(stub);
 
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'first response');
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'first response');
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'second response');
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'first response');
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'first response');
-            assert.strictEqual(stubs.getResponseFor({}, logger, {}).is, 'second response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('first response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('first response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('second response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('first response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('first response');
+            expect(stubs.getResponseFor({}, logger, {}).is).toEqual('second response');
         });
     });
 });

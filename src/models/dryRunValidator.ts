@@ -24,10 +24,10 @@ import * as behaviors from "./behaviors/behaviors";
 
 
     interface IDryRunValidatorOptions {
-    allowInjection:boolean;
-    testRequest:IServerRequestData;
-    testProxyResponse:any;
-    additionalValidation:(cfg:IImposterConfig) => Q.Promise<IValidation>
+    allowInjection?:boolean;
+    testRequest?:IServerRequestData;
+    testProxyResponse?:any;
+    additionalValidation?:(cfg:IImposterConfig) => Q.Promise<IValidation>
 }
 
 /**
@@ -99,7 +99,7 @@ export function create (options: IDryRunValidatorOptions) {
             // @ts-ignore
             const responseConfig = stubRepository.getResponseFor(options.testRequest, dryRunLogger, {}),
                 resolver = resolverFor(stubRepository);
-            return resolver.resolve(responseConfig, options.testRequest, dryRunLogger, {});
+            return resolver.resolve(responseConfig, options.testRequest!, dryRunLogger, {});
         }));
     }
 
