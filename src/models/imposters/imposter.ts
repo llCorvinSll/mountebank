@@ -61,9 +61,9 @@ export class Imposter implements IImposter {
         protected isAllowedConnection: IpValidator) {
         compatibility.upcast(this.creationRequest);
 
-        this.logger = require('../../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port));
+        this.logger = require('../../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port!));
         // If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
-        this.recordRequests = config.recordRequests || creationRequest.recordRequests;
+        this.recordRequests = !!config.recordRequests || !!creationRequest.recordRequests;
     }
 
     private readonly logger: ILogger;
@@ -82,7 +82,7 @@ export class Imposter implements IImposter {
         this.domain = domain_nsp.create();
         const deferred = Q.defer<IImposter>();
 
-        const errorHandler = createErrorHandler(deferred, this.creationRequest.port);
+        const errorHandler = createErrorHandler(deferred, this.creationRequest.port!);
 
         this.domain.on('error', errorHandler);
 
@@ -175,7 +175,7 @@ export class Imposter implements IImposter {
     // requestDetails are not stored with the imposter
     // It was created to pass the raw URL to maintain the exact querystring during http proxying
     // without having to change the path / query options on the stored request
-    public getResponseFor(request: IServerRequestData, requestDetails: unknown): Q.Promise<IMountebankResponse> {
+    public getResponseFor(request: IServerRequestData, requestDetails?: unknown): Q.Promise<IMountebankResponse> {
         if (!this.isAllowedConnection(request.ip, this.logger)) {
             return Q({blocked: true, code: 'unauthorized ip address'});
         }

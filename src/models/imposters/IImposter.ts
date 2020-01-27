@@ -21,7 +21,7 @@ export interface IImposter {
     overwriteStubAtIndex(index:string, newStub: IStubConfig):void;
     overwriteStubs(stubs:IStubConfig[]):void;
 
-    getResponseFor(request: IServerRequestData, requestDetails: unknown): Q.Promise<IMountebankResponse>;
+    getResponseFor(request: IServerRequestData, requestDetails?: unknown): Q.Promise<IMountebankResponse>;
     getProxyResponseFor(proxyResponse: any, proxyResolutionKey: any):Q.Promise<any>;
 }
 

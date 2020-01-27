@@ -16,12 +16,12 @@ import {StubRepository} from "./stubs/StubRepository";
 
 
 export interface IProtocolLoadOptions {
-    callbackURLTemplate: string;
-    loglevel: string;
-    allowInjection: boolean;
-    host: string;
-    recordRequests: boolean;
-    recordMatches: unknown;
+    callbackURLTemplate?: string;
+    loglevel?: string;
+    allowInjection?: boolean;
+    host?: string;
+    recordRequests?: boolean;
+    recordMatches?: unknown;
 }
 
 interface IProtocolMap {
@@ -33,8 +33,8 @@ export function load (
     builtInProtocols: IProtocolMap,
     customProtocols: IProtocolMap,
     options:IProtocolLoadOptions,
-    isAllowedConnection: IpValidator,
-    mbLogger: ILogger): {[key: string]: IProtocolFactory} {
+    isAllowedConnection?: IpValidator,
+    mbLogger?: ILogger): {[key: string]: IProtocolFactory} {
     function inProcessCreate (createProtocol: ServerImplCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn).then(server => {
@@ -112,12 +112,12 @@ export function load (
                 }
                 catch (error) { /* do nothing */ }
 
-                let serverPort: number = creationRequest.port;
+                let serverPort: number = creationRequest.port!;
                 if (metadata.port) {
                     serverPort = metadata.port;
                     delete metadata.port;
                 }
-                const callbackURL = options.callbackURLTemplate.replace(':port', String(serverPort)),
+                const callbackURL = options.callbackURLTemplate!.replace(':port', String(serverPort)),
                     encoding = metadata.encoding || 'utf8';
 
                 const stubs = new StubRepository(encoding),
@@ -166,7 +166,7 @@ export function load (
     }
 
     function createImposter (Protocol: IProtocolFactory, creationRequest: IImposterConfig) {
-        return new Imposter(Protocol, creationRequest, mbLogger.baseLogger, options, isAllowedConnection).init();
+        return new Imposter(Protocol, creationRequest, mbLogger!.baseLogger, options, isAllowedConnection!).init();
     }
 
     const result: {[key: string]: IProtocolFactory} = {};

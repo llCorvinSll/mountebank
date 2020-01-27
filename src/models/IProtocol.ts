@@ -22,14 +22,14 @@ export interface IProtocol {
 
 
 export interface IServerCreationOptions {
-    port: number;
+    port?: number;
     defaultResponse?: any;
 
     [key: string]: any;
 }
 
 export type ServerImplCreatorFunction = (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback) => Q.Promise<IServerImplementation>;
-export type ServerCreatorFunction = (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback) => Q.Promise<IServer>;
+export type ServerCreatorFunction = (options: IServerCreationOptions, logger: ILogger, responseFn?: RequestCallback) => Q.Promise<IServer>;
 
 export type RequestCallback = (arg1: IServerRequestData, arg2: any) => any;
 
