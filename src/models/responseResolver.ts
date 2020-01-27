@@ -52,7 +52,7 @@ function newIsResponse (this: void, response: IMountebankResponse, proxyConfig: 
 
 
 function xpathValue (xpathConfig: IXPathConfig, possibleXML: string, logger: ILogger) {
-    const nodes = xpath.select(xpathConfig.selector, xpathConfig.ns, possibleXML, logger);
+    const nodes = xpath.select(xpathConfig.selector, xpathConfig.ns!, possibleXML, logger);
     return selectionValue(nodes);
 }
 

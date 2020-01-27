@@ -31,3 +31,4 @@ src/models/stubs/**/*.js
 test/controllers/**/*.js
 test/models/behaviors/**/*.js
 test/models/http/**/*.js
+test/models/predicates/**/*.js

@@ -105,15 +105,15 @@ function selectTransform (config: IPredicate, options: INormalizeOptions) {
         // use keyCaseSensitive instead of caseSensitive to help "matches" PREDICATES too
         // see https://github.com/bbyars/mountebank/issues/361
         if (!cloned.keyCaseSensitive) {
-            cloned.jsonpath.selector = cloned.jsonpath.selector.toLowerCase();
+            cloned.jsonpath!.selector = cloned.jsonpath!.selector.toLowerCase();
         }
 
         return combinators.curry(selectJSONPath, cloned.jsonpath, options.encoding, config, stringTransform);
     }
     else if (config.xpath) {
         if (!cloned.caseSensitive) {
-            cloned.xpath.ns = transformObject(cloned.xpath.ns || {}, lowercase);
-            cloned.xpath.selector = cloned.xpath.selector.toLowerCase();
+            cloned.xpath!.ns = transformObject(cloned.xpath!.ns || {}, lowercase);
+            cloned.xpath!.selector = cloned.xpath!.selector.toLowerCase();
         }
         return combinators.curry(selectXPath, cloned.xpath, options.encoding);
     }
@@ -134,7 +134,7 @@ function exceptTransform (config: IPredicate) {
     const exceptRegexOptions = config.caseSensitive ? 'g' : 'gi';
 
     if (config.except) {
-        return (text: string) => text.replace(new RegExp(config.except, exceptRegexOptions), '');
+        return (text: string) => text.replace(new RegExp(config.except!, exceptRegexOptions), '');
     }
     else {
         return combinators.identity;
@@ -319,7 +319,7 @@ function create (operator: string, predicateFn: (expected: string, actual: strin
 }
 
 function deepEquals (predicate: IPredicate, request: IServerRequestData, encoding: string) {
-    const expected = normalize(forceStrings(predicate.deepEquals), predicate, { encoding: encoding }),
+    const expected = normalize(forceStrings(predicate.deepEquals!), predicate, { encoding: encoding }),
         actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true });
 
     return Object.keys(expected).every(fieldName => {
@@ -352,7 +352,7 @@ function matches (predicate: IPredicate, request: IServerRequestData, encoding: 
 }
 
 function not (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
-    return !evaluate(predicate.not, request, encoding, logger, imposterState);
+    return !evaluate(predicate.not!, request, encoding, logger, imposterState);
 }
 
 function evaluateFn (request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
@@ -360,11 +360,11 @@ function evaluateFn (request: IServerRequestData, encoding: string, logger:ILogg
 }
 
 function or (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
-    return predicate.or.some(evaluateFn(request, encoding, logger, imposterState));
+    return predicate.or!.some(evaluateFn(request, encoding, logger, imposterState));
 }
 
 function and (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
-    return predicate.and.every(evaluateFn(request, encoding, logger, imposterState));
+    return predicate.and!.every(evaluateFn(request, encoding, logger, imposterState));
 }
 
 function inject (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {

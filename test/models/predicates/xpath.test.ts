@@ -1,7 +1,7 @@
 'use strict';
 
-const assert = require('assert'),
-    predicates = require('../../../src/models/predicates/predicates');
+const assert = require('assert');
+import * as predicates from '../../../src/models/predicates/predicates';
 
 describe('predicates', function () {
     describe('xpath', function () {
@@ -11,7 +11,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: 'VALUE' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should be false if field is empty', function () {
@@ -20,7 +20,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should be true if value in provided xpath expression', function () {
@@ -29,7 +29,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>value</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should be false if value provided xpath expression does not equal', function () {
@@ -38,7 +38,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>value</title></doc>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should use case-insensitive xpath selector by default', function () {
@@ -47,7 +47,7 @@ describe('predicates', function () {
                     xpath: { selector: '//Title' }
                 },
                 request = { field: '<DOC><TITLE>value</TITLE></DOC>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should not equal if case-sensitive xpath selector does not match', function () {
@@ -57,7 +57,7 @@ describe('predicates', function () {
                     caseSensitive: true
                 },
                 request = { field: '<DOC><TITLE>value</TITLE></DOC>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should equal if case-sensitive xpath selector matches', function () {
@@ -67,7 +67,7 @@ describe('predicates', function () {
                     caseSensitive: true
                 },
                 request = { field: '<Doc><Title>value</Title></Doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should equal if case-sensitive xpath selector matches, stripping out the exception', function () {
@@ -78,7 +78,7 @@ describe('predicates', function () {
                     except: 'alu'
                 },
                 request = { field: '<Doc><Title>value</Title></Doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should not equal if case-sensitive xpath selector matches, but stripped values differ', function () {
@@ -89,7 +89,7 @@ describe('predicates', function () {
                     except: 'alu'
                 },
                 request = { field: '<Doc><Title>value</Title></Doc>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#deepEquals should be false if field is not XML and xpath selector used', function () {
@@ -98,7 +98,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: 'VALUE' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#deepEquals should equal value in provided xpath attribute', function () {
@@ -107,7 +107,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title/@href' }
                 },
                 request = { field: '<doc><title href="value">text</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#deepEquals should be false if value in provided xpath attribute expression does not equal', function () {
@@ -116,7 +116,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title/@attr' }
                 },
                 request = { field: '<doc><title attr="value">text</title></doc>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#deepEquals should be true if all values in a multi-value selector match are present', function () {
@@ -125,7 +125,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>first</title><title>second</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#deepEquals should be false if some values in a multi-value selector match are missing', function () {
@@ -134,7 +134,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>first</title><title>second</title><title>third</title></doc>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#deepEquals should be true if values in a multi-value selector match are out of order', function () {
@@ -143,7 +143,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>second</title><title>first</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#contains should be true if direct text value contains predicate', function () {
@@ -152,7 +152,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title/text()' }
                 },
                 request = { field: '<doc><title>this is a value</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#contains should be false if direct text value does not contain predicate', function () {
@@ -162,7 +162,7 @@ describe('predicates', function () {
                     caseSensitive: true
                 },
                 request = { field: '<doc><title>this is a value</title></doc>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#startsWith should be true if direct namespaced xpath selection starts with value', function () {
@@ -171,7 +171,7 @@ describe('predicates', function () {
                     xpath: { selector: '//*[local-name(.)="title" and namespace-uri(.)="myns"]' }
                 },
                 request = { field: '<book><title xmlns="myns">Harry Potter</title></book>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#startsWith should be false if direct namespaced xpath selection does not start with value', function () {
@@ -180,7 +180,7 @@ describe('predicates', function () {
                     xpath: { selector: '//*[local-name(.)="title" and namespace-uri(.)="myns"]' }
                 },
                 request = { field: '<book><title xmlns="myns">Harry Potter</title></book>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#startsWith should be false if direct namespaced xpath selection does not match', function () {
@@ -189,7 +189,7 @@ describe('predicates', function () {
                     xpath: { selector: '//*[local-name(.)="title" and namespace-uri(.)="myns"]' }
                 },
                 request = { field: '<book><title>Harry Potter</title></book>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#endsWith should be true if aliased namespace match endsWith predicate', function () {
@@ -203,7 +203,7 @@ describe('predicates', function () {
                     }
                 },
                 request = { field: '<book xmlns:bookml="http://example.com/book"><bookml:title>Harry Potter</bookml:title></book>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#endsWith should be true if aliased namespace match but has capital letters in URL', function () {
@@ -217,7 +217,7 @@ describe('predicates', function () {
                     }
                 },
                 request = { field: '<book xmlns:bookml="http://EXAMPLE.COM/book"><bookml:title>Harry Potter</bookml:title></book>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should be true if caseSensitive and namespace has capital letters in URL', function () {
@@ -230,7 +230,7 @@ describe('predicates', function () {
                     }
                 },
                 request = { field: '<book xmlns:bookml="http://EXAMPLE.COM/book"><bookml:title>Harry Potter</bookml:title></book>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#endsWith should be false if aliased namespace match does not end with predicate', function () {
@@ -244,7 +244,7 @@ describe('predicates', function () {
                     }
                 },
                 request = { field: '<b:book xmlns:b="http://example.com/book"><b:title>Harry Potter</b:title></b:book>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should be true if any matched node equals the predicate value', function () {
@@ -265,7 +265,7 @@ describe('predicates', function () {
                     '  <thisa:child>Third</thisa:child>' +
                     '</root>'
                 };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#equals should be false if no nodes match the selector', function () {
@@ -287,7 +287,7 @@ describe('predicates', function () {
                     '  <a:child>Third</a:child>' +
                     '</root>'
                 };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#matches should be false if field is not XML', function () {
@@ -296,7 +296,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: 'VALUE' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#matches should be true if selected value matches regex', function () {
@@ -305,7 +305,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>value</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#matches should be false if selected value does not match regex', function () {
@@ -314,7 +314,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>value</title></doc>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should throw an error if encoding is base64', function () {
@@ -339,7 +339,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><title>value</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#exists should be false if xpath selector does not match', function () {
@@ -348,7 +348,7 @@ describe('predicates', function () {
                     xpath: { selector: '//title' }
                 },
                 request = { field: '<doc><summary>value</summary></doc>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should throw error if xpath selector is malformed', function () {
@@ -373,7 +373,7 @@ describe('predicates', function () {
                     xpath: { selector: 'count(//title)' }
                 },
                 request = { field: '<doc><title>first</title><title>second</title></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should accept booleans returning false', function () {
@@ -382,7 +382,7 @@ describe('predicates', function () {
                     xpath: { selector: 'boolean(//title)' }
                 },
                 request = { field: '<doc></doc>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should return true if node exists even if no data in the node (issue #163)', function () {
@@ -391,7 +391,7 @@ describe('predicates', function () {
                     xpath: { selector: '//book' }
                 },
                 request = { field: '<books><book></book></books>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should return false if node does not exist (issue #163)', function () {
@@ -400,7 +400,7 @@ describe('predicates', function () {
                     xpath: { selector: '//book' }
                 },
                 request = { field: '<books></books>' };
-            assert.ok(!predicates.evaluate(predicate, request));
+            expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should return true if node exists with child node data (issue #163)', function () {
@@ -409,7 +409,7 @@ describe('predicates', function () {
                     xpath: { selector: '//book' }
                 },
                 request = { field: '<books><book><title>Game of Thrones</title></book></books>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should support array predicates', function () {
@@ -418,7 +418,7 @@ describe('predicates', function () {
                     xpath: { selector: '//value' }
                 },
                 request = { field: '<values><value>first</value><value>second</value><value>third</value></values>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('#matches without case sensitivity should maintain selector to match XML (test for issue #361, already worked)', function () {
@@ -427,7 +427,7 @@ describe('predicates', function () {
                     xpath: { selector: '/ipAddress' }
                 },
                 request = { body: '<ipAddress>111.222.333.456</ipAddress>' };
-            assert.ok(predicates.evaluate(predicate, request));
+            expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
     });
 });

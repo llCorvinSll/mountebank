@@ -64,12 +64,12 @@ export interface IServer {
 }
 
 export interface IServerRequestData {
-    requestFrom: string;
-    method: string;
-    path: string;
-    query: any;
-    headers: any;
-    body: string;
+    requestFrom?: string;
+    method?: string;
+    path?: string;
+    query?: any;
+    headers?: any;
+    body?: string;
     form?: any | undefined;
     data?:unknown;
 
