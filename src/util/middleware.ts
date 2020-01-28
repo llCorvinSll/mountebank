@@ -21,7 +21,7 @@ interface IBody {
  * @param {number} port - The port of the current instance
  * @returns {Function}
  */
-export function useAbsoluteUrls (port:string):(request:Request, response:Response, next:() => void) => void {
+export function useAbsoluteUrls (port:string|number):(request:Request, response:Response, next:() => void) => void {
     return function (request, response, next) {
         const setHeaderOriginal = response.setHeader,
             sendOriginal = response.send,

@@ -38,8 +38,8 @@ export function curry (fn:Function, ...args:unknown[]):Function {
  * @param {...Function} args - The functions to compose
  * @returns {Function} A single function that represents the composition of the functions provided
  */
-export function compose ():Function {
-    const args = Array.prototype.slice.call(arguments).reverse();
+export function compose (...funcs:Array<Function>):Function {
+    const args = Array.prototype.slice.call(funcs).reverse();
     return (obj:object) => args.reduce((result:unknown, F:(obj:unknown) => unknown) => F(result), obj);
 }
 
@@ -53,7 +53,7 @@ export function noop():void {}
  * @param {Object} k - The constant to return
  * @returns {Function} - A function that will always return the constant
  */
-export function constant<T>(k:T): () => T {
+export function constant<T>(k:T): (k:T) => T {
   return () => k
 }
 

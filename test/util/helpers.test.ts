@@ -1,18 +1,15 @@
-'use strict';
-
-const assert = require('assert'),
-    helpers = require('../../src/util/helpers');
+import * as helpers from '../../src/util/helpers';
 
 describe('helpers', function () {
     describe('#socketName', function () {
         it('should concatenate host and port for a normal socket', function () {
-            const name = helpers.socketName({ remoteAddress: 'address', remotePort: 'port' });
-            assert.strictEqual(name, 'address:port');
+            const name = helpers.socketName({ remoteAddress: 'address', remotePort: 'port' } as any);
+            expect(name).toEqual('address:port');
         });
 
         it('should just use host if port is undefined', function () {
-            const name = helpers.socketName({ remoteAddress: 'address' });
-            assert.strictEqual(name, 'address');
+            const name = helpers.socketName({ remoteAddress: 'address' } as any);
+            expect(name).toEqual('address');
         });
     });
 
@@ -27,8 +24,8 @@ describe('helpers', function () {
             };
 
             const clone = helpers.clone(original);
-            assert.ok(clone !== original);
-            assert.deepEqual(clone, original);
+            expect(clone !== original).toBeTruthy();
+            expect(clone).toEqual(original);
         });
     });
 
@@ -45,7 +42,7 @@ describe('helpers', function () {
 
             const merged = helpers.merge(first, second);
 
-            assert.deepEqual(merged, {
+            expect(merged).toEqual({
                 first: 1,
                 fourth: 4,
                 second: { third: 3 },
@@ -59,7 +56,7 @@ describe('helpers', function () {
 
             const merged = helpers.merge(defaults, overrides);
 
-            assert.deepEqual(merged, {
+            expect(merged).toEqual({
                 onlyInDefault: 1,
                 onlyInOverrides: 2,
                 inBoth: 2
@@ -72,8 +69,8 @@ describe('helpers', function () {
 
             helpers.merge(first, second);
 
-            assert.deepEqual(first, { one: 1 });
-            assert.deepEqual(second, { two: 2 });
+            expect(first).toEqual({ one: 1 });
+            expect(second).toEqual({ two: 2 });
         });
 
         it('should be able to handle null values', function () {
@@ -82,7 +79,7 @@ describe('helpers', function () {
 
             const merged = helpers.merge(defaults, overrides);
 
-            assert.deepEqual(merged, {
+            expect(merged).toEqual({
                 onlyInDefault: 1,
                 onlyInOverrides: 2,
                 inBoth: null
@@ -92,11 +89,11 @@ describe('helpers', function () {
 
     describe('#isObject', function () {
         it('should return true for object', function () {
-            assert.ok(helpers.isObject({}));
+            expect(helpers.isObject({})).toBeTruthy();
         });
 
         it('should return false for null', function () {
-            assert.ok(!helpers.isObject(null));
+            expect(!helpers.isObject(null)).toBeTruthy();
         });
     });
 });

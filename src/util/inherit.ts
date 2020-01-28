@@ -13,7 +13,7 @@ interface ICtor {
  * @param {Object} [obj] - properties to merge into the newly created object as own properties
  * @returns {Object}
  */
-export function from (proto:ICtor, obj:ICtor|object|{[key:string]:unknown}) {
+export function from (proto:ICtor, obj?:ICtor|object|{[key:string]:unknown}) {
     // allow either inherit.from(EventEmitter) or inherit.from({key: 'value'})
     if (typeof proto === 'function') {
         proto = new proto();

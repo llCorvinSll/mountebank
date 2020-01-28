@@ -1,25 +1,26 @@
 'use strict';
 
-const middleware = require('../../src/util/middleware');
-const assert = require('assert');
-const mock = require('../mock').mock;
-const FakeResponse = require('../fakes/fakeResponse').FakeResponse;
+import * as middleware from '../../src/util/middleware';
+import {FakeResponse} from '../fakes/fakeResponse';
 
 describe('middleware', function () {
-    let request, response, next;
+    let request: any;
+    let response: any;
+    let next: any;
 
     beforeEach(() => {
         request = { headers: {}, params: {} };
         response = new FakeResponse();
-        next = mock();
+        next = jest.fn();
     });
 
     describe('#useAbsoluteUrls', function () {
-        let send, setHeader;
+        let send: any;
+        let setHeader: any;
 
         beforeEach(() => {
-            send = mock();
-            setHeader = mock();
+            send = jest.fn();
+            setHeader = jest.fn();
             response.send = send;
             response.setHeader = setHeader;
         });
@@ -30,7 +31,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.setHeader('name', 'value');
 
-            assert.ok(setHeader.wasCalledWith('name', 'value'));
+            expect(setHeader).toBeCalledWith('name', 'value');
         });
 
         it('should default location header to localhost with given port if no host header', function () {
@@ -40,7 +41,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.setHeader('location', '/');
 
-            assert.ok(setHeader.wasCalledWith('location', 'http://localhost:9000/'));
+            expect(setHeader).toBeCalledWith('location', 'http://localhost:9000/');
         });
 
         it('should match location header regardless of case', function () {
@@ -50,7 +51,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.setHeader('LOCATION', '/');
 
-            assert.ok(setHeader.wasCalledWith('LOCATION', 'http://localhost:9000/'));
+            expect(setHeader).toBeCalledWith('LOCATION', 'http://localhost:9000/');
         });
 
         it('should use the host header if present', function () {
@@ -60,7 +61,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.setHeader('location', '/');
 
-            assert.ok(setHeader.wasCalledWith('location', 'http://mountebank.com/'));
+            expect(setHeader).toBeCalledWith('location', 'http://mountebank.com/');
         });
 
         it('should do nothing if no response body links are present', function () {
@@ -69,7 +70,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send({ key: 'value' });
 
-            assert.ok(send.wasCalledWith({ key: 'value' }));
+            expect(send).toBeCalledWith({ key: 'value' });
         });
 
         it('should change response body links', function () {
@@ -78,7 +79,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send({ key: 'value', _links: { rel: { href: '/' } } });
 
-            assert.ok(send.wasCalledWith({ key: 'value', _links: { rel: { href: 'http://localhost:9000/' } } }));
+            expect(send).toBeCalledWith({ key: 'value', _links: { rel: { href: 'http://localhost:9000/' } } });
         });
 
         it('should change response nested body links', function () {
@@ -87,7 +88,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send({ key: { _links: { rel: { href: '/' } } } });
 
-            assert.ok(send.wasCalledWith({ key: { _links: { rel: { href: 'http://localhost:9000/' } } } }));
+            expect(send).toBeCalledWith({ key: { _links: { rel: { href: 'http://localhost:9000/' } } } });
         });
 
         it('should ignore null and undefined values', function () {
@@ -96,7 +97,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send({ first: null, second: undefined });
 
-            assert.ok(send.wasCalledWith({ first: null }));
+            expect(send).toBeCalledWith({ first: null });
         });
 
         it('should not change html responses', function () {
@@ -105,7 +106,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send('<html _links="/"></html>');
 
-            assert.ok(send.wasCalledWith('<html _links="/"></html>'));
+            expect(send).toBeCalledWith('<html _links="/"></html>');
         });
 
         it('should not change links within stub responses', function () {
@@ -125,7 +126,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send(userRequest);
 
-            assert.ok(send.wasCalledWith(userRequest));
+            expect(send).toBeCalledWith(userRequest);
         });
 
         it('should change links within stub _links', function () {
@@ -135,7 +136,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send(userRequest);
 
-            assert.ok(send.wasCalledWith({ stubs: [{ _links: { self: { href: 'http://localhost:9000/path/to' } } }] }));
+            expect(send).toBeCalledWith({ stubs: [{ _links: { self: { href: 'http://localhost:9000/path/to' } } }] });
         });
 
         it('should change links within stub _links with root imposters array', function () {
@@ -149,11 +150,11 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send(userRequest);
 
-            assert.ok(send.wasCalledWith({
+            expect(send).toBeCalledWith({
                 imposters: [{
                     stubs: [{ _links: { self: { href: 'http://localhost:9000/path/to' } } }]
                 }]
-            }));
+            });
         });
 
         it('should not change links within response elements sent back to protocol implementations', function () {
@@ -168,7 +169,7 @@ describe('middleware', function () {
             middlewareFn(request, response, next);
             response.send(userRequest);
 
-            assert.ok(send.wasCalledWith(userRequest));
+            expect(send).toBeCalledWith(userRequest);
         });
     });
 
@@ -179,125 +180,125 @@ describe('middleware', function () {
 
             middlewareFn(request, response, next);
 
-            assert.strictEqual(response.statusCode, 404);
+            expect(response.statusCode).toEqual(404);
         });
 
         it('should call next if imposter exists', function () {
-            const imposters = { 1: {} },
-                middlewareFn = middleware.createImposterValidator(imposters);
+            const imposters = {1: {}} as any;
+            const middlewareFn = middleware.createImposterValidator(imposters);
             request.params.id = 1;
 
             middlewareFn(request, response, next);
 
-            assert(next.wasCalled());
+            expect(next).toBeCalled();
         });
     });
 
     describe('#logger', function () {
         it('should log request at info level', function () {
-            const log = { info: mock() },
-                middlewareFn = middleware.logger(log, 'TEST MESSAGE');
+            const log = {info: jest.fn()} as any;
+            const middlewareFn = middleware.logger(log, 'TEST MESSAGE');
             request = { url: '', headers: { accept: '' } };
 
-            middlewareFn(request, {}, next);
+            middlewareFn(request, {} as any, next);
 
-            assert(log.info.wasCalledWith('TEST MESSAGE'));
+            expect(log.info).toBeCalledWith('TEST MESSAGE');
         });
 
         it('should log protocol implementation requests at debug level', function () {
-            const log = { debug: mock() },
-                middlewareFn = middleware.logger(log, 'TEST MESSAGE');
+            const log: any = {debug: jest.fn()};
+            const middlewareFn = middleware.logger(log, 'TEST MESSAGE');
             request = { url: '/_requests/0', headers: { accept: '' } };
 
-            middlewareFn(request, {}, next);
+            middlewareFn(request, {} as any, next);
 
-            assert(log.debug.wasCalledWith('TEST MESSAGE'));
+            expect(log.debug).toBeCalledWith('TEST MESSAGE');
         });
 
         it('should log request url and method', function () {
-            const log = { info: mock() },
-                middlewareFn = middleware.logger(log, 'MESSAGE WITH :method :url');
+            const log: any = {info: jest.fn()};
+            const middlewareFn = middleware.logger(log, 'MESSAGE WITH :method :url');
             request = { method: 'METHOD', url: 'URL', headers: { accept: '' } };
 
-            middlewareFn(request, {}, next);
+            middlewareFn(request, {} as any, next);
 
-            assert(log.info.wasCalledWith('MESSAGE WITH METHOD URL'));
+            expect(log.info).toBeCalledWith('MESSAGE WITH METHOD URL');
         });
 
         it('should not log static asset requests', function () {
-            const log = { info: mock() },
-                middlewareFn = middleware.logger(log, 'TEST');
+            const log: any = {info: jest.fn()};
+            const middlewareFn = middleware.logger(log, 'TEST');
 
             ['.js', '.css', '.png', '.ico'].forEach(ext => {
                 request = { url: `file${ext}`, headers: { accept: '' } };
-                middlewareFn(request, {}, next);
-                assert(!log.info.wasCalled());
+                middlewareFn(request, {} as any, next);
+                expect(log.info).not.toBeCalled();
             });
         });
 
         it('should not log html requests', function () {
-            const log = { info: mock() },
-                middlewareFn = middleware.logger(log, 'TEST');
+            const log: any = {info: jest.fn()};
+            const middlewareFn = middleware.logger(log, 'TEST');
             request = { method: 'METHOD', url: 'URL', headers: { accept: 'text/html' } };
 
-            middlewareFn(request, {}, next);
+            middlewareFn(request, {} as any, next);
 
-            assert(!log.info.wasCalled());
+            expect(log.info).not.toBeCalled();
         });
 
         it('should not log AJAX requests', function () {
-            const log = { info: mock() },
-                middlewareFn = middleware.logger(log, 'TEST');
+            const log: any = {info: jest.fn()};
+            const middlewareFn = middleware.logger(log, 'TEST');
             request = { method: 'METHOD', url: 'URL', headers: { 'x-requested-with': 'XMLHttpRequest' } };
 
-            middlewareFn(request, {}, next);
+            middlewareFn(request, {} as any, next);
 
-            assert(!log.info.wasCalled());
+            expect(log.info).not.toBeCalled();
         });
 
         it('should call next', function () {
-            const log = { info: mock() },
-                middlewareFn = middleware.logger(log, 'TEST');
+            const log: any = {info: jest.fn()};
+            const middlewareFn = middleware.logger(log, 'TEST');
             request = { url: '', headers: { accept: '' } };
 
-            middlewareFn(request, {}, next);
+            middlewareFn(request, {} as any, next);
 
-            assert(next.wasCalled());
+            expect(next).toBeCalled();
         });
     });
 
     describe('#globals', function () {
         it('should pass variables to all render calls', function () {
-            const render = mock(),
-                middlewareFn = middleware.globals({ first: 1, second: 2 });
+            const render = jest.fn();
+            const middlewareFn = middleware.globals({first: 1, second: 2});
             response = { render: render };
 
-            middlewareFn({}, response, next);
+            middlewareFn({} as any, response, next);
             response.render('view');
 
-            assert(render.wasCalledWith('view', { first: 1, second: 2 }));
+            expect(render).toBeCalledWith('view', { first: 1, second: 2 });
         });
 
         it('should merge variables to all render calls', function () {
-            const render = mock(),
-                middlewareFn = middleware.globals({ first: 1, second: 2 });
+            const render = jest.fn();
+            const middlewareFn = middleware.globals({first: 1, second: 2});
             response = { render: render };
 
-            middlewareFn({}, response, next);
+            middlewareFn({} as any, response, next);
             response.render('view', { third: 3 });
 
-            assert(render.wasCalledWith('view', { third: 3, first: 1, second: 2 }));
+            expect(render).toBeCalledWith('view', { third: 3, first: 1, second: 2 });
         });
 
         it('should overwrite variables of the same name', function () {
-            const render = mock(),
-                middlewareFn = middleware.globals({ key: 'global' });
+            const render = jest.fn();
+            const middlewareFn = middleware.globals({key: 'global'});
             response = { render: render };
 
-            middlewareFn({}, response, next);
+            middlewareFn({} as any, response, next);
             response.render('view', { key: 'local' });
 
-            assert(render.wasCalledWith('view', { key: 'global' }));
+            expect(render).toBeCalledWith('view', { key: 'global' });
         });
     });
 
@@ -306,9 +307,9 @@ describe('middleware', function () {
             request.headers['user-agent'] = 'blah Chrome blah';
             request.headers.accept = 'original accept';
 
-            middleware.defaultIEtoHTML(request, {}, mock());
+            middleware.defaultIEtoHTML(request, {} as any, jest.fn());
 
-            assert.strictEqual(request.headers.accept, 'original accept');
+            expect(request.headers.accept).toEqual('original accept');
         });
 
         it('should change accept header for IE user agents', function () {
@@ -317,7 +318,7 @@ describe('middleware', function () {
 
             middleware.defaultIEtoHTML(request, response, next);
 
-            assert.strictEqual(request.headers.accept, 'text/html');
+            expect(request.headers.accept).toEqual('text/html');
         });
 
         it('should not change accept header for IE user agents if application/json explicitly included', function () {
@@ -326,7 +327,7 @@ describe('middleware', function () {
 
             middleware.defaultIEtoHTML(request, response, next);
 
-            assert.strictEqual(request.headers.accept, 'accept/any, application/json');
+            expect(request.headers.accept).toEqual('accept/any, application/json');
         });
     });
 });

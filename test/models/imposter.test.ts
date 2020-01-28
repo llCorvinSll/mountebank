@@ -1,7 +1,3 @@
-'use strict';
-
-const assert = require('assert');
-const mock = require('../mock').mock;
 import {Imposter} from '../../src/models/imposters/imposter';
 import * as Q from 'q';
 import { IImposter } from '../../src/models/imposters/IImposter';
@@ -26,17 +22,17 @@ describe('imposter', function () {
                     addStub: (stub: any) => { stubs.push(stub); },
                     stubs: () => stubs
                 },
-                resolver: mock(),
+                resolver: jest.fn(),
                 port: 3535,
                 metadata: metadata,
-                close: mock(),
-                proxy: { to: mock() },
+                close: jest.fn(),
+                proxy: { to: jest.fn() },
                 encoding: 'utf8'
             };
             Protocol = {
                 testRequest: {},
                 testProxyResponse: {},
-                createServer: mock().returns(Q(server))
+                createServer: jest.fn().mockReturnValue(Q(server))
             };
             logger = FakeLogger.create();
         });
@@ -164,7 +160,7 @@ describe('imposter', function () {
 
         it('should create protocol server on provided port with options', function () {
             return new Imposter(Protocol, { key: 'value' } as any, logger, {}, allow).init().then(() => {
-                assert(Protocol.createServer.wasCalledWith({ key: 'value' }));
+                expect(Protocol.createServer.mock.calls[0][0]).toEqual({ key: 'value' });
             });
         });
 
@@ -299,8 +295,8 @@ describe('imposter', function () {
         });
 
         it('responseFor should resolve using stubs and resolver', function () {
-            server.stubs.getResponseFor = mock().returns('RESPONSE CONFIG');
-            server.resolver.resolve = mock().returns(Q({ is: 'RESPONSE' }));
+            server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE CONFIG');
+            server.resolver.resolve = jest.fn().mockReturnValue(Q({ is: 'RESPONSE' }));
 
             return new Imposter(Protocol, {}, logger, {}, allow).init().then(imposter =>
                 imposter.getResponseFor({})
@@ -310,8 +306,8 @@ describe('imposter', function () {
         });
 
         it('responseFor should increment numberOfRequests and not record requests if recordRequests = false', function () {
-            server.stubs.getResponseFor = mock().returns('RESPONSE CONFIG');
-            server.resolver.resolve = mock().returns(Q({}));
+            server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE CONFIG');
+            server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter:IImposter;
 
             return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: false }, allow).init().then(imp => {
@@ -325,8 +321,8 @@ describe('imposter', function () {
         });
 
         it('responseFor should increment numberOfRequests and record requests if imposter recordRequests = true', function () {
-            server.stubs.getResponseFor = mock().returns('RESPONSE CONFIG');
-            server.resolver.resolve = mock().returns(Q({}));
+            server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE CONFIG');
+            server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter:IImposter;
 
             return new Imposter(Protocol, { recordRequests: true }, logger, { recordRequests: false }, allow).init().then(imp => {
@@ -341,8 +337,8 @@ describe('imposter', function () {
         });
 
         it('responseFor should increment numberOfRequests and record requests if global recordRequests = true', function () {
-            server.stubs.getResponseFor = mock().returns('RESPONSE');
-            server.resolver.resolve = mock().returns(Q({}));
+            server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE');
+            server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
             return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: true }, allow).init().then(imp => {
@@ -357,8 +353,8 @@ describe('imposter', function () {
         });
 
         it('responseFor should add timestamp to recorded request', function () {
-            server.stubs.getResponseFor = mock().returns('RESPONSE');
-            server.resolver.resolve = mock().returns(Q({}));
+            server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE');
+            server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
             return new Imposter(Protocol, {}, logger, { recordRequests: true }, allow).init().then(imp => {

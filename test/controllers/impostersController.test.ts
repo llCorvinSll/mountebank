@@ -1,7 +1,6 @@
 'use strict';
 
 import {FakeResponse} from "../fakes/fakeResponse";
-const mock = require('../mock').mock;
 import {ImpostersController} from '../../src/controllers/impostersController';
 const FakeLogger = require('../fakes/fakeLogger');
 import * as Q from 'q';
@@ -78,7 +77,7 @@ describe('ImpostersController', function () {
             request = { body: {}, socket: { remoteAddress: 'host', remotePort: 'port' } };
             imposter = {
                 url: 'imposter-url',
-                toJSON: mock().returns('JSON')
+                toJSON: jest.fn().mockReturnValue('JSON')
             };
             imposters = {};
             Protocol = {
@@ -193,11 +192,11 @@ describe('ImpostersController', function () {
         });
 
         it('should not call protocol validation if there are common validation failures', function () {
-            Protocol.Validator = { create: mock() };
+            Protocol.Validator = { create: jest.fn() };
             request.body = { protocol: 'invalid' };
 
             return controller.post(request, response as any).then(() => {
-                expect(!Protocol.Validator.create.wasCalled());
+                expect(Protocol.Validator.create).not.toBeCalled();
             });
         });
 
@@ -291,7 +290,7 @@ describe('ImpostersController', function () {
         });
 
         it('should return a 400 if the "imposters" key is not present', function () {
-            const existingImposter = {stop: mock()};
+            const existingImposter = {stop: jest.fn()};
             const imposters = {0: existingImposter};
             const controller = new ImpostersController({http: Protocol}, imposters as any, logger, false);
 
@@ -311,7 +310,7 @@ describe('ImpostersController', function () {
         });
 
         it('should return an empty array if no imposters provided', function () {
-            const existingImposter = { stop: mock() },
+            const existingImposter = { stop: jest.fn() },
                 imposters = { 0: existingImposter },
                 controller = new ImpostersController({ http: Protocol }, imposters as any, logger, false);
             request.body = { imposters: [] };
@@ -346,7 +345,7 @@ describe('ImpostersController', function () {
 
         it('should replace imposters list', function () {
             let creates = 0;
-            const oldImposter = { stop: mock() },
+            const oldImposter = { stop: jest.fn() },
                 imposters = { 0: oldImposter },
                 firstImposter = { toJSON: jest.fn().mockReturnValue({ first: true }), port: 1 },
                 secondImposter = { toJSON: jest.fn().mockReturnValue({ second: true }), port: 2 },
