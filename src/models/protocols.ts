@@ -37,7 +37,7 @@ export function load (
     mbLogger?: ILogger): {[key: string]: IProtocolFactory} {
     function inProcessCreate (createProtocol: ServerImplCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
-            createProtocol(creationRequest, logger, responseFn).then(server => {
+            createProtocol(creationRequest, logger, responseFn!).then(server => {
                 const stubs = new StubRepository(server.encoding || 'utf8'),
                     resolver = new ResponseResolver(stubs, server.proxy);
 
@@ -87,8 +87,8 @@ export function load (
             let closeCalled = false;
 
             imposterProcess.on('error', (error:any) => {
-                const errors = require('../util/errors'),
-                    message = `Invalid configuration for protocol "${protocolName}": cannot run "${config.createCommand}"`;
+                const errors = require('../util/errors');
+                const message = `Invalid configuration for protocol "${protocolName}": cannot run "${config.createCommand}"`;
                 deferred.reject(errors.ProtocolError(message,
                     { source: config.createCommand, details: error }));
             });

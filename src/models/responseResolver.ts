@@ -91,7 +91,7 @@ function deepEqual (obj1: unknown, obj2: unknown) {
 export class ResponseResolver implements IResolver {
     public constructor(
         protected stubs: IStubRepository,
-        protected proxy: IProxyImplementation | undefined,
+        protected proxy: IProxyImplementation | undefined  | null,
         protected callbackURL?: string) {
         this.inProcessProxy = Boolean(proxy);
     }

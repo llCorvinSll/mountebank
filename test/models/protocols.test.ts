@@ -1,7 +1,4 @@
-'use strict';
-
 const assert = require('assert');
-const mock = require('../mock').mock;
 const FakeLogger = require('../fakes/fakeLogger');
 import * as fs from 'fs';
 import * as Q from 'q';
@@ -16,9 +13,9 @@ describe('protocols', function () {
         });
 
         it('should return only builtins if no customProtocols passed in', function () {
-            const builtIns:any = {proto: {create: mock()}};
+            const builtIns:any = {proto: {create: jest.fn()}};
             const protocols = loader.load(builtIns, {}, config);
-            assert.deepEqual(Object.keys(protocols), ['proto']);
+            expect(Object.keys(protocols)).toEqual(['proto']);
         });
 
         describe('#outOfProcessCreate', function () {
@@ -31,7 +28,7 @@ describe('protocols', function () {
                     assert.fail('should have errored');
                 }, (error: any) => {
                     delete error.details;
-                    assert.deepEqual(error, {
+                    expect(error).toEqual({
                         code: 'cannot start server',
                         message: 'Invalid configuration for protocol "test": cannot run "no-such-command"',
                         source: 'no-such-command'
@@ -43,25 +40,27 @@ describe('protocols', function () {
                 const fn = () => { console.log('TESTING 1 2 3'); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols:any = {test: {createCommand: 'node ./protocol-test.js'}};
+                const customProtocols:any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({}, logger).then(server => {
-                    assert.deepEqual(server.metadata, {});
-                }).finally(() => fs.unlinkSync('protocol-test.js'));
+                    expect(server.metadata).toEqual({});
+                }).finally(() => {
+                    fs.unlinkSync('protocol-test.js');
+                });
             });
 
             it('should default to the port in the creationRequest', function () {
                 const fn = () => { console.log('{}'); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: 'node ./protocol-test.js'}};
+                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({ port: 3000 }, logger).then(server => {
-                    assert.strictEqual(server.port, 3000);
+                    expect(server.port).toEqual(3000);
                 }).finally(() => fs.unlinkSync('protocol-test.js'));
             });
 
@@ -69,12 +68,12 @@ describe('protocols', function () {
                 const fn = () => { console.log(JSON.stringify({ port: 3000 })); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: 'node ./protocol-test.js'}};
+                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({}, logger).then(server => {
-                    assert.strictEqual(server.port, 3000);
+                    expect(server.port).toEqual(3000);
                 }).finally(() => fs.unlinkSync('protocol-test.js'));
             });
 
@@ -82,12 +81,12 @@ describe('protocols', function () {
                 const fn = () => { console.log(JSON.stringify({ mode: 'text' })); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: 'node ./protocol-test.js'}};
+                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({}, logger).then(server => {
-                    assert.deepEqual(server.metadata, { mode: 'text' });
+                    expect(server.metadata).toEqual({ mode: 'text' });
                 }).finally(() => fs.unlinkSync('protocol-test.js'));
             });
 
@@ -101,7 +100,7 @@ describe('protocols', function () {
                 };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: 'node ./protocol-test.js'}};
+                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
@@ -119,13 +118,13 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 config.callbackURLTemplate = 'CALLBACK-URL';
-                const customProtocols: any = {test: {createCommand: 'node ./protocol-test.js'}};
+                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
                 const creationRequest = {port: 3000};
 
                 return protocols.test.createServer!(creationRequest, logger).then(server => {
-                    assert.deepEqual(server.metadata.args, [
+                    expect(server.metadata.args).toEqual([
                         JSON.stringify({
                             port: 3000,
                             callbackURLTemplate: 'CALLBACK-URL',
@@ -140,13 +139,13 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 config.callbackURLTemplate = 'CALLBACK-URL';
-                const customProtocols: any = {test: {createCommand: 'node ./protocol-test.js'}};
+                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
                 const creationRequest = {port: 3000, defaultResponse: {key: 'default'}};
 
                 return protocols.test.createServer!(creationRequest, logger).then(server => {
-                    assert.deepEqual(server.metadata.args, [
+                    expect(server.metadata.args).toEqual([
                         JSON.stringify({
                             port: 3000,
                             callbackURLTemplate: 'CALLBACK-URL',
@@ -164,7 +163,7 @@ describe('protocols', function () {
                 config.callbackURLTemplate = 'CALLBACK-URL';
                 const customProtocols: any = {
                     test: {
-                        createCommand: 'node ./protocol-test.js',
+                        createCommand: `${process.execPath} ./protocol-test.js`,
                         customProtocolFields: ['key1', 'key3']
                     }
                 };
@@ -181,7 +180,7 @@ describe('protocols', function () {
                 };
 
                 return protocols.test.createServer!(creationRequest, logger).then(server => {
-                    assert.deepEqual(server.metadata.args, [
+                    expect(server.metadata.args).toEqual([
                         JSON.stringify({
                             port: 3000,
                             callbackURLTemplate: 'CALLBACK-URL',

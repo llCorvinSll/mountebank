@@ -107,6 +107,7 @@ export interface IMountebankResponse {
 
     recordMatch?: (match?: any) => void;
     setMetadata?: (responseType: string, metadata: any) => void;
+    callbackURL?: string;
 }
 
 

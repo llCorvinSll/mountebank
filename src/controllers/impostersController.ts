@@ -143,7 +143,7 @@ export class ImpostersController {
             if (isValid) {
                 return this.deleteAllImposters().then(() => {
                     const creationPromises = requestImposters.map((imposter) => {
-                            let protocol_factory = this.protocols[imposter.protocol];
+                            let protocol_factory = this.protocols[imposter.protocol!];
                             if (protocol_factory && protocol_factory.createImposterFrom) {
                                 return protocol_factory.createImposterFrom(imposter);
                             }
@@ -203,13 +203,13 @@ export class ImpostersController {
 
         compatibility.upcast(request);
 
-        this.validatePort(request.port, errors);
-        this.validateProtocol(request.protocol, errors);
+        this.validatePort(request.port!, errors);
+        this.validateProtocol(request.protocol!, errors);
 
         if (errors.length > 0) {
             return Q({isValid: false, errors});
         } else {
-            const Protocol = this.protocols[request.protocol],
+            const Protocol = this.protocols[request.protocol!],
                 validator = require('../models/dryRunValidator').create({
                     testRequest: Protocol.testRequest,
                     testProxyResponse: Protocol.testProxyResponse,
