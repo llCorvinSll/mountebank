@@ -1,46 +1,48 @@
-'use strict';
+import {ApiClient} from "../api";
 
-const assert = require('assert'),
-    api = require('../api').create(),
-    BaseHttpClient = require('./baseHttpClient'),
-    promiseIt = require('../../testHelpers').promiseIt,
-    port = api.port + 1,
-    timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 2000),
-    fs = require('fs'),
-    util = require('util');
+const assert = require('assert');
+const BaseHttpClient = require('./baseHttpClient');
+const fs = require('fs');
+const util = require('util');
 
 ['http', 'https'].forEach(protocol => {
+    // const timeout = parseInt((process as any).env.MB_SLOW_TEST_TIMEOUT || 2000);
     const client = BaseHttpClient.create(protocol);
+    let api: ApiClient;
+    let port: number;
+
+    beforeEach(() => {
+        api = new ApiClient();
+        port = api.port + 1;
+    })
 
     describe(`${protocol} imposter`, function () {
-        this.timeout(timeout);
-
         describe('POST /imposters with stubs', function () {
-            promiseIt('should add latency when using behaviors.wait', function () {
+            it('should add latency when using behaviors.wait', function () {
                 const stub = {
-                        responses: [{
-                            is: { body: 'stub' },
-                            _behaviors: { wait: 1000 }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
-                let timer;
+                    responses: [{
+                        is: {body: 'stub'},
+                        _behaviors: {wait: 1000}
+                    }]
+                };
+                const stubs = [stub];
+                const request = {protocol, port, stubs: stubs};
+                let timer: number;
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
-                    timer = new Date();
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
+                    timer = Date.now();
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'stub');
-                    const time = new Date() - timer;
+                }).then((response: any) => {
+                    expect(response.body).toEqual('stub');
+                    const time = Date.now() - timer;
 
                     // Occasionally there's some small inaccuracies
                     assert.ok(time >= 990, `actual time: ${time}`);
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should add latency when using behaviors.wait as a function', function () {
+            it('should add latency when using behaviors.wait as a function', function () {
                 const fn = () => 1000,
                     stub = {
                         responses: [{
@@ -50,23 +52,23 @@ const assert = require('assert'),
                     },
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
-                let timer;
+                let timer: number;
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
-                    timer = new Date();
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
+                    timer = Date.now();
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'stub');
-                    const time = new Date() - timer;
+                }).then((response: any) => {
+                    expect(response.body).toEqual('stub');
+                    const time = Date.now() - timer;
 
                     // Occasionally there's some small inaccuracies
                     assert.ok(time >= 990, `actual time: ${time}`);
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support post-processing when using behaviors.decorate (old interface)', function () {
-                const decorator = (request, response) => {
+            it('should support post-processing when using behaviors.decorate (old interface)', function () {
+                const decorator = (request: any, response: any) => {
                         response.body = response.body.replace('${YEAR}', new Date().getFullYear());
                     },
                     stub = {
@@ -78,16 +80,16 @@ const assert = require('assert'),
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, `the year is ${new Date().getFullYear()}`);
+                }).then((response: any) => {
+                    expect(response.body).toEqual(`the year is ${new Date().getFullYear()}`);
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support post-processing when using behaviors.decorate', function () {
-                const decorator = config => {
+            it('should support post-processing when using behaviors.decorate', function () {
+                const decorator = (config: any) => {
                         config.response.body = config.response.body.replace('${YEAR}', new Date().getFullYear());
                     },
                     stub = {
@@ -99,16 +101,16 @@ const assert = require('assert'),
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, `the year is ${new Date().getFullYear()}`);
+                }).then((response: any) => {
+                    expect(response.body).toEqual(`the year is ${new Date().getFullYear()}`);
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should fix content-length if set and adjusted using decoration (issue #155)', function () {
-                const decorator = (request, response) => {
+            it('should fix content-length if set and adjusted using decoration (issue #155)', function () {
+                const decorator = (request: any, response: any) => {
                         response.body = 'length-8';
                     },
                     stub = {
@@ -123,17 +125,17 @@ const assert = require('assert'),
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'length-8');
-                    assert.strictEqual(response.headers['content-length'], '8');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('length-8');
+                    expect(response.headers['content-length']).toEqual('8');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support using request parameters during decorating (old interface)', function () {
-                const decorator = (request, response) => {
+            it('should support using request parameters during decorating (old interface)', function () {
+                const decorator = (request: any, response: any) => {
                         response.body = response.body.replace('${PATH}', request.path);
                     },
                     stub = {
@@ -145,37 +147,37 @@ const assert = require('assert'),
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/test', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'the path is /test');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('the path is /test');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support using request parameters during decorating', function () {
-                const decorator = config => {
-                        config.response.body = config.response.body.replace('${PATH}', config.request.path);
-                    },
-                    stub = {
-                        responses: [{
-                            is: { body: 'the path is ${PATH}' },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+            it('should support using request parameters during decorating', function () {
+                const decorator = (config:any) => {
+                    config.response.body = config.response.body.replace('${PATH}', config.request.path);
+                };
+                const stub = {
+                    responses: [{
+                        is: {body: 'the path is ${PATH}'},
+                        _behaviors: {decorate: decorator.toString()}
+                    }]
+                };
+                const stubs = [stub];
+                const request = {protocol, port, stubs: stubs};
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/test', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'the path is /test');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('the path is /test');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support using request parameters during decorating multiple times (issue #173)', function () {
-                const decorator = (request, response) => {
+            it('should support using request parameters during decorating multiple times (issue #173)', function () {
+                const decorator = (request: any, response: any) => {
                         response.body = response.body.replace('${id}', request.query.id);
                     },
                     stub = {
@@ -187,23 +189,23 @@ const assert = require('assert'),
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/test?id=100', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'request 100');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('request 100');
                     return api.get(`/imposters/${port}`);
                 }).then(() => client.get('/test?id=200', port)
-                ).then(response => {
-                    assert.strictEqual(response.body, 'request 200');
+                ).then((response: any) => {
+                    expect(response.body).toEqual('request 200');
                     return client.get('/test?id=300', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'request 300');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('request 300');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support decorate functions that return a value (old interface)', function () {
-                const decorator = (request, response) => {
+            it('should support decorate functions that return a value (old interface)', function () {
+                const decorator = (request: any, response: any) => {
                         const clonedResponse = JSON.parse(JSON.stringify(response));
                         clonedResponse.body = 'This is a clone';
                         return clonedResponse;
@@ -217,16 +219,16 @@ const assert = require('assert'),
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'This is a clone');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('This is a clone');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support decorate functions that return a value', function () {
-                const decorator = config => {
+            it('should support decorate functions that return a value', function () {
+                const decorator = (config: any) => {
                         const clonedResponse = JSON.parse(JSON.stringify(config.response));
                         clonedResponse.body = 'This is a clone';
                         return clonedResponse;
@@ -240,82 +242,82 @@ const assert = require('assert'),
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'This is a clone');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('This is a clone');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should not validate the decorate JavaScript function', function () {
-                const decorator = "response.body = 'This should not work';",
-                    stub = {
-                        responses: [{
-                            is: { body: 'This is the original' },
-                            _behaviors: { decorate: decorator }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
-
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
-                }).finally(() => api.del('/imposters'));
-            });
-
-            promiseIt('should repeat if behavior set and loop around responses with same repeat behavior (issue #165)', function () {
+            it('should not validate the decorate JavaScript function', function () {
+                const decorator = "response.body = 'This should not work';";
                 const stub = {
-                        responses: [
-                            {
-                                is: {
-                                    body: 'first response',
-                                    statusCode: 400,
-                                    headers: { 'Content-Type': 'text/plain' }
-                                },
-                                _behaviors: { repeat: 2 }
-                            },
-                            {
-                                is: { body: 'second response' },
-                                _behaviors: { repeat: 3 }
-                            },
-                            { is: { body: 'third response' } }
-                        ]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{
+                        is: {body: 'This is the original'},
+                        _behaviors: {decorate: decorator}
+                    }]
+                };
+                const stubs = [stub];
+                const request = {protocol, port, stubs: stubs};
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, response.body);
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
+                }).finally(() => api.del('/imposters'));
+            });
+
+            it('should repeat if behavior set and loop around responses with same repeat behavior (issue #165)', function () {
+                const stub = {
+                    responses: [
+                        {
+                            is: {
+                                body: 'first response',
+                                statusCode: 400,
+                                headers: {'Content-Type': 'text/plain'}
+                            },
+                            _behaviors: {repeat: 2}
+                        },
+                        {
+                            is: {body: 'second response'},
+                            _behaviors: {repeat: 3}
+                        },
+                        {is: {body: 'third response'}}
+                    ]
+                };
+                const request = {protocol, port, stubs: [stub]};
+
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.statusCode, 400);
-                    assert.strictEqual(response.body, 'first response');
+                }).then((response: any) => {
+                    expect(response.statusCode).toEqual(400);
+                    expect(response.body).toEqual('first response');
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'first response');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('first response');
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'second response');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('second response');
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'second response');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('second response');
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'second response');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('second response');
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'third response');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('third response');
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'first response');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('first response');
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'first response');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('first response');
                     return client.get('/', port);
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should repeat consistently with headers (issue #158)', function () {
+            it('should repeat consistently with headers (issue #158)', function () {
                 const stub = {
                         responses: [
                             {
@@ -330,21 +332,21 @@ const assert = require('assert'),
                     },
                     request = { protocol, port, stubs: [stub] };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, response.body);
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
+                }).then((response: any) => {
                     assert.deepEqual(response.body, 'first response', 'first try');
                     return client.get('/', port);
-                }).then(response => {
+                }).then((response: any) => {
                     assert.deepEqual(response.body, 'first response', 'second try');
                     return client.get('/', port);
-                }).then(response => {
+                }).then((response: any) => {
                     assert.deepEqual(response.body, 'second response', 'third try');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should repeat with JSON key of repeat (issue #237)', function () {
+            it('should repeat with JSON key of repeat (issue #237)', function () {
                 const stub = {
                         responses: [
                             {
@@ -361,21 +363,21 @@ const assert = require('assert'),
                     },
                     request = { protocol, port, stubs: [stub] };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, response.body);
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.post('/', { repeat: true }, port);
-                }).then(response => {
+                }).then((response: any) => {
                     assert.deepEqual(response.body, 'This should repeat 2 times', 'first try');
                     return client.post('/', { repeat: true }, port);
-                }).then(response => {
+                }).then((response: any) => {
                     assert.deepEqual(response.body, 'This should repeat 2 times', 'second try');
                     return client.post('/', { repeat: true }, port);
-                }).then(response => {
+                }).then((response: any) => {
                     assert.deepEqual(response.body, 'Then you should see this', 'third try');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support shell transform without array for backwards compatibility', function () {
+            it('should support shell transform without array for backwards compatibility', function () {
                 // The string version of the shellTransform behavior is left for backwards
                 // compatibility. It changed in v1.13.0 to accept an array.
                 const stub = {
@@ -392,18 +394,18 @@ const assert = require('assert'),
 
                 fs.writeFileSync('shellTransformTest.js', util.format('%s\nexec();', shellFn.toString()));
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'Hello, mountebank!');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('Hello, mountebank!');
                 }).finally(() => {
                     fs.unlinkSync('shellTransformTest.js');
                     return api.del('/imposters');
                 });
             });
 
-            promiseIt('should support array of shell transforms in order', function () {
+            it('should support array of shell transforms in order', function () {
                 const stub = {
                         responses: [{
                             is: { body: 1 },
@@ -428,11 +430,11 @@ const assert = require('assert'),
                 fs.writeFileSync('double.js', util.format('%s\ndouble();', doubleFn.toString()));
                 fs.writeFileSync('increment.js', util.format('%s\nincrement();', incrementFn.toString()));
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, '3');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('3');
                 }).finally(() => {
                     fs.unlinkSync('double.js');
                     fs.unlinkSync('increment.js');
@@ -440,7 +442,7 @@ const assert = require('assert'),
                 });
             });
 
-            promiseIt('should support copying from request fields using regex', function () {
+            it('should support copying from request fields using regex', function () {
                 const stub = {
                         responses: [{
                             is: {
@@ -477,22 +479,22 @@ const assert = require('assert'),
                     },
                     request = { protocol, port, stubs: [stub] };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.responseFor({
                         port,
                         method: 'GET',
                         headers: { 'x-request': 'header value' },
                         path: '/400/this-will-be-ignored?body=body%20is%20HERE'
                     });
-                }).then(response => {
-                    assert.strictEqual(response.statusCode, 400);
-                    assert.strictEqual(response.headers['x-test'], 'header value');
-                    assert.strictEqual(response.body, 'HERE');
+                }).then((response: any) => {
+                    expect(response.statusCode).toEqual(400);
+                    expect(response.headers['x-test']).toEqual('header value');
+                    expect(response.body).toEqual('HERE');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support copying from request fields using xpath', function () {
+            it('should support copying from request fields using xpath', function () {
                 const stub = {
                         responses: [{
                             is: { body: 'Hello, NAME! Good to see you, NAME.' },
@@ -511,15 +513,15 @@ const assert = require('assert'),
                     },
                     request = { protocol, port, stubs: [stub] };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.post('/', '<doc xmlns:mb="http://example.com/mb"><mb:name>mountebank</mb:name></doc>', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'Hello, mountebank! Good to see you, mountebank.');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('Hello, mountebank! Good to see you, mountebank.');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support copying from request fields using jsonpath', function () {
+            it('should support copying from request fields using jsonpath', function () {
                 const stub = {
                         responses: [{
                             is: { body: 'Hello, NAME! Good to see you, NAME.' },
@@ -534,15 +536,15 @@ const assert = require('assert'),
                     },
                     request = { protocol, port, stubs: [stub] };
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.post('/', JSON.stringify({ name: 'mountebank' }), port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'Hello, mountebank! Good to see you, mountebank.');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('Hello, mountebank! Good to see you, mountebank.');
                 }).finally(() => api.del('/imposters'));
             });
 
-            promiseIt('should support lookup from CSV file keyed by regex', function () {
+            it('should support lookup from CSV file keyed by regex', function () {
                 const stub = {
                         responses: [{
                             is: {
@@ -576,25 +578,25 @@ const assert = require('assert'),
                     'Brandon,404,mountebank,Dallas\n' +
                     'Bob Barker,500,"The Price Is Right","Darrington, Washington"');
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.responseFor({
                         port,
                         method: 'GET',
                         headers: { 'x-bob': 'The Price Is Right' },
                         path: '/mountebank'
                     });
-                }).then(response => {
-                    assert.strictEqual(response.statusCode, 400);
-                    assert.strictEqual(response.headers['x-occupation'], 'tester');
-                    assert.strictEqual(response.body, 'Hello mountebank. Have you been to Darrington, Washington?');
+                }).then((response: any) => {
+                    expect(response.statusCode).toEqual(400);
+                    expect(response.headers['x-occupation']).toEqual('tester');
+                    expect(response.body).toEqual('Hello mountebank. Have you been to Darrington, Washington?');
                 }).finally(() => {
                     fs.unlinkSync('lookupTest.csv');
                     return api.del('/imposters');
                 });
             });
 
-            promiseIt('should support lookup from CSV file keyed by xpath', function () {
+            it('should support lookup from CSV file keyed by xpath', function () {
                 const stub = {
                         responses: [{
                             is: { body: "Hello, YOU[name]! How is YOU['location'] today?" },
@@ -622,18 +624,18 @@ const assert = require('assert'),
                     'Brandon,mountebank,Dallas\n' +
                     'Bob Barker,"The Price Is Right","Darrington, Washington"');
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.post('/', '<doc xmlns:mb="http://example.com/mb"><mb:name>mountebank</mb:name></doc>', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'Hello, Brandon! How is Dallas today?');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('Hello, Brandon! How is Dallas today?');
                 }).finally(() => {
                     fs.unlinkSync('lookupTest.csv');
                     return api.del('/imposters');
                 });
             });
 
-            promiseIt('should support lookup from CSV file keyed by jsonpath', function () {
+            it('should support lookup from CSV file keyed by jsonpath', function () {
                 const stub = {
                         responses: [{
                             is: { body: 'Hello, YOU["name"]! How is YOU[location] today?' },
@@ -654,22 +656,22 @@ const assert = require('assert'),
                     'Brandon,mountebank,Dallas\n' +
                     'Bob Barker,"The Price Is Right","Darrington, Washington"');
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.post('/', JSON.stringify({ occupation: 'mountebank' }), port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'Hello, Brandon! How is Dallas today?');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('Hello, Brandon! How is Dallas today?');
                 }).finally(() => {
                     fs.unlinkSync('lookupTest.csv');
                     return api.del('/imposters');
                 });
             });
 
-            promiseIt('should compose multiple behaviors together', function () {
+            it('should compose multiple behaviors together', function () {
                 const shellFn = function exec () {
                         console.log(process.argv[3].replace('${SALUTATION}', 'Hello'));
                     },
-                    decorator = (request, response) => {
+                    decorator = (request: any, response: any) => {
                         response.body = response.body.replace('${SUBJECT}', 'mountebank');
                     },
                     stub = {
@@ -695,25 +697,25 @@ const assert = require('assert'),
                     },
                     stubs = [stub],
                     request = { protocol, port, stubs: stubs },
-                    timer = new Date();
+                    timer = Date.now();
 
                 fs.writeFileSync('shellTransformTest.js', util.format('%s\nexec();', shellFn.toString()));
 
-                return api.post('/imposters', request).then(response => {
-                    assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body, null, 2));
+                return api.post('/imposters', request).then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                     return client.get('/?punctuation=!', port);
-                }).then(response => {
-                    const time = new Date() - timer;
-                    assert.strictEqual(response.body, 'Hello, mountebank!');
+                }).then((response: any) => {
+                    const time = Date.now() - timer;
+                    expect(response.body).toEqual('Hello, mountebank!');
                     assert.ok(time >= 250, `actual time: ${time}`);
                     return client.get('/?punctuation=!', port);
-                }).then(response => {
-                    const time = new Date() - timer;
-                    assert.strictEqual(response.body, 'Hello, mountebank!');
+                }).then((response: any) => {
+                    const time = Date.now() - timer;
+                    expect(response.body).toEqual('Hello, mountebank!');
                     assert.ok(time >= 250, `actual time: ${time}`);
                     return client.get('/?punctuation=!', port);
-                }).then(response => {
-                    assert.strictEqual(response.body, 'No behaviors');
+                }).then((response: any) => {
+                    expect(response.body).toEqual('No behaviors');
                 }).finally(() => {
                     fs.unlinkSync('shellTransformTest.js');
                     return api.del('/imposters');
