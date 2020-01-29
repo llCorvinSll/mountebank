@@ -1,5 +1,4 @@
 const api = require('./api').create();
-const promiseIt = require('../testHelpers').promiseIt;
 
 describe('GET /', function () {
     it('should return correct hypermedia', function () {
