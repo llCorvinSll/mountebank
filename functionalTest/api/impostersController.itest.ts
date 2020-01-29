@@ -113,7 +113,7 @@ describe('DELETE /imposters', function () {
 
             return client.get('/', firstImposter.port);
         }).done(() => {
-            assert.fail('did not close socket');
+            throw new Error('did not close socket');
             done();
         }, (error: any) => {
             expect(error.code).toEqual('ECONNREFUSED');
