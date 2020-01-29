@@ -1,28 +1,29 @@
-'use strict';
+import {ApiClient} from "../api";
 
-const assert = require('assert'),
-    api = require('../api').create(),
-    client = require('./smtpClient'),
-    promiseIt = require('../../testHelpers').promiseIt,
-    port = api.port + 1,
-    timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 2000);
+const client = require('./smtpClient');
 
 describe('smtp imposter', function () {
-    this.timeout(timeout);
+    let api: any;
+    let port: number;
+
+    beforeEach(() => {
+        api = new ApiClient();
+        port = api.port + 1;
+    })
 
     describe('POST /imposters/:id', function () {
-        promiseIt('should auto-assign port if port not provided', function () {
+        it('should auto-assign port if port not provided', function () {
             const request = { protocol: 'smtp' };
 
-            return api.post('/imposters', request).then(response => {
-                assert.strictEqual(response.statusCode, 201);
-                assert.ok(response.body.port > 0);
+            return api.post('/imposters', request).then((response: any) => {
+                expect(response.statusCode).toEqual(201);
+                expect(response.body.port > 0).toBeTruthy();
             }).finally(() => api.del('/imposters'));
         });
     });
 
     describe('GET /imposters/:id', function () {
-        promiseIt('should provide access to all requests', function () {
+        it('should provide access to all requests', function () {
             const imposterRequest = { protocol: 'smtp', port };
 
             return api.post('/imposters', imposterRequest)
@@ -44,9 +45,9 @@ describe('smtp imposter', function () {
                     text: 'text 2'
                 }, port))
                 .then(() => api.get(`/imposters/${port}`))
-                .then(response => {
+                .then((response: any) => {
                     const requests = response.body.requests;
-                    requests.forEach(request => {
+                    requests.forEach((request: any) => {
                         if (request.requestFrom) {
                             request.requestFrom = 'HERE';
                         }
@@ -54,7 +55,7 @@ describe('smtp imposter', function () {
                             request.timestamp = 'NOW';
                         }
                     });
-                    assert.deepEqual(requests, [
+                    expect(requests).toEqual([
                         {
                             timestamp: 'NOW',
                             requestFrom: 'HERE',
@@ -98,17 +99,17 @@ describe('smtp imposter', function () {
     });
 
     describe('DELETE /imposters/:id should shutdown server at that port', function () {
-        promiseIt('should shutdown server at that port', function () {
+        it('should shutdown server at that port', function () {
             const request = { protocol: 'smtp', port };
 
             return api.post('/imposters', request)
-                .then(response => api.del(response.headers.location))
-                .then(response => {
-                    assert.strictEqual(response.statusCode, 200, JSON.stringify(response.body));
+                .then((response: any) => api.del(response.headers.location))
+                .then((response: any) => {
+                    expect(response.statusCode).toEqual(200);
                     return api.post('/imposters', request);
                 })
-                .then(response => {
-                    assert.strictEqual(response.statusCode, 201, 'Delete did not free up port');
+                .then((response: any) => {
+                    expect(response.statusCode).toEqual(201);
                 })
                 .finally(() => api.del(`/imposters/${port}`));
         });
