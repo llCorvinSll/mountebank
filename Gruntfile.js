@@ -51,7 +51,7 @@ module.exports = grunt => {
                 options: {
                     reporter: 'spec'
                 },
-                src: ['functionalTest/**/*.js']
+                src: ['functionalTest/**/*.js', '!functionalTest/**/*.itest.js']
             },
             performance: {
                 options: { reporter: 'spec' },
