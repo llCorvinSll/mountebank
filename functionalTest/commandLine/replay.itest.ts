@@ -1,18 +1,22 @@
 'use strict';
 
-const assert = require('assert'),
-    api = require('../api/api').create(),
-    client = require('../api/http/baseHttpClient').create('http'),
-    mb = require('../mb').create(api.port + 1),
-    promiseIt = require('../testHelpers').promiseIt,
-    timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 4000);
+import {ApiClient} from "../api/api";
+const client = require('../api/http/baseHttpClient').create('http');
 
 describe('mb replay', function () {
-    this.timeout(timeout);
+    let api: any;
+    let port: number;
+    let mb: any;
 
-    promiseIt('should remove proxies', function () {
+    beforeAll(() => {
+        api = new ApiClient();
+        port = api.port + 1;
+        mb = require('../mb').create(port)
+    })
+
+    it('should remove proxies', function () {
         const originServerPort = mb.port + 1,
-            originServerFn = (request, state) => {
+            originServerFn = (request: any, state: any) => {
                 state.count = state.count || 0;
                 state.count += 1;
                 return {
@@ -37,25 +41,25 @@ describe('mb replay', function () {
 
         return mb.start(['--allowInjection'])
             .then(() => mb.post('/imposters', originServerRequest))
-            .then(response => {
-                assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body));
+            .then((response: any) => {
+                expect(response.statusCode).toEqual(201);
                 return mb.post('/imposters', proxyRequest);
             })
-            .then(response => {
-                assert.strictEqual(response.statusCode, 201, JSON.stringify(response.body));
+            .then((response: any) => {
+                expect(response.statusCode).toEqual(201);
                 return client.get('/first', proxyPort);
             })
             .then(() => client.get('/second', proxyPort))
             .then(() => client.get('/first', proxyPort))
             .then(() => mb.replay())
             .then(() => mb.get(`/imposters/${proxyPort}`))
-            .then(response => {
-                assert.strictEqual(response.body.stubs.length, 2, JSON.stringify(response.body.stubs, null, 2));
+            .then((response: any) => {
+                expect(response.body.stubs.length).toEqual(2);
 
                 const stubs = response.body.stubs,
-                    responses = stubs.map(stub => stub.responses.map(stubResponse => stubResponse.is.body));
+                    responses = stubs.map((stub: any) => stub.responses.map((stubResponse: any) => stubResponse.is.body));
 
-                assert.deepEqual(responses, [['1. /first', '3. /first'], ['2. /second']]);
+                expect(responses).toEqual([['1. /first', '3. /first'], ['2. /second']]);
             })
             .finally(() => mb.stop());
     });
