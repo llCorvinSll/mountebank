@@ -1,54 +1,56 @@
 'use strict';
 
-const assert = require('assert'),
-    api = require('../api').create(),
-    tcp = require('./tcpClient'),
-    promiseIt = require('../../testHelpers').promiseIt,
-    port = api.port + 1,
-    sanitizeBody = require('../../testUtils/sanitize').sanitizeBody,
-    timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 2000);
+import {ApiClient} from "../api";
+const tcp = require('./tcpClient');
+const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
 
 
 describe('tcp imposter', function () {
-    this.timeout(timeout);
+    let api: any;
+    let port: number;
+
+    beforeEach(() => {
+        api = new ApiClient();
+        port = api.port + 1;
+    })
 
     describe('POST /imposters/:id', function () {
-        promiseIt('should auto-assign port if port not provided', function () {
+        it('should auto-assign port if port not provided', function () {
             const request = { protocol: 'tcp' };
 
-            return api.post('/imposters', request).then(response => {
-                assert.strictEqual(response.statusCode, 201);
-                assert.ok(response.body.port > 0);
+            return api.post('/imposters', request).then((response: any) => {
+                expect(response.statusCode).toEqual(201);
+                expect(response.body.port > 0).toBeTruthy();
             }).finally(() => api.del('/imposters'));
         });
     });
 
     describe('GET /imposters/:id', function () {
-        promiseIt('should provide access to all requests', function () {
+        it('should provide access to all requests', function () {
             const request = { protocol: 'tcp', port };
 
             return api.post('/imposters', request)
                 .then(() => tcp.fireAndForget('first', port))
                 .then(() => tcp.fireAndForget('second', port))
                 .then(() => api.get(`/imposters/${port}`))
-                .then(response => {
-                    const requests = response.body.requests.map(recordedRequest => recordedRequest.data);
-                    assert.deepEqual(requests, ['first', 'second']);
+                .then((response: any) => {
+                    const requests = response.body.requests.map((recordedRequest: any) => recordedRequest.data);
+                    expect(requests).toEqual(['first', 'second']);
                 })
                 .finally(() => api.del('/imposters'));
         });
 
-        promiseIt('should return list of stubs in order', function () {
+        it('should return list of stubs in order', function () {
             const first = { responses: [{ is: { data: '1' } }] },
                 second = { responses: [{ is: { data: '2' } }] },
                 request = { protocol: 'tcp', port, stubs: [first, second] };
 
             return api.post('/imposters', request)
                 .then(() => api.get(`/imposters/${port}`))
-                .then(response => {
+                .then((response: any) => {
                     const sanitizedBody = sanitizeBody(response);
-                    assert.strictEqual(response.statusCode, 200);
-                    assert.deepEqual(sanitizedBody.stubs, [
+                    expect(response.statusCode).toEqual(200);
+                    expect(sanitizedBody.stubs).toEqual([
                         {
                             _uuid: '696969696969',
                             responses: [{ is: { data: '1' } }],
@@ -64,14 +66,14 @@ describe('tcp imposter', function () {
                 .finally(() => api.del('/imposters'));
         });
 
-        promiseIt('should reflect default mode', function () {
+        it('should reflect default mode', function () {
             const request = { protocol: 'tcp', port, name: 'imposter' };
 
             return api.post('/imposters', request)
                 .then(() => api.get(`/imposters/${port}`))
-                .then(response => {
-                    assert.strictEqual(response.statusCode, 200);
-                    assert.deepEqual(response.body, {
+                .then((response: any) => {
+                    expect(response.statusCode).toEqual(200);
+                    expect(response.body).toEqual({
                         protocol: 'tcp',
                         port,
                         recordRequests: false,
@@ -89,7 +91,7 @@ describe('tcp imposter', function () {
                 .finally(() => api.del('/imposters'));
         });
 
-        promiseIt('should record matches against stubs', function () {
+        it('should record matches against stubs', function () {
             const stub = { responses: [{ is: { data: '1' } }, { is: { data: '2' } }] },
                 request = { protocol: 'tcp', port, stubs: [stub] };
 
@@ -97,10 +99,10 @@ describe('tcp imposter', function () {
                 .then(() => tcp.send('first', port))
                 .then(() => tcp.send('second', port))
                 .then(() => api.get(`/imposters/${port}`))
-                .then(response => {
+                .then((response: any) => {
                     const sanitizedBody = sanitizeBody(response);
 
-                    assert.deepEqual(sanitizedBody.stubs, [{
+                    expect(sanitizedBody.stubs).toEqual([{
                         _uuid: '696969696969',
                         responses: [{ is: { data: '1' } }, { is: { data: '2' } }],
                         matches: [
