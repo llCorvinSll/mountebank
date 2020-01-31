@@ -4,22 +4,16 @@ import * as Q from 'q';
 import {IStubConfig} from "../stubs/IStubConfig";
 import {ILogger} from "../../util/scopedLogger";
 import {IMountebankResponse, IServerRequestData} from "../IProtocol";
-import {IStub} from "../stubs/IStub";
+import {IStubRepository} from "../stubs/IStubRepository";
 
 export interface IImposter {
     port: number;
     url: string;
     protocol: string;
 
-    stubs():IStub[];
-    addStub(stub: IStubConfig):void;
+    stubRepository:IStubRepository;
     toJSON(options?:ImposterPrintOptions):string;
-    resetProxies():void;
     stop():Q.Promise<unknown>;
-    deleteStubAtIndex(index:string):void;
-    addStubAtIndex(index:string, newStub:IStubConfig):void;
-    overwriteStubAtIndex(index:string, newStub: IStubConfig):void;
-    overwriteStubs(stubs:IStubConfig[]):void;
 
     getResponseFor(request: IServerRequestData, requestDetails?: unknown): Q.Promise<IMountebankResponse>;
     getProxyResponseFor(proxyResponse: any, proxyResolutionKey: any):Q.Promise<any>;

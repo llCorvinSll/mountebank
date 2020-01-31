@@ -12,13 +12,12 @@ import {IImposter, IImposterConfig, ImposterPrintOptions, IpValidator} from "./I
 import * as Q from "q";
 import {ILogger} from "../../util/scopedLogger";
 import {IProtocolLoadOptions} from "../protocols";
-import {IStubConfig} from "../stubs/IStubConfig";
 import * as domain_nsp from "domain";
 import {Domain} from "domain";
 import * as helpers from '../../util/helpers';
 import * as compatibility from '../compatibility';
-import {IStub} from "../stubs/IStub";
 import {ImposterPrinter} from "./imposterPrinter";
+import { IStubRepository } from "../stubs/IStubRepository";
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -139,38 +138,9 @@ export class Imposter implements IImposter {
         return stopDeferred.promise;
     }
 
-    //#region ProxyMethods
-
-    public resetProxies() {
-        this.server.stubs.resetProxies();
-    };
-
-    public addStub(stub: IStubConfig, beforeResponse?: IMountebankResponse) {
-        this.server.stubs.addStub(stub, beforeResponse);
-    };
-
-    public stubs(): IStub[] {
-        return this.server.stubs.stubs();
+    get stubRepository(): IStubRepository {
+        return this.server.stubs;
     }
-
-    public overwriteStubs(stubs: IStubConfig[]) {
-        this.server.stubs.overwriteStubs(stubs);
-    }
-
-    public overwriteStubAtIndex(index: string, newStub: IStubConfig) {
-        this.server.stubs.overwriteStubAtIndex(index, newStub);
-    }
-
-    public deleteStubAtIndex(index: string) {
-        this.server.stubs.deleteStubAtIndex(index);
-    }
-
-    public addStubAtIndex(index: string, newStub: IStubConfig) {
-        this.server.stubs.addStubAtIndex(index, newStub);
-    }
-
-    //#endregion
-
 
     // requestDetails are not stored with the imposter
     // It was created to pass the raw URL to maintain the exact querystring during http proxying
@@ -205,8 +175,7 @@ export class Imposter implements IImposter {
     public getProxyResponseFor(proxyResponse: IProxyResponse, proxyResolutionKey: number) {
         return this.resolver.resolveProxy(proxyResponse, proxyResolutionKey, this.logger).then(response => {
             if (this.config.recordMatches) {
-                // @ts-ignore
-                response.recordMatch();
+                response.recordMatch!();
             }
             return Q(response);
         });

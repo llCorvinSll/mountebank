@@ -1,9 +1,7 @@
-'use strict';
-
 import {Request, Response} from "express";
 import {ILogger} from "../util/scopedLogger";
 import {IProtocolFactory, IValidation} from "../models/IProtocol";
-import {IImposter} from "../models/imposters/IImposter";
+import {IImposter, IImposterConfig} from "../models/imposters/IImposter";
 import {ParsedUrlQuery} from "querystring";
 import * as Q from "q";
 import {IMontebankError, ValidationError} from "../util/errors";
@@ -118,7 +116,7 @@ export class ImposterController {
         const imposter = this.imposters[request.params.id];
 
         if (imposter) {
-            imposter.resetProxies();
+            imposter.stubRepository.resetProxies();
             const imposter_json = imposter.toJSON(options);
 
             response.format({
@@ -208,7 +206,7 @@ export class ImposterController {
         else {
             return this.validate(imposter, newStubs).then(result => {
                 if (result.isValid) {
-                    imposter.overwriteStubs(newStubs);
+                    imposter.stubRepository.overwriteStubs(newStubs);
                     response.send(imposter.toJSON());
                 }
                 else {
@@ -218,14 +216,14 @@ export class ImposterController {
         }
     }
 
-    private validate (imposter:IImposter, newStubs:IStubConfig[]):Q.Promise<IValidation> {
+    private validate (imposter:IImposterConfig, newStubs:IStubConfig[]):Q.Promise<IValidation> {
         const request = helpers.clone(imposter);
 
         request.stubs = newStubs as any;
 
         compatibility.upcast(request as any);
 
-        const Protocol = this.protocols[request.protocol],
+        const Protocol = this.protocols[request.protocol!],
             validator = require('../models/dryRunValidator').create({
                 testRequest: Protocol.testRequest,
                 testProxyResponse: Protocol.testProxyResponse,
@@ -276,7 +274,7 @@ export class ImposterController {
         else {
             return this.validate(imposter, [newStub]).then(result => {
                 if (result.isValid) {
-                    imposter.overwriteStubAtIndex(request.params.stubIndex, newStub);
+                    imposter.stubRepository.overwriteStubAtIndex(request.params.stubIndex, newStub);
                     response.send(imposter.toJSON());
                 }
                 else {
@@ -287,7 +285,7 @@ export class ImposterController {
     }
 
     private validateStubIndex (index:string, imposter:IImposter, errors:IMontebankError[]) {
-        if (typeof imposter.stubs()[parseInt(index)] === 'undefined') {
+        if (typeof imposter.stubRepository.stubs()[parseInt(index)] === 'undefined') {
             errors.push(exceptions.ValidationError("'stubIndex' must be a valid integer, representing the array index position of the stub to replace"));
         }
     }
@@ -307,10 +305,10 @@ export class ImposterController {
     public postStub = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id],
             newStub:IStubConfig = request.body.stub,
-            index = typeof request.body.index === 'undefined' ? imposter.stubs().length : request.body.index,
+            index = typeof request.body.index === 'undefined' ? imposter.stubRepository.stubs().length : request.body.index,
             errors = [];
 
-        if (typeof index !== 'number' || index < 0 || index > imposter.stubs().length) {
+        if (typeof index !== 'number' || index < 0 || index > imposter.stubRepository.stubs().length) {
             // @ts-ignore
             errors.push(exceptions.ValidationError("'index' must be between 0 and the length of the stubs array"));
         }
@@ -320,7 +318,7 @@ export class ImposterController {
         else {
             return this.validate(imposter, [newStub]).then(result => {
                 if (result.isValid) {
-                    imposter.addStubAtIndex(index, newStub);
+                    imposter.stubRepository.addStubAtIndex(index, newStub);
                     response.send(imposter.toJSON());
                 }
                 else {
@@ -352,7 +350,7 @@ export class ImposterController {
         }
         else {
 
-            imposter.deleteStubAtIndex(request.params.stubIndex);
+            imposter.stubRepository.deleteStubAtIndex(request.params.stubIndex);
             response.send(imposter.toJSON());
             return Q();
         }

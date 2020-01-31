@@ -165,12 +165,14 @@ describe('ImposterController', function () {
         it('should delete requests recorded with the imposter', function () {
             const imposter = {
                 toJSON: jest.fn().mockReturnValue('JSON'),
-                resetProxies: jest.fn()
+                stubRepository: {
+                    resetProxies: jest.fn()
+                }
             };
             const controller = new ImposterController({}, {1: imposter} as any);
 
             return controller.resetProxies({ url: '/imposters/1/requests', params: { id: 1 } } as any, response as any).then(() => {
-                expect(imposter.resetProxies).toHaveBeenCalled();
+                expect(imposter.stubRepository.resetProxies).toHaveBeenCalled();
             });
         });
     });
@@ -254,7 +256,9 @@ describe('ImposterController', function () {
             const imposters = {
                 1: {
                     protocol: 'test',
-                    stubs: jest.fn().mockReturnValue([])
+                    stubRepository: {
+                        stubs: jest.fn().mockReturnValue([])
+                    }
                 }
             };
             const Protocol = {testRequest: {}};
@@ -279,7 +283,9 @@ describe('ImposterController', function () {
             const imposters = {
                 1: {
                     protocol: 'test',
-                    stubs: jest.fn().mockReturnValue([])
+                    stubRepository: {
+                        stubs: jest.fn().mockReturnValue([])
+                    }
                 }
             };
             const Protocol = {testRequest: {}};
@@ -304,7 +310,9 @@ describe('ImposterController', function () {
             const imposters = {
                 1: {
                     protocol: 'test',
-                    stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    stubRepository: {
+                        stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    }
                 }
             };
             const Protocol = {testRequest: {}};
@@ -329,7 +337,9 @@ describe('ImposterController', function () {
             const imposters = {
                 1: {
                     protocol: 'test',
-                    stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    stubRepository: {
+                        stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    }
                 }
             };
             const Protocol = {testRequest: {}};
@@ -355,7 +365,9 @@ describe('ImposterController', function () {
             const imposters = {
                 1: {
                     protocol: 'test',
-                    stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    stubRepository: {
+                        stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    }
                 }
             };
             const Protocol = {testRequest: {}};
@@ -383,7 +395,9 @@ describe('ImposterController', function () {
             const imposters = {
                 1: {
                     protocol: 'test',
-                    stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    stubRepository: {
+                        stubs: jest.fn().mockReturnValue([0, 1, 2])
+                    }
                 }
             };
             const Protocol = {testRequest: {}};

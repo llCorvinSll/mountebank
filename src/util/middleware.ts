@@ -2,7 +2,7 @@
 
 import {ILogger} from "./scopedLogger";
 import { Request, Response } from "express";
-import {IImposter} from "../models/imposters/IImposter";
+import {IImposter, IImposterConfig} from "../models/imposters/IImposter";
 import {IStubConfig} from "../models/stubs/IStubConfig";
 
 /**
@@ -12,7 +12,7 @@ import {IStubConfig} from "../models/stubs/IStubConfig";
 
 interface IBody {
     stubs:IStubConfig[];
-    imposters:IImposter[];
+    imposters:IImposterConfig[];
 }
 
 /**
