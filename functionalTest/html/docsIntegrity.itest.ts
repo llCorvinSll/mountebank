@@ -1,15 +1,13 @@
 'use strict';
-
 import * as  Q from "q";
-import {promiseIt, isInProcessImposter} from '../testHelpers';
+import {isInProcessImposter} from '../testHelpers';
 import * as  docs from './docsTester/docs';
 
 const tcpIsInProcess = isInProcessImposter('tcp');
 const isWindows = require('os').platform().indexOf('win') === 0;
-const timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || '3000', 10);
 
 function validateDocs (page: string) {
-    promiseIt(`${page} should be up-to-date`, function () {
+    it(`${page} should be up-to-date`, function () {
         return docs.getScenarios(page).then(testScenarios => {
             const tests = Object.keys(testScenarios).map(testName => testScenarios[testName].assertValid());
             return Q.all(tests);
@@ -20,8 +18,6 @@ function validateDocs (page: string) {
 describe('docs', function () {
     // TODO: Hack - getting ECONNRESET errors on windows / appveyor
     if (!isWindows) {
-        this.timeout(timeout);
-
         [
             '/docs/api/mocks',
             '/docs/api/proxies',
