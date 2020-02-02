@@ -243,8 +243,8 @@ export class ResponseResolver implements IResolver {
     }
 
     private indexOfStubToAddResponseTo (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger) {
-        const predicates = this.predicatesFor(request, responseConfig.proxy && responseConfig.proxy.predicateGenerators || [], logger),
-            stubList = this.stubs.stubs();
+        const predicates = this.predicatesFor(request, responseConfig.proxy && responseConfig.proxy.predicateGenerators || [], logger);
+        const stubList = this.stubs.stubs();
 
         for (let index = this.stubIndexFor(responseConfig) + 1; index < stubList.length; index += 1) {
             if (deepEqual(predicates, stubList[index].predicates)) {

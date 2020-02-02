@@ -20,7 +20,7 @@ export class Stub implements IStub {
     }
 
     _links:string;
-    public addResponse:(resp:IResponse) => void = (response:IResponse) => {
+    public addResponse(response:IResponse): void {
         this.responses && this.responses.push(response);
     }
 

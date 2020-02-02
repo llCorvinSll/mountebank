@@ -87,8 +87,8 @@ describe('stubRepository', function () {
 
     describe('#stubs', function () {
         it('should not allow changing state in stubRepository', function () {
-            const stubs = new StubRepository('utf8', true),
-                stub = { responses: [] };
+            const stubs = new StubRepository('utf8', true);
+            const stub = {responses: []};
 
             stubs.addStub(stub);
             stubs.stubs()[0].responses!.push('RESPONSE' as any);

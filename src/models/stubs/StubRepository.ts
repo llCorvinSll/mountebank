@@ -1,7 +1,6 @@
 'use strict';
 
 import {ILogger} from "../../util/scopedLogger";
-import {IResponse} from "../IRequest";
 import {IPredicate} from "../predicates/IPredicate";
 import {IStubConfig} from "./IStubConfig";
 import {IMountebankResponse, IServerRequestData} from "../IProtocol";
@@ -11,6 +10,7 @@ import {IStub} from "./IStub";
 import {IStubRepository} from "./IStubRepository";
 import { Stub } from "./Stub";
 import {uniqueId} from "lodash";
+import {StubWrapper} from "./StubWrapper";
 
 /**
  * Maintains all stubs for an imposter
@@ -35,16 +35,8 @@ export class StubRepository implements IStubRepository {
      * @returns {Object} - The stubs
      */
     public stubs() {
-        const result:IStub[] = helpers.clone(this._stubs) as any;
-
-        for (let i = 0; i < this._stubs.length; i += 1) {
-            delete result[i].statefulResponses;
-            const stub = this._stubs[i];
-            result[i].addResponse = (response: IResponse) => { stub.responses && stub.responses.push(response); };
-        }
-        return result;
+        return this._stubs.map((stub) => new StubWrapper(stub));
     }
-
 
     //#region addStub
 
