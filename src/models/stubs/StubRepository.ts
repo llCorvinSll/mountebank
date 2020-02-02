@@ -2,7 +2,7 @@
 
 import {ILogger} from "../../util/scopedLogger";
 import {IPredicate} from "../predicates/IPredicate";
-import {IStubConfig} from "./IStubConfig";
+import {IProxyConfig, IStubConfig} from "./IStubConfig";
 import {IMountebankResponse, IServerRequestData} from "../IProtocol";
 import * as helpers from "../../util/helpers";
 import * as predicates from '../predicates/predicates';
@@ -11,6 +11,9 @@ import {IStubRepository} from "./IStubRepository";
 import { Stub } from "./Stub";
 import {uniqueId} from "lodash";
 import {StubWrapper} from "./StubWrapper";
+import * as stringify from "json-stable-stringify";
+import {predicatesFor, newIsResponse} from "../predicatesFor";
+import {IResponse} from "../IRequest";
 
 /**
  * Maintains all stubs for an imposter
@@ -86,16 +89,6 @@ export class StubRepository implements IStubRepository {
         newStubs.forEach(stub => this.addStub(stub));
     }
 
-    private stubIndexFor (responseToMatch: object) {
-        let i = 0;
-        for (i; i < this._stubs.length; i += 1) {
-            let current_stub = this._stubs[i];
-            if (current_stub.responses && current_stub.responses.some(response => JSON.stringify(response) === JSON.stringify(responseToMatch))) {
-                break;
-            }
-        }
-        return i;
-    }
 
     private decorate (stub: IStubConfig):IStub {
         let uuid = uniqueId("stub");
@@ -212,4 +205,44 @@ export class StubRepository implements IStubRepository {
             }
         }
     }
+
+    //#region METHODS FOR ResponseResolver
+
+    public stubIndexFor (responseConfig: IMountebankResponse) {
+        const stubList = this._stubs;
+        for (var i = 0; i < stubList.length; i += 1) {
+            let current_stub = stubList[i];
+            if (current_stub.responses && current_stub.responses.some(response => deepEqual(response, responseConfig))) {
+                break;
+            }
+        }
+        return i;
+    }
+
+    public indexOfStubToAddResponseTo (responseConfig: IMountebankResponse, request: IServerRequestData, pathes: string[], logger: ILogger) {
+        const predicates = predicatesFor(request, responseConfig.proxy && responseConfig.proxy.predicateGenerators || [], pathes, logger);
+
+        for (let index = this.stubIndexFor(responseConfig) + 1; index < this._stubs.length; index += 1) {
+            if (deepEqual(predicates, this._stubs[index].predicates)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, pathes: string[], logger: ILogger):void {
+        const stubResponse:IResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig);
+
+        const responseIndex = this.indexOfStubToAddResponseTo(responseConfig, request, pathes, logger);
+
+        let i_stub = this._stubs[responseIndex];
+        i_stub.addResponse && i_stub.addResponse(stubResponse);
+    }
+
+    //#endregion METHODS FOR ResponseResolver
+
+}
+
+function deepEqual (obj1: unknown, obj2: unknown) {
+    return stringify(obj1) === stringify(obj2);
 }

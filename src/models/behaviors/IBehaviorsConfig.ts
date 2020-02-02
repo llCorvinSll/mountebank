@@ -6,11 +6,11 @@ export interface IBehaviorsConfig {
     copy?: ICopyDescriptor[];
     lookup?:ILookupDescriptor[];
     repeat?: boolean;
-    decorate?:string;
-    [key: string]: string[] | IWaitDescriptor | ICopyDescriptor[] | ILookupDescriptor[] | boolean | string | undefined;
+    decorate?:string | object;
+    [key: string]: string[] | IWaitDescriptor | ICopyDescriptor[] | ILookupDescriptor[] | boolean | string | object | undefined;
 }
 
-export type IWaitDescriptor = (() => number) | string;
+export type IWaitDescriptor = (() => number) | string | number;
 
 export interface ICopyDescriptor {
     from:string;

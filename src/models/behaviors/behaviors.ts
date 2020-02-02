@@ -240,7 +240,7 @@ function shellTransform (request:IServerRequestData, responsePromise:ResponsePro
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function decorate (originalRequest:IServerRequestData, responsePromise:ResponsePromise, fn:string, logger:ILogger) {
+function decorate (originalRequest:IServerRequestData, responsePromise:ResponsePromise, fn:string | object, logger:ILogger) {
     if (originalRequest.isDryRun === true) {
         return responsePromise;
     }

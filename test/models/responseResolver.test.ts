@@ -1,5 +1,3 @@
-'use strict';
-
 const assert = require('assert');
 import {ResponseResolver} from '../../src/models/responseResolver';
 import {StubRepository} from '../../src/models/stubs/StubRepository';
@@ -444,20 +442,20 @@ describe('responseResolver', function () {
         });
 
         it('should format exists matcher from predicateOperator with nested match', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        mode: 'proxyOnce',
-                        predicateGenerators: [{
-                            matches: { key: { nested: true } },
-                            predicateOperator: 'exists'
-                        }]
-                    }
-                },
-                request = { key: { nested: 'Test' } };
+            const proxy = {to: mock().returns(Q({key: 'value'}))};
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    mode: 'proxyOnce',
+                    predicateGenerators: [{
+                        matches: {key: {nested: true}},
+                        predicateOperator: 'exists'
+                    }]
+                }
+            };
+            const request = {key: {nested: 'Test'}};
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});

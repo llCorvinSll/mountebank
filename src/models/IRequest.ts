@@ -4,6 +4,7 @@
 import {IStub} from "./stubs/IStub";
 import {IBehaviorsConfig} from "./behaviors/IBehaviorsConfig";
 import {IJsonPathConfig, IXPathConfig} from "./predicates/IPredicate";
+import {IProxyConfig} from "./stubs/IStubConfig";
 
 export interface IRequest {
     protocol?: string;
@@ -21,7 +22,7 @@ type SetMetadataFunction = (responseType: any, metadata: any) => void;
 
 export interface IResponse {
     proxy?:IProxy;
-    _behaviors?: IBehaviorsConfig;
+    _behaviors?: IBehaviorsConfig | IProxyConfig;
     setMetadata?: SetMetadataFunction;
     is?: {
         _proxyResponseTime?: string;
