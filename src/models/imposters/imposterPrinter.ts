@@ -1,5 +1,3 @@
-'use strict';
-
 import {IServer, IServerRequestData} from "../IProtocol";
 import * as helpers from '../../util/helpers';
 import {IImposterConfig, ImposterPrintOptions} from "./IImposter";
@@ -11,7 +9,7 @@ export class ImposterPrinter {
 
     }
 
-    public toJSON (numberOfRequests:number, options:ImposterPrintOptions):any {
+    public toJSON (numberOfRequests:number, options?:ImposterPrintOptions):any {
         // I consider the order of fields represented important.  They won't matter for parsing,
         // but it makes a nicer user experience for developers viewing the JSON to keep the most
         // relevant information at the top
@@ -55,7 +53,7 @@ export class ImposterPrinter {
 
         result.requests = this.requests;
         result.stubs = this.server.stubs.stubs().map((stub) => {
-            return JSON.parse(JSON.stringify(stub));
+            return helpers.clone(stub);
         });
 
         for (let i = 0; i < result.stubs.length; i += 1) {

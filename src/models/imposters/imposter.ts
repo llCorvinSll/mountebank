@@ -1,5 +1,3 @@
-'use strict';
-
 import {
     IMountebankResponse,
     IProtocolFactory,
@@ -73,7 +71,6 @@ export class Imposter implements IImposter {
     private requests: IServerRequestData[] = [];
     private readonly recordRequests: boolean = false;
     private imposterState = {};
-    private printer:any;
     //TODO: not required field
     public protocol:string;
 
@@ -104,8 +101,6 @@ export class Imposter implements IImposter {
 
                     this.resolver = server.resolver;
 
-                    this.printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
-
                     if (this.creationRequest.stubs) {
                         this.creationRequest.stubs.forEach((st) => this.server.stubs.addStub(st));
                     }
@@ -126,7 +121,8 @@ export class Imposter implements IImposter {
     }
 
     public toJSON(options?:ImposterPrintOptions): string {
-        return this.printer.toJSON(this.numberOfRequests, options);
+        const printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
+        return printer.toJSON(this.numberOfRequests, options);
     }
 
     public stop() {
