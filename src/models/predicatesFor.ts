@@ -1,5 +1,5 @@
 import {IMountebankResponse, IServerRequestData} from "./IProtocol";
-import {IPredicateGenerator, IRequest, IResponse} from "./IRequest";
+import {IMatch, IPredicateGenerator, IRequest, IResponse} from "./IRequest";
 import {ILogger} from "../util/scopedLogger";
 import {IJsonPathConfig, IPredicate, IXPathConfig} from "./predicates/IPredicate";
 import * as errors from "../util/errors";
@@ -52,7 +52,7 @@ export function newIsResponse (this: void, response: IMountebankResponse, proxyC
 }
 
 
-function buildEquals (request: IRequest, matchers: any, valueOf: any) {
+function buildEquals (request: IRequest, matchers: Readonly<IMatch>, valueOf: any) {
     const result: any = {};
 
     Object.keys(matchers).forEach(key => {
@@ -66,7 +66,7 @@ function buildEquals (request: IRequest, matchers: any, valueOf: any) {
     return result;
 }
 
-function buildExists (this: void, request: IRequest | undefined, fieldName: string, matchers: any, initialRequest: any, pathes: string[]) {
+function buildExists (this: void, request: IRequest | undefined, fieldName: string, matchers: Readonly<IMatch>, initialRequest: any, pathes: string[]) {
     request = request || {} as IRequest;
 
     Object.keys(request || {}).forEach(key => {
@@ -85,7 +85,7 @@ function buildExists (this: void, request: IRequest | undefined, fieldName: stri
 export function predicatesFor (this: void, request: IServerRequestData, matchers: IPredicateGenerator[], pathes: string[], logger: ILogger) {
     const predicates: IPredicate[] = [];
 
-    matchers.forEach(matcher => {
+    matchers.forEach((matcher:Readonly<IPredicateGenerator> ) => {
         if (matcher.inject) {
             // eslint-disable-next-line no-unused-vars
             // @ts-ignore
