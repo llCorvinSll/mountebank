@@ -27,6 +27,44 @@ describe('helpers', function () {
             expect(clone !== original).toBeTruthy();
             expect(clone).toEqual(original);
         });
+
+        it('should clone array', function () {
+            const original = [
+                {
+                    level: 1,
+                    key: 'value1'
+                },
+                {
+                    level: 1,
+                    key: 'value2'
+                }
+            ];
+
+            const clone = helpers.clone(original);
+            expect(clone !== original).toBeTruthy();
+            expect(clone).toEqual(original);
+        });
+
+        it('should return null if null passed', function () {
+            const original = null;
+
+            const clone = helpers.clone(original);
+            expect(clone).toBeNull();
+        });
+
+        it('should return undefined if undefined passed', function () {
+            const original = undefined;
+
+            const clone = helpers.clone(original);
+            expect(clone).toBeUndefined();
+        });
+
+        it('should return boolean if boolean passed', function () {
+            const original = true;
+
+            const clone = helpers.clone(original);
+            expect(clone).toEqual(true);
+        });
     });
 
     describe('#merge', function () {

@@ -47,6 +47,10 @@ export function socketName (socket:Socket):string {
  * @returns {Object}
  */
 export function clone<T> (obj:T):T {
+    if (typeof obj === 'undefined') {
+        return undefined as any;
+    }
+
     return JSON.parse(JSON.stringify(obj));
 }
 
