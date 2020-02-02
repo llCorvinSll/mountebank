@@ -29,7 +29,7 @@ describe('responseResolver', function () {
             delete stub.addResponse;
             stub.responses = proxyResponses(stub.responses);
         });
-        return result;
+        return JSON.parse(JSON.stringify(result));
     }
 
     describe('#resolve', function () {
