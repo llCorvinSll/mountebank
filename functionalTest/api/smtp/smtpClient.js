@@ -26,7 +26,7 @@ function send (message, port, host) {
     }
 
     let deferred = Q.defer();
-    let connection = new SMTPConnection({ port, host });
+    let connection = new SMTPConnection({ port, host, ignoreTLS: true });
 
     message.cc = message.cc || [];
     message.bcc = message.bcc || [];

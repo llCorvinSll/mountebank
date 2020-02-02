@@ -12,20 +12,46 @@ module.exports = grunt => {
     grunt.loadNpmTasks('grunt-mountebank');
     grunt.loadNpmTasks('grunt-eslint');
     grunt.loadNpmTasks('grunt-css');
+    grunt.loadNpmTasks('grunt-ts');
+
+    const tsSrcSet = [
+        '**/*.ts',
+        '!node_modules/**',
+        '!dist/**',
+        '!test/**'
+    ];
 
     grunt.initConfig({
+        ts: {
+            dev: {
+                tsconfig: './tsconfig.json',
+                src: tsSrcSet
+            },
+            production: {
+                tsconfig: './tsconfig.json',
+                src: tsSrcSet,
+                options: {
+                    sourceMap: false
+                }
+            },
+            life: {
+                tsconfig: './tsconfig.json',
+                watch: '.',
+                src: tsSrcSet
+            }
+        },
         mochaTest: {
             unit: {
                 options: {
                     reporter: 'spec'
                 },
-                src: ['test/**/*.js']
+                src: ['test/**/*.js', '!test/**/*.test.js']
             },
             functional: {
                 options: {
                     reporter: 'spec'
                 },
-                src: ['functionalTest/**/*.js']
+                src: ['functionalTest/**/*.js', '!functionalTest/**/*.itest.js']
             },
             performance: {
                 options: { reporter: 'spec' },
@@ -36,6 +62,8 @@ module.exports = grunt => {
             target: [
                 'Gruntfile.js',
                 'src/**/*.js',
+                'src/**/*.ts',
+                '!src/util/*',
                 'tasks/**/*.js',
                 'test/**/*.js',
                 'functionalTest/**/*.js',
@@ -98,13 +126,13 @@ module.exports = grunt => {
         require('fs').writeFileSync('protocols.json', JSON.stringify(protocols, null, 2));
     });
 
-    grunt.registerTask('test:unit', 'Run the unit tests', ['mochaTest:unit']);
+    grunt.registerTask('test:unit', 'Run the unit tests', ['ts:production', 'mochaTest:unit']);
     grunt.registerTask('test:functional', 'Run the functional tests',
-        ['mb:restart', 'try', 'mochaTest:functional', 'finally', 'mb:stop', 'checkForErrors']);
-    grunt.registerTask('test:performance', 'Run the performance tests', ['mochaTest:performance']);
-    grunt.registerTask('test', 'Run all non-performance tests', ['test:unit', 'test:functional']);
-    grunt.registerTask('lint', 'Run all lint checks', ['jsCheck', 'deadCheck', 'eslint']);
-    grunt.registerTask('default', ['test', 'lint']);
+        ['ts:production', 'mb:restart', 'try', 'mochaTest:functional', 'finally', 'mb:stop', 'checkForErrors']);
+    grunt.registerTask('test:performance', 'Run the performance tests', ['ts:production', 'mochaTest:performance']);
+    grunt.registerTask('test', 'Run all non-performance tests', ['ts:production', 'test:unit', 'test:functional']);
+    grunt.registerTask('lint', 'Run all lint checks', ['jsCheck', 'eslint']);
+    grunt.registerTask('default', ['ts:production', 'test', 'lint']);
     grunt.registerTask('airplane', 'Build that avoids tests requiring network access', ['setAirplaneMode', 'default']);
 
     // Package-specific testing

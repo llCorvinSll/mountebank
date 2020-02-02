@@ -4,6 +4,7 @@ const fs = require('fs-extra'),
     os = require('os'),
     rimraf = require('rimraf'),
     version = require('./version').getVersion(),
+    glob = require('glob'),
     run = require('./run').run;
 
 module.exports = function (grunt) {
@@ -14,7 +15,10 @@ module.exports = function (grunt) {
         };
     }
 
-    grunt.registerTask('dist', 'Create trimmed down distribution directory', function () {
+    // start ts compilation and then create dist folder with pure content
+    grunt.registerTask('dist', ['ts:production', 'dist:folder']);
+
+    grunt.registerTask('dist:folder', 'Create trimmed down distribution directory', function () {
         const done = this.async(),
             newPackage = JSON.parse(JSON.stringify(require('../package.json'))),
             failed = failTask('dist');
@@ -22,8 +26,16 @@ module.exports = function (grunt) {
         rimraf.sync('dist');
         fs.mkdirSync('dist');
         fs.mkdirSync('dist/mountebank');
-        ['bin', 'src', 'package.json', 'package-lock.json', 'releases.json', 'README.md', 'LICENSE'].forEach(source => {
-            fs.copySync(source, 'dist/mountebank/' + source);
+
+        // we dont want to add ts files to resulting package
+        // so using glob and exlude all ts by file extension
+        ['bin/**/*.!(ts|map)', 'src/**/*.!(ts|map)', 'package.json', 'package-lock.json', 'releases.json', 'README.md', 'LICENSE'].forEach(source => {
+            const files = glob.sync(source);
+
+            files.forEach(file => {
+                console.log(file);
+                fs.copySync(file, 'dist/mountebank/' + file);
+            });
         });
         rimraf.sync('dist/mountebank/src/public/images/sources');
 
