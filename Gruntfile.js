@@ -18,7 +18,7 @@ module.exports = grunt => {
         '**/*.ts',
         '!node_modules/**',
         '!dist/**',
-        '!test/**'
+        'test/**/*.ts'
     ];
 
     grunt.initConfig({
@@ -40,34 +40,14 @@ module.exports = grunt => {
                 src: tsSrcSet
             }
         },
-        mochaTest: {
-            unit: {
-                options: {
-                    reporter: 'spec'
-                },
-                src: ['test/**/*.js', '!test/**/*.test.js']
-            },
-            functional: {
-                options: {
-                    reporter: 'spec'
-                },
-                src: ['functionalTest/**/*.js', '!functionalTest/**/*.itest.js']
-            },
-            performance: {
-                options: { reporter: 'spec' },
-                src: ['performanceTest/**/*.js']
-            }
-        },
         eslint: {
             target: [
                 'Gruntfile.js',
-                'src/**/*.js',
                 'src/**/*.ts',
-                '!src/util/*',
                 'tasks/**/*.js',
-                'test/**/*.js',
-                'functionalTest/**/*.js',
-                'performanceTest/**/*.js',
+                'test/**/*.ts',
+                'functionalTest/**/*.ts',
+                'performanceTest/**/*.ts',
                 'bin/mb'
             ]
         },
@@ -126,10 +106,10 @@ module.exports = grunt => {
         require('fs').writeFileSync('protocols.json', JSON.stringify(protocols, null, 2));
     });
 
-    grunt.registerTask('test:unit', 'Run the unit tests', ['ts:production', 'mochaTest:unit']);
+    grunt.registerTask('test:unit', 'Run the unit tests', ['ts:production']);
     grunt.registerTask('test:functional', 'Run the functional tests',
-        ['ts:production', 'mb:restart', 'try', 'mochaTest:functional', 'finally', 'mb:stop', 'checkForErrors']);
-    grunt.registerTask('test:performance', 'Run the performance tests', ['ts:production', 'mochaTest:performance']);
+        ['ts:production', 'mb:restart', 'try', 'finally', 'mb:stop', 'checkForErrors']);
+    grunt.registerTask('test:performance', 'Run the performance tests', ['ts:production']);
     grunt.registerTask('test', 'Run all non-performance tests', ['ts:production', 'test:unit', 'test:functional']);
     grunt.registerTask('lint', 'Run all lint checks', ['jsCheck', 'eslint']);
     grunt.registerTask('default', ['ts:production', 'test', 'lint']);

@@ -2,8 +2,15 @@
 // eslint-disable-next-line no-underscore-dangle
 /* eslint complexity: 0 */
 {
-    "parser": "@typescript-eslint/parser",
-    "extends": "eslint:recommended",
+    parser: "@typescript-eslint/parser",
+    plugins: [
+        "@typescript-eslint",
+    ],
+    extends: [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended",
+    ],
     "parserOptions": {
         "ecmaVersion": 6
     },
@@ -95,7 +102,7 @@
         "no-warning-comments": 1,
         "no-with": 2,
         "object-curly-spacing": [2, "always"],
-        //"one-var": [2, "always"],
+        "one-var": [2, "never"],
         "operator-assignment": [2, "always"],
 //        "operator-linebreak": [2, "after"],
         "quote-props": [2, "as-needed"],
