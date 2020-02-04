@@ -1,4 +1,4 @@
-'use strict';
+
 
 import * as Validator from '../../src/models/dryRunValidator';
 const Logger = require('../fakes/fakeLogger');

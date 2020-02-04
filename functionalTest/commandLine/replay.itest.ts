@@ -1,4 +1,4 @@
-'use strict';
+
 
 import {ApiClient} from "../api/api";
 const client = require('../api/http/baseHttpClient').create('http');

@@ -1,5 +1,5 @@
-import {IPredicate} from "../predicates/IPredicate";
-import {IPredicateGenerator, IResponse} from "../IRequest";
+import { IPredicate } from '../predicates/IPredicate';
+import { IPredicateGenerator, IResponse } from '../IRequest';
 
 
 export interface IProxyConfig {
@@ -10,6 +10,6 @@ export interface IProxyConfig {
 }
 
 export interface IStubConfig {
-    responses?:IResponse[];
+    responses?: IResponse[];
     predicates?: IPredicate[];
 }

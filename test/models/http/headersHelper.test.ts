@@ -1,4 +1,4 @@
-'use strict';
+
 
 import * as headersHelper from '../../../src/models/http/headersHelper';
 

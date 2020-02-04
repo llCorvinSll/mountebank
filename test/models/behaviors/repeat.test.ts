@@ -1,4 +1,4 @@
-'use strict';
+
 
 const behaviors = require('../../../src/models/behaviors/behaviors');
 

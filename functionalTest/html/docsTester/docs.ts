@@ -1,10 +1,10 @@
-'use strict';
+
 
 import * as Q from "q";
 import * as assert from "assert";
 import {DOMWindow, JSDOM} from 'jsdom';
 import {DocsTestScenario, ISubElement} from './docsTestScenario';
-import {HashMap} from "../../../src/util/types";
+import {IHashMap} from "../../../src/util/types";
 import stringify = require("json-stable-stringify");
 
 const api = require('../../api/api').create();
@@ -37,7 +37,7 @@ function asArray (iterable: HTMLCollectionOf<Element>) {
 
 function subElements (parentElement: Element | Document, tagName: string): ISubElement[] {
     return asArray(parentElement.getElementsByTagName(tagName)).map(element => {
-        const attributes: HashMap<string> = {};
+        const attributes: IHashMap<string> = {};
         element.getAttributeNames().forEach(attributeName => {
             attributes[attributeName] = element.attributes[attributeName as any].value;
         });
@@ -246,11 +246,11 @@ function createScenarioFrom (testElement: ISubElement, endpoint: string): DocsTe
  * Each scenario is wrapped in a <testScenario name='scenario-name></testScenario> tag
  */
 export function getScenarios (endpoint: string) {
-    const deferred = Q.defer<HashMap<DocsTestScenario>>();
+    const deferred = Q.defer<IHashMap<DocsTestScenario>>();
 
     getDOM(endpoint).done(window => {
         const testElements = subElements(window.document, 'testScenario');
-        const testScenarios: HashMap<DocsTestScenario> = {};
+        const testScenarios: IHashMap<DocsTestScenario> = {};
 
         testElements.forEach(testElement => {
             const scenarioName = testElement.attributeValue('name');

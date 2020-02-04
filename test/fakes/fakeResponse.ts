@@ -1,8 +1,8 @@
-import {HashMap} from "../../src/util/types";
-import {Response} from 'express';
+import {IHashMap} from "../../src/util/types";
 
-export class FakeResponse implements Response {
-    public headers:HashMap<string> = {};
+
+export class FakeResponse {
+    public headers:IHashMap<string> = {};
     public body:any;
     public statusCode:number;
 

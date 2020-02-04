@@ -1,7 +1,5 @@
-'use strict';
-
-import {ILogger} from "../util/scopedLogger";
-import {SelectedValue} from "xpath";
+import { ILogger } from '../util/scopedLogger';
+import { SelectedValue } from 'xpath';
 import * as errors from '../util/errors';
 import * as helpers from '../util/helpers';
 
@@ -51,25 +49,24 @@ function nodeValue (node: any) {
  * @param {Object} logger - Optional, used to log XML parsing errors
  * @returns {Object}
  */
-export function select (selector:string, ns: {}, possibleXML: string, logger: ILogger) {
-    const xpath = require('xpath'),
-        DOMParser = require('xmldom').DOMParser,
-        parser = new DOMParser({
-            errorHandler: (level: string, message: any) => {
-                const warn = (logger || {}).warn || (() => {});
-                warn('%s (source: %s)', message, JSON.stringify(possibleXML));
-            }
-        }),
-        doc = parser.parseFromString(possibleXML),
-        selectFn = xpath.useNamespaces(ns || {}),
-        result = xpathSelect(selectFn, selector, doc);
-    let nodeValues;
+export function select (selector: string, ns: {}, possibleXML: string, logger: ILogger) {
+    const xpath = require('xpath');
+    const DOMParser = require('xmldom').DOMParser;
+    const parser = new DOMParser({
+        errorHandler: (level: string, message: any) => {
+            const warn = (logger || {}).warn || (() => {});
+            warn('%s (source: %s)', message, JSON.stringify(possibleXML));
+        }
+    });
+    const doc = parser.parseFromString(possibleXML);
+    const selectFn = xpath.useNamespaces(ns || {});
+    const result = xpathSelect(selectFn, selector, doc);
 
     if (['number', 'boolean'].indexOf(typeof result) >= 0) {
         return result;
     }
 
-    nodeValues = result.map(nodeValue);
+    const nodeValues = result.map(nodeValue);
 
     if (nodeValues.length === 0) {
         return undefined;

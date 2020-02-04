@@ -1,8 +1,8 @@
-'use strict';
+
 
 import * as Q from 'q';
 import * as  util from 'util';
-import {HashMap} from "../../../src/util/types";
+import {IHashMap} from "../../../src/util/types";
 
 interface IStep {
     actualResponse?: any;
@@ -13,13 +13,13 @@ interface IStep {
 export interface ISubElement {
     subElements(name: string): ISubElement[];
     attributeValue(name: string): string;
-    attributes: HashMap<string>;
+    attributes: IHashMap<string>;
     requestText?:string;
     assertValid?: (actualResponse: any, message: string) => void;
     setText?: (text: string) => void;
     text?: () => string;
     type?: string;
-    [key: string]: string | Function | HashMap<string> | undefined;
+    [key: string]: string | Function | IHashMap<string> | undefined;
 }
 
 export class DocsTestScenario {

@@ -1,4 +1,4 @@
-'use strict';
+
 import * as  Q from "q";
 import {isInProcessImposter} from '../testHelpers';
 import * as  docs from './docsTester/docs';

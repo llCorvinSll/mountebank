@@ -1,4 +1,4 @@
-'use strict';
+
 
 import {ApiClient} from "../api";
 const tcp = require('./tcpClient');

@@ -1,16 +1,16 @@
-'use strict';
+
 
 /** @module */
 
-function toEpochWithoutTime (text:string):number {
+function toEpochWithoutTime (text: string): number {
     // be sure to exclude time so we get accurate text
     const dateTextWithoutTime = new Date(Date.parse(text)).toDateString();
     return Date.parse(dateTextWithoutTime);
 }
 
-function sameMonth (firstEpoch:number, secondEpoch:number):boolean {
-    const first = new Date(firstEpoch),
-        second = new Date(secondEpoch);
+function sameMonth (firstEpoch: number, secondEpoch: number): boolean {
+    const first = new Date(firstEpoch);
+    const second = new Date(secondEpoch);
 
     return first.getFullYear() === second.getFullYear() && first.getMonth() === second.getMonth();
 }
@@ -21,12 +21,12 @@ function sameMonth (firstEpoch:number, secondEpoch:number):boolean {
  * @param {string} testNowText - Ignore, used for testing purposes only.
  * @returns {string}
  */
-export function howLongAgo (thenText:string, testNowText:string):string {
-    const nowText = testNowText ? testNowText : new Date(Date.now()).toISOString(), // testNow is just for testing purposes
-        then = toEpochWithoutTime(thenText),
-        now = toEpochWithoutTime(nowText),
-        millisecondsInDay = 24 * 60 * 60 * 1000,
-        daysAgo = Math.floor((now - then) / millisecondsInDay);
+export function howLongAgo (thenText: string, testNowText: string): string {
+    const nowText = testNowText ? testNowText : new Date(Date.now()).toISOString(); // testNow is just for testing purposes
+    const then = toEpochWithoutTime(thenText);
+    const now = toEpochWithoutTime(nowText);
+    const millisecondsInDay = 24 * 60 * 60 * 1000;
+    const daysAgo = Math.floor((now - then) / millisecondsInDay);
 
     if (daysAgo === 0) {
         return 'today';

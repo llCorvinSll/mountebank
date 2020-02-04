@@ -1,6 +1,6 @@
-'use strict';
 
-export interface HashMap<V = object> {
-    [key: string]: V
+
+export interface IHashMap<V = object> {
+    [key: string]: V;
 
 }

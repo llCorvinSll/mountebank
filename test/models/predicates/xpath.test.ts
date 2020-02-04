@@ -1,4 +1,4 @@
-'use strict';
+
 
 const assert = require('assert');
 import * as predicates from '../../../src/models/predicates/predicates';

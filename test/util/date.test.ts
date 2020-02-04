@@ -1,4 +1,4 @@
-'use strict';
+
 
 import * as date from '../../src/util/date';
 

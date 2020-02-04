@@ -1,11 +1,11 @@
-'use strict';
 
-import {ILogger} from "../util/scopedLogger";
-import * as Q from "q";
-import {IProxyImplementation} from "./IProtocol";
-import {IProxyConfig} from "./stubs/IStubConfig";
-import {IRequest, IResponse} from "./IRequest";
-import {IncomingMessage, RequestOptions} from "http";
+
+import { ILogger } from '../util/scopedLogger';
+import * as Q from 'q';
+import { IProxyImplementation } from './IProtocol';
+import { IProxyConfig } from './stubs/IStubConfig';
+import { IRequest, IResponse } from './IRequest';
+import { IncomingMessage, RequestOptions } from 'http';
 
 /**
  * Helper functions to navigate the mountebank API for out of process implementations.
@@ -14,8 +14,8 @@ import {IncomingMessage, RequestOptions} from "http";
  */
 
 function createLogger (loglevel: string): ILogger {
-    const result: ILogger = {} as any,
-        levels = ['debug', 'info', 'warn', 'error'];
+    const result: ILogger = {} as any;
+    const levels = ['debug', 'info', 'warn', 'error'];
 
     levels.forEach((level, index) => {
         if (index < levels.indexOf(loglevel)) {
@@ -23,8 +23,9 @@ function createLogger (loglevel: string): ILogger {
         }
         else {
             result[level] = function () {
-                const args = Array.prototype.slice.call(arguments),
-                    message = require('util').format.apply(this, args);
+                // eslint-disable-next-line prefer-rest-params
+                const args = Array.prototype.slice.call(arguments);
+                const message = require('util').format.apply(this, args);
 
                 console.log(`${level} ${message}`);
             };
@@ -33,38 +34,38 @@ function createLogger (loglevel: string): ILogger {
     return result;
 }
 
-function postJSON (what: object, where: string):Q.Promise<any> {
-    const deferred = Q.defer(),
-        url = require('url'),
-        parts = url.parse(where),
-        driver = require(parts.protocol.replace(':', '')), // http or https
-        options:RequestOptions = {
-            hostname: parts.hostname,
-            port: parts.port,
-            path: parts.pathname,
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        },
-        request = driver.request(options, (response:IncomingMessage) => {
-            const packets: any[] = [];
+function postJSON (what: object, where: string): Q.Promise<any> {
+    const deferred = Q.defer();
+    const url = require('url');
+    const parts = url.parse(where);
+    const driver = require(parts.protocol.replace(':', '')); // http or https
+    const options: RequestOptions = {
+        hostname: parts.hostname,
+        port: parts.port,
+        path: parts.pathname,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    };
+    const request = driver.request(options, (response: IncomingMessage) => {
+        const packets: any[] = [];
 
-            response.on('data', chunk => packets.push(chunk));
+        response.on('data', chunk => packets.push(chunk));
 
-            response.on('end', () => {
-                const buffer = Buffer.concat(packets),
-                    body = buffer.toString('utf8');
+        response.on('end', () => {
+            const buffer = Buffer.concat(packets);
+            const body = buffer.toString('utf8');
 
-                if (response.statusCode !== 200) {
-                    deferred.reject(require('../../util/errors').CommunicationError({
-                        statusCode: response.statusCode,
-                        body: body
-                    }));
-                }
-                else {
-                    deferred.resolve(JSON.parse(body));
-                }
-            });
+            if (response.statusCode !== 200) {
+                deferred.reject(require('../../util/errors').CommunicationError({
+                    statusCode: response.statusCode,
+                    body: body
+                }));
+            }
+            else {
+                deferred.resolve(JSON.parse(body));
+            }
         });
+    });
 
     request.on('error', deferred.reject);
     request.write(JSON.stringify(what));
@@ -74,10 +75,10 @@ function postJSON (what: object, where: string):Q.Promise<any> {
 
 
 export interface IMbConnection {
-    getResponse(request: IRequest, requestDetails: unknown):Q.Promise<IResponse>;
+    getResponse(request: IRequest, requestDetails: unknown): Q.Promise<IResponse>;
     setPort(port: string): void;
     setProxy(value: IProxyImplementation): void;
-    logger():ILogger;
+    logger(): ILogger;
 }
 
 interface IMbConnectionConfig {
@@ -86,10 +87,10 @@ interface IMbConnectionConfig {
 }
 
 export function create (config: IMbConnectionConfig): IMbConnection {
-    let callbackURL: string,
-        proxy: IProxyImplementation;
+    let callbackURL: string;
+    let proxy: IProxyImplementation;
 
-    function setPort (port: string):void {
+    function setPort (port: string): void {
         callbackURL = config.callbackURLTemplate.replace(':port', port);
     }
 
@@ -103,8 +104,9 @@ export function create (config: IMbConnectionConfig): IMbConnection {
 
     function getProxyResponse (proxyConfig: IProxyConfig, request: IRequest, proxyCallbackURL: string): Q.Promise<IResponse> {
         return proxy.to(proxyConfig.to, request, proxyConfig)
-        // @ts-ignore
-            .then((response:IResponse) => postJSON({ proxyResponse: response }, proxyCallbackURL));
+            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            // @ts-ignore
+            .then((response: IResponse) => postJSON({ proxyResponse: response }, proxyCallbackURL));
     }
 
     function getResponse (request: IRequest, requestDetails: unknown) {

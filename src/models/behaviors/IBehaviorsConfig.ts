@@ -1,19 +1,19 @@
-'use strict';
+
 
 export interface IBehaviorsConfig {
-    shellTransform?:string[];
-    wait?:IWaitDescriptor;
+    shellTransform?: string[];
+    wait?: IWaitDescriptor;
     copy?: ICopyDescriptor[];
-    lookup?:ILookupDescriptor[];
+    lookup?: ILookupDescriptor[];
     repeat?: boolean;
-    decorate?:string | object;
+    decorate?: string | object;
     [key: string]: string[] | IWaitDescriptor | ICopyDescriptor[] | ILookupDescriptor[] | boolean | string | object | undefined;
 }
 
 export type IWaitDescriptor = (() => number) | string | number;
 
 export interface ICopyDescriptor {
-    from:string;
+    from: string;
     using: IUsingConfig;
     into: {} | string;
 }
@@ -36,10 +36,10 @@ export interface ILookupInfokey {
 }
 
 export interface ILookupDescriptor {
-    into: string
+    into: string;
     key: ILookupInfokey;
     fromDataSource: {
-        csv: ICsvConfig
+        csv: ICsvConfig;
     };
 }
 

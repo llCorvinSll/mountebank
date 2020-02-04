@@ -1,27 +1,24 @@
-'use strict';
-
-import {BehaviorsValidator} from "./behaviorsValidator";
-import * as Q from "q";
-import * as fs from "fs";
-import * as csv_parse from "csv-parse";
-import {clone, defined, isObject} from "../../util/helpers";
-import * as errors from "../../util/errors";
-import {IMountebankResponse, IServerRequestData} from "../IProtocol";
-import {ILogger} from "../../util/scopedLogger";
+import { BehaviorsValidator } from './behaviorsValidator';
+import * as Q from 'q';
+import * as fs from 'fs';
+import * as csvParse from 'csv-parse';
+import { clone, defined, isObject } from '../../util/helpers';
+import * as errors from '../../util/errors';
+import { IMountebankResponse, IServerRequestData } from '../IProtocol';
+import { ILogger } from '../../util/scopedLogger';
 import {
     IBehaviorsConfig,
     ICopyDescriptor, ICsvConfig,
     ILookupDescriptor, ILookupInfokey, IUsingConfig,
     IUsingConfigOptions,
     IWaitDescriptor
-} from "./IBehaviorsConfig";
-import { exec } from "child_process";
+} from './IBehaviorsConfig';
+import { exec } from 'child_process';
 import * as util from 'util';
-import {HashMap} from "../../util/types";
-
-import * as xpath from "../xpath";
-import * as jsonpath from "../jsonpath";
-import {IMatch} from "../IRequest";
+import { IHashMap } from '../../util/types';
+import * as xpath from '../xpath';
+import * as jsonpath from '../jsonpath';
+import { IMatch } from '../IRequest';
 
 /**
  * The functionality behind the _behaviors field in the API, supporting post-processing responses
@@ -30,99 +27,99 @@ import {IMatch} from "../IRequest";
 
 // The following schemas are used by both the lookup and copy behaviors and should be kept consistent
 const fromSchema = {
-        _required: true,
-        _allowedTypes: {
-            string: {},
-            object: { singleKeyOnly: true }
-        },
-        _additionalContext: 'the request field to select from'
+    _required: true,
+    _allowedTypes: {
+        string: {},
+        object: { singleKeyOnly: true }
     },
-    intoSchema = {
+    _additionalContext: 'the request field to select from'
+};
+const intoSchema = {
+    _required: true,
+    _allowedTypes: { string: {} },
+    _additionalContext: 'the token to replace in response fields'
+};
+const usingSchema = {
+    _required: true,
+    _allowedTypes: { object: {} },
+    method: {
+        _required: true,
+        _allowedTypes: { string: { enum: ['regex', 'xpath', 'jsonpath'] } }
+    },
+    selector: {
+        _required: true,
+        _allowedTypes: { string: {} }
+    }
+};
+const validations = {
+    wait: {
+        _required: true,
+        _allowedTypes: { string: {}, number: { nonNegativeInteger: true } }
+    },
+    repeat: {
+        _required: true,
+        _allowedTypes: { number: { positiveInteger: true } }
+    },
+    copy: [{
+        from: fromSchema,
+        into: intoSchema,
+        using: usingSchema
+    }],
+    lookup: [{
+        key: {
+            _required: true,
+            _allowedTypes: { object: {} },
+            from: fromSchema,
+            using: usingSchema
+        },
+        fromDataSource: {
+            _required: true,
+            _allowedTypes: { object: { singleKeyOnly: true, enum: ['csv'] } },
+            csv: {
+                _required: false,
+                _allowedTypes: { object: {} },
+                path: {
+                    _required: true,
+                    _allowedTypes: { string: {} },
+                    _additionalContext: 'the path to the CSV file'
+                },
+                delimiter: {
+                    _required: false,
+                    _allowedTypes: { string: {} },
+                    _additionalContext: 'the delimiter separator values'
+                },
+                keyColumn: {
+                    _required: true,
+                    _allowedTypes: { string: {} },
+                    _additionalContext: 'the column header to select against the "key" field'
+                }
+            }
+        },
+        into: intoSchema
+    }],
+    shellTransform: [{
         _required: true,
         _allowedTypes: { string: {} },
-        _additionalContext: 'the token to replace in response fields'
-    },
-    usingSchema = {
+        _additionalContext: 'the path to a command line application'
+    }],
+    decorate: {
         _required: true,
-        _allowedTypes: { object: {} },
-        method: {
-            _required: true,
-            _allowedTypes: { string: { enum: ['regex', 'xpath', 'jsonpath'] } }
-        },
-        selector: {
-            _required: true,
-            _allowedTypes: { string: {} }
-        }
-    },
-    validations = {
-        wait: {
-            _required: true,
-            _allowedTypes: { string: {}, number: { nonNegativeInteger: true } }
-        },
-        repeat: {
-            _required: true,
-            _allowedTypes: { number: { positiveInteger: true } }
-        },
-        copy: [{
-            from: fromSchema,
-            into: intoSchema,
-            using: usingSchema
-        }],
-        lookup: [{
-            key: {
-                _required: true,
-                _allowedTypes: { object: {} },
-                from: fromSchema,
-                using: usingSchema
-            },
-            fromDataSource: {
-                _required: true,
-                _allowedTypes: { object: { singleKeyOnly: true, enum: ['csv'] } },
-                csv: {
-                    _required: false,
-                    _allowedTypes: { object: {} },
-                    path: {
-                        _required: true,
-                        _allowedTypes: { string: {} },
-                        _additionalContext: 'the path to the CSV file'
-                    },
-                    delimiter: {
-                        _required: false,
-                        _allowedTypes: { string: {} },
-                        _additionalContext: 'the delimiter separator values'
-                    },
-                    keyColumn: {
-                        _required: true,
-                        _allowedTypes: { string: {} },
-                        _additionalContext: 'the column header to select against the "key" field'
-                    }
-                }
-            },
-            into: intoSchema
-        }],
-        shellTransform: [{
-            _required: true,
-            _allowedTypes: { string: {} },
-            _additionalContext: 'the path to a command line application'
-        }],
-        decorate: {
-            _required: true,
-            _allowedTypes: { string: {} },
-            _additionalContext: 'a JavaScript function'
-        }
-    };
+        _allowedTypes: { string: {} },
+        _additionalContext: 'a JavaScript function'
+    }
+};
 
 
 type valueExtractor = (from: any, config: IUsingConfig | ICopyDescriptor | ILookupInfokey, logger: ILogger) => any
 
-const fnMap: HashMap<valueExtractor> = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue };
+const fnMap: IHashMap<valueExtractor> = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue };
 
 /**
  * Validates the behavior configuration and returns all errors
  * @param {Object} config - The behavior configuration
  * @returns {Object} The array of errors
  */
-export function validate (config:IBehaviorsConfig) {
+export function validate (config: IBehaviorsConfig) {
     const validator = new BehaviorsValidator();
     return validator.validate(config, validations);
 }
@@ -136,12 +133,11 @@ export function validate (config:IBehaviorsConfig) {
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object} A promise resolving to the response
  */
-function wait (request:IServerRequestData, responsePromise:ResponsePromise, millisecondsOrFn:IWaitDescriptor, logger:ILogger) {
+function wait (request: IServerRequestData, responsePromise: ResponsePromise, millisecondsOrFn: IWaitDescriptor, logger: ILogger) {
     if (request.isDryRun) {
         return responsePromise;
     }
 
-    const util = require('util');
     const fn = util.format('(%s)()', millisecondsOrFn);
     let milliseconds = parseInt(millisecondsOrFn as string);
 
@@ -161,10 +157,9 @@ function wait (request:IServerRequestData, responsePromise:ResponsePromise, mill
     return responsePromise.delay(milliseconds);
 }
 
-function quoteForShell (obj:unknown) {
-    const json = JSON.stringify(obj),
-        isWindows = require('os').platform().indexOf('win') === 0,
-        util = require('util');
+function quoteForShell (obj: unknown) {
+    const json = JSON.stringify(obj);
+    const isWindows = require('os').platform().indexOf('win') === 0;
 
     if (isWindows) {
         // Confused? Me too. All other approaches I tried were spectacular failures
@@ -176,10 +171,10 @@ function quoteForShell (obj:unknown) {
     }
 }
 
-function execShell (command:string, request:IServerRequestData, response:IMountebankResponse, logger:ILogger):ResponsePromise {
-    const deferred = Q.defer<IMountebankResponse>(),
-        fullCommand = util.format('%s %s %s', command, quoteForShell(request), quoteForShell(response)),
-        env = clone(process.env);
+function execShell (command: string, request: IServerRequestData, response: IMountebankResponse, logger: ILogger): ResponsePromise {
+    const deferred = Q.defer<IMountebankResponse>();
+    const fullCommand = util.format('%s %s %s', command, quoteForShell(request), quoteForShell(response));
+    const env = clone(process.env);
     logger.debug('Shelling out to %s', command);
     logger.debug(fullCommand);
 
@@ -219,7 +214,7 @@ function execShell (command:string, request:IServerRequestData, response:IMounte
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function shellTransform (request:IServerRequestData, responsePromise:ResponsePromise, commandArray:string[], logger:ILogger) {
+function shellTransform (request: IServerRequestData, responsePromise: ResponsePromise, commandArray: string[], logger: ILogger) {
     if (request.isDryRun) {
         return responsePromise;
     }
@@ -240,19 +235,19 @@ function shellTransform (request:IServerRequestData, responsePromise:ResponsePro
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function decorate (originalRequest:IServerRequestData, responsePromise:ResponsePromise, fn:string | object, logger:ILogger) {
+function decorate (originalRequest: IServerRequestData, responsePromise: ResponsePromise, fn: string | object, logger: ILogger) {
     if (originalRequest.isDryRun === true) {
         return responsePromise;
     }
 
     return responsePromise.then(response => {
         const config = {
-                request: clone(originalRequest),
-                response,
-                logger
-            },
-            injected = `(${fn})(config, response, logger);`,
-            compatibility = require('../compatibility');
+            request: clone(originalRequest),
+            response,
+            logger
+        };
+        const injected = `(${fn})(config, response, logger);`;
+        const compatibility = require('../compatibility');
 
         compatibility.downcastInjectionConfig(config);
 
@@ -274,7 +269,7 @@ function decorate (originalRequest:IServerRequestData, responsePromise:ResponseP
     });
 }
 
-function getKeyIgnoringCase (obj:object, expectedKey:string):string {
+function getKeyIgnoringCase (obj: object, expectedKey: string): string {
     return Object.keys(obj).find(key => {
         if (key.toLowerCase() === expectedKey.toLowerCase()) {
             return key;
@@ -285,13 +280,14 @@ function getKeyIgnoringCase (obj:object, expectedKey:string):string {
     }) as string;
 }
 
-function getFrom (obj:HashMap<HashMap | any>, from:HashMap<HashMap | any> | string): any {
+function getFrom (obj: IHashMap<IHashMap | any>, from: IHashMap<IHashMap | any> | string): any {
     if (typeof obj === 'undefined') {
         return undefined;
-    } else if (isObject(from)) {
+    }
+    else if (isObject(from)) {
         const keys = Object.keys(from);
         const objElement = obj[keys[0]];
-        const fromElement = (from as HashMap)[keys[0]];
+        const fromElement = (from as IHashMap)[keys[0]];
         return getFrom(objElement, fromElement);
     }
     else {
@@ -307,7 +303,7 @@ function getFrom (obj:HashMap<HashMap | any>, from:HashMap<HashMap | any> | stri
     }
 }
 
-function regexFlags (options:IUsingConfigOptions): string {
+function regexFlags (options: IUsingConfigOptions): string {
     let result = '';
     if (options && options.ignoreCase) {
         result += 'i';
@@ -318,7 +314,7 @@ function regexFlags (options:IUsingConfigOptions): string {
     return result;
 }
 
-function getMatches (selectionFn: () => Array<any> | undefined, selector: string | RegExp, logger:ILogger): Array<IMatch> {
+function getMatches (selectionFn: () => Array<any> | undefined, selector: string | RegExp, logger: ILogger): Array<IMatch> {
     const matches = selectionFn();
 
     if (matches && matches.length > 0) {
@@ -330,27 +326,23 @@ function getMatches (selectionFn: () => Array<any> | undefined, selector: string
     }
 }
 
-function regexValue (from: any, config: ILookupInfokey, logger:ILogger) {
-    const regex = new RegExp(config.using.selector, regexFlags(config.using.options)),
-        selectionFn: () => any[] = () => regex.exec(from) as any[];
+function regexValue (from: any, config: ILookupInfokey, logger: ILogger) {
+    const regex = new RegExp(config.using.selector, regexFlags(config.using.options));
+    const selectionFn: () => any[] = () => regex.exec(from) as any[];
     return getMatches(selectionFn, regex, logger);
 }
 
-function xpathValue (from: any, config: ILookupInfokey, logger:ILogger) {
-    const selectionFn = () => {
-        return xpath.select(config.using.selector, config.using.ns, from, logger);
-    };
+function xpathValue (from: any, config: ILookupInfokey, logger: ILogger) {
+    const selectionFn = () => xpath.select(config.using.selector, config.using.ns, from, logger);
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function jsonpathValue (from: any, config: ILookupInfokey, logger:ILogger) {
-    const selectionFn: () => any[] = () => {
-        return jsonpath.select(config.using.selector, from, logger) as unknown as any[];
-    };
+function jsonpathValue (from: any, config: ILookupInfokey, logger: ILogger) {
+    const selectionFn: () => any[] = () => jsonpath.select(config.using.selector, from, logger) as unknown as any[];
     return getMatches(selectionFn, config.using.selector, logger);
 }
 
-function globalStringReplace (str:string, substring: string, newSubstring: string, logger:ILogger) {
+function globalStringReplace (str: string, substring: string, newSubstring: string, logger: ILogger) {
     if (substring !== newSubstring) {
         logger.debug('Replacing %s with %s', JSON.stringify(substring), JSON.stringify(newSubstring));
         return str.split(substring).join(newSubstring);
@@ -360,7 +352,7 @@ function globalStringReplace (str:string, substring: string, newSubstring: strin
     }
 }
 
-function globalObjectReplace (obj:HashMap|any, replacer:(v: any) => any) {
+function globalObjectReplace (obj: IHashMap|any, replacer: (v: any) => any) {
     Object.keys(obj).forEach(key => {
         if (typeof obj[key] === 'string') {
             obj[key] = replacer(obj[key]);
@@ -371,7 +363,7 @@ function globalObjectReplace (obj:HashMap|any, replacer:(v: any) => any) {
     });
 }
 
-function replaceArrayValuesIn (response: IMountebankResponse, token: string, values: any[], logger:ILogger) {
+function replaceArrayValuesIn (response: IMountebankResponse, token: string, values: any[], logger: ILogger) {
     const replacer = (field: string) => {
         values.forEach(function (replacement, index) {
             // replace ${TOKEN}[1] with indexed element
@@ -396,7 +388,7 @@ function replaceArrayValuesIn (response: IMountebankResponse, token: string, val
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function copy (originalRequest:IServerRequestData, responsePromise:ResponsePromise, copyArray:ICopyDescriptor[], logger:ILogger) {
+function copy (originalRequest: IServerRequestData, responsePromise: ResponsePromise, copyArray: ICopyDescriptor[], logger: ILogger) {
     return responsePromise.then(response => {
 
         copyArray.forEach(function (copyConfig) {
@@ -410,25 +402,25 @@ function copy (originalRequest:IServerRequestData, responsePromise:ResponsePromi
     });
 }
 
-function containsKey (headers: HashMap<string>, keyColumn: string) {
+function containsKey (headers: IHashMap<string>, keyColumn: string) {
     const key = Object.values(headers).find(value => value === keyColumn);
     return defined(key);
 }
 
-function createRowObject (headers: HashMap<string>, rowArray: string[]) {
-    const row: HashMap<string> = {};
+function createRowObject (headers: IHashMap<string>, rowArray: string[]) {
+    const row: IHashMap<string> = {};
     rowArray.forEach(function (value, index) {
         row[headers[index]] = value;
     });
     return row;
 }
 
-function selectRowFromCSV (csvConfig: ICsvConfig, keyValue: string, logger:ILogger) {
-    const delimiter = csvConfig.delimiter || ',',
-        inputStream = fs.createReadStream(csvConfig.path),
-        parser = csv_parse({ delimiter: delimiter }),
-        pipe = inputStream.pipe(parser),
-        deferred = Q.defer();
+function selectRowFromCSV (csvConfig: ICsvConfig, keyValue: string, logger: ILogger) {
+    const delimiter = csvConfig.delimiter || ',';
+    const inputStream = fs.createReadStream(csvConfig.path);
+    const parser = csvParse({ delimiter: delimiter });
+    const pipe = inputStream.pipe(parser);
+    const deferred = Q.defer();
     let headers: any;
 
     inputStream.on('error', (e: any) => {
@@ -465,7 +457,7 @@ function selectRowFromCSV (csvConfig: ICsvConfig, keyValue: string, logger:ILogg
     return deferred.promise;
 }
 
-function lookupRow (lookupConfig:ILookupDescriptor, originalRequest: any, logger:ILogger) {
+function lookupRow (lookupConfig: ILookupDescriptor, originalRequest: any, logger: ILogger) {
     const from = getFrom(originalRequest, lookupConfig.key.from);
     const keyValues = fnMap[lookupConfig.key.using.method](from, lookupConfig.key, logger);
     const index = lookupConfig.key.index || 0;
@@ -478,11 +470,9 @@ function lookupRow (lookupConfig:ILookupDescriptor, originalRequest: any, logger
     }
 }
 
-function replaceObjectValuesIn (response: any, token: string, values: HashMap<string>, logger:ILogger) {
+function replaceObjectValuesIn (response: any, token: string, values: IHashMap<string>, logger: ILogger) {
     const replacer = (field: string) => {
         Object.keys(values).forEach(key => {
-            const util = require('util');
-
             // replace ${TOKEN}["key"] and ${TOKEN}['key'] and ${TOKEN}[key]
             ['"', "'", ''].forEach(function (quoteChar) {
                 const quoted = util.format('%s[%s%s%s]', token, quoteChar, key, quoteChar);
@@ -504,13 +494,13 @@ function replaceObjectValuesIn (response: any, token: string, values: HashMap<st
  * @param {Object} logger - The mountebank logger, useful in debugging
  * @returns {Object}
  */
-function lookup (originalRequest:IServerRequestData, responsePromise:ResponsePromise, lookupArray:ILookupDescriptor[], logger:ILogger) {
+function lookup (originalRequest: IServerRequestData, responsePromise: ResponsePromise, lookupArray: ILookupDescriptor[], logger: ILogger) {
     return responsePromise.then(response => {
         const lookupPromises = lookupArray.map(function (lookupConfig) {
-                return lookupRow(lookupConfig, originalRequest, logger).then(function (row: HashMap<string>) {
-                    replaceObjectValuesIn(response, lookupConfig.into, row, logger);
-                });
+            return lookupRow(lookupConfig, originalRequest, logger).then(function (row: IHashMap<string>) {
+                replaceObjectValuesIn(response, lookupConfig.into, row, logger);
             });
+        });
         return Q.all(lookupPromises).then(() => Q(response));
     }).catch(error => {
         logger.error(error);
@@ -527,27 +517,27 @@ type ResponsePromise = Q.Promise<IMountebankResponse>;
  * @param {Object} logger - The mountebank logger, useful for debugging
  * @returns {Object}
  */
-export function execute (request:IServerRequestData, response:IMountebankResponse, behaviors:IBehaviorsConfig | undefined, logger:ILogger): ResponsePromise {
+export function execute (request: IServerRequestData, response: IMountebankResponse, behaviors: IBehaviorsConfig | undefined, logger: ILogger): ResponsePromise {
     if (!behaviors) {
         return Q(response);
     }
 
-    const combinators = require('../../util/combinators'),
-        waitFn = behaviors.wait ?
-            (result:ResponsePromise) => wait(request, result, behaviors.wait!, logger) :
-            combinators.identity,
-        copyFn = behaviors.copy ?
-            (result:ResponsePromise) => copy(request, result, behaviors.copy!, logger) :
-            combinators.identity,
-        lookupFn = behaviors.lookup ?
-            (result:ResponsePromise) => lookup(request, result, behaviors.lookup!, logger) :
-            combinators.identity,
-        shellTransformFn = behaviors.shellTransform ?
-            (result:ResponsePromise) => shellTransform(request, result, behaviors.shellTransform!, logger) :
-            combinators.identity,
-        decorateFn = behaviors.decorate ?
-            (result:ResponsePromise) => decorate(request, result, behaviors.decorate!, logger) :
-            combinators.identity;
+    const combinators = require('../../util/combinators');
+    const waitFn = behaviors.wait ?
+        (result: ResponsePromise) => wait(request, result, behaviors.wait!, logger) :
+        combinators.identity;
+    const copyFn = behaviors.copy ?
+        (result: ResponsePromise) => copy(request, result, behaviors.copy!, logger) :
+        combinators.identity;
+    const lookupFn = behaviors.lookup ?
+        (result: ResponsePromise) => lookup(request, result, behaviors.lookup!, logger) :
+        combinators.identity;
+    const shellTransformFn = behaviors.shellTransform ?
+        (result: ResponsePromise) => shellTransform(request, result, behaviors.shellTransform!, logger) :
+        combinators.identity;
+    const decorateFn = behaviors.decorate ?
+        (result: ResponsePromise) => decorate(request, result, behaviors.decorate!, logger) :
+        combinators.identity;
 
     logger.debug('using stub response behavior ' + JSON.stringify(behaviors));
 

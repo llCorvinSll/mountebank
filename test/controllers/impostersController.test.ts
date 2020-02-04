@@ -1,4 +1,4 @@
-'use strict';
+
 
 import {FakeResponse} from "../fakes/fakeResponse";
 import {ImpostersController} from '../../src/controllers/impostersController';

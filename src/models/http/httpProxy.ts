@@ -1,13 +1,11 @@
-'use strict';
-
-import {ILogger} from "../../util/scopedLogger";
-import {IRequest, IResponse} from "../IRequest";
-import * as Q from "q";
-import {UrlWithStringQuery} from "url";
-import {ClientRequest, IncomingHttpHeaders} from "http";
-import {InvalidProxyError} from "../../util/errors";
-import {IProxyImplementation} from "../IProtocol";
-import {IProxyConfig} from "../stubs/IStubConfig";
+import { ILogger } from '../../util/scopedLogger';
+import { IRequest, IResponse } from '../IRequest';
+import * as Q from 'q';
+import { UrlWithStringQuery } from 'url';
+import { ClientRequest, IncomingHttpHeaders } from 'http';
+import { InvalidProxyError } from '../../util/errors';
+import { IProxyImplementation } from '../IProtocol';
+import { IProxyConfig } from '../stubs/IStubConfig';
 
 /**
  * The proxy implementation for http/s imposters
@@ -22,22 +20,20 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
  * @returns {Object}
  */
 export function create (logger: ILogger): IProxyImplementation {
-    // @ts-ignore
-    function addInjectedHeadersTo (request, headersToInject) {
+    function addInjectedHeadersTo (request: any, headersToInject: any) {
         Object.keys(headersToInject || {}).forEach(key => {
             request.headers[key] = headersToInject[key];
         });
     }
 
-    // @ts-ignore
-    function toUrl (path: string | undefined, query, requestDetails: any) {
+    function toUrl (path: string | undefined, query: any, requestDetails: any) {
         if (requestDetails) {
             // Not passed in outOfProcess mode
             return requestDetails.rawUrl;
         }
 
-        const querystring = require('querystring'),
-            tail = querystring.stringify(query);
+        const querystring = require('querystring');
+        const tail = querystring.stringify(query);
 
         if (tail === '') {
             return path;
@@ -54,8 +50,8 @@ export function create (logger: ILogger): IProxyImplementation {
     }
 
     function setProxyAgent (parts: UrlWithStringQuery, options: any) {
-        const HttpProxyAgent = require('http-proxy-agent'),
-            HttpsProxyAgent = require('https-proxy-agent');
+        const HttpProxyAgent = require('http-proxy-agent');
+        const HttpsProxyAgent = require('https-proxy-agent');
 
         if (process.env.http_proxy && parts.protocol === 'http:') {
             options.agent = new HttpProxyAgent(process.env.http_proxy);
@@ -65,28 +61,28 @@ export function create (logger: ILogger): IProxyImplementation {
         }
     }
 
-    function getProxyRequest (baseUrl: string, originalRequest: IRequest, proxyOptions: IProxyConfig, requestDetails?: unknown):ClientRequest {
+    function getProxyRequest (baseUrl: string, originalRequest: IRequest, proxyOptions: IProxyConfig, requestDetails?: unknown): ClientRequest {
         /* eslint complexity: 0 */
-        const helpers = require('../../util/helpers'),
-            headersHelper = require('./headersHelper'),
-            url = require('url'),
-            parts = url.parse(baseUrl),
-            protocol = parts.protocol === 'https:' ? require('https') : require('http'),
-            defaultPort = parts.protocol === 'https:' ? 443 : 80,
-            options = {
-                method: originalRequest.method,
-                hostname: parts.hostname,
-                port: parts.port || defaultPort,
-                auth: parts.auth,
-                path: toUrl(originalRequest.path, originalRequest.query, requestDetails),
-                headers: helpers.clone(originalRequest.headers),
-                cert: proxyOptions.cert,
-                key: proxyOptions.key,
-                ciphers: proxyOptions.ciphers || 'ALL',
-                secureProtocol: proxyOptions.secureProtocol,
-                passphrase: proxyOptions.passphrase,
-                rejectUnauthorized: false
-            };
+        const helpers = require('../../util/helpers');
+        const headersHelper = require('./headersHelper');
+        const url = require('url');
+        const parts = url.parse(baseUrl);
+        const protocol = parts.protocol === 'https:' ? require('https') : require('http');
+        const defaultPort = parts.protocol === 'https:' ? 443 : 80;
+        const options = {
+            method: originalRequest.method,
+            hostname: parts.hostname,
+            port: parts.port || defaultPort,
+            auth: parts.auth,
+            path: toUrl(originalRequest.path, originalRequest.query, requestDetails),
+            headers: helpers.clone(originalRequest.headers),
+            cert: proxyOptions.cert,
+            key: proxyOptions.key,
+            ciphers: proxyOptions.ciphers || 'ALL',
+            secureProtocol: proxyOptions.secureProtocol,
+            passphrase: proxyOptions.passphrase,
+            rejectUnauthorized: false
+        };
 
         // Only set host header if not overridden via injectHeaders (issue #388)
         if (!proxyOptions.injectHeaders || !headersHelper.hasHeader('host', proxyOptions.injectHeaders)) {
@@ -109,8 +105,8 @@ export function create (logger: ILogger): IProxyImplementation {
     }
 
     function isBinaryResponse (headers: IncomingHttpHeaders) {
-        const contentEncoding = headers['content-encoding'] || '',
-            contentType = headers['content-type'] || '';
+        const contentEncoding = headers['content-encoding'] || '';
+        const contentType = headers['content-type'] || '';
 
         if (contentEncoding.indexOf('gzip') >= 0) {
             return true;
@@ -136,16 +132,16 @@ export function create (logger: ILogger): IProxyImplementation {
             });
 
             response.on('end', () => {
-                const body = Buffer.concat(packets),
-                    mode = isBinaryResponse(response.headers) ? 'binary' : 'text',
-                    encoding = mode === 'binary' ? 'base64' : 'utf8',
-                    headersHelper = require('./headersHelper'),
-                    stubResponse: IResponse = {
-                        statusCode: response.statusCode,
-                        headers: headersHelper.headersFor(response.rawHeaders),
-                        body: body.toString(encoding),
-                        _mode: mode
-                    };
+                const body = Buffer.concat(packets);
+                const mode = isBinaryResponse(response.headers) ? 'binary' : 'text';
+                const encoding = mode === 'binary' ? 'base64' : 'utf8';
+                const headersHelper = require('./headersHelper');
+                const stubResponse: IResponse = {
+                    statusCode: response.statusCode,
+                    headers: headersHelper.headersFor(response.rawHeaders),
+                    body: body.toString(encoding),
+                    _mode: mode
+                };
                 deferred.resolve(stubResponse);
             });
         });
@@ -175,8 +171,8 @@ export function create (logger: ILogger): IProxyImplementation {
                 originalRequest.requestFrom, direction, JSON.stringify(what), direction, proxyDestination);
         }
 
-        const deferred = Q.defer<IResponse>(),
-            proxiedRequest = getProxyRequest(proxyDestination, originalRequest, options, requestDetails);
+        const deferred = Q.defer<IResponse>();
+        const proxiedRequest = getProxyRequest(proxyDestination, originalRequest, options, requestDetails);
 
         log('=>', originalRequest);
 
@@ -185,7 +181,7 @@ export function create (logger: ILogger): IProxyImplementation {
             deferred.resolve(response);
         });
 
-        proxiedRequest.once('error', (error:any) => {
+        proxiedRequest.once('error', (error: any) => {
             if (error.code === 'ENOTFOUND') {
                 deferred.reject(InvalidProxyError(`Cannot resolve ${JSON.stringify(proxyDestination)}`));
             }
@@ -201,6 +197,7 @@ export function create (logger: ILogger): IProxyImplementation {
     }
 
     return {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore
         to
     };

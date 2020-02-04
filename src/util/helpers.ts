@@ -1,9 +1,9 @@
-'use strict';
 
-import {Socket} from "net";
+
+import { Socket } from 'net';
 
 interface IIndexed {
-    [key: string]:any
+    [key: string]: any;
 }
 
 /** @module */
@@ -13,7 +13,7 @@ interface IIndexed {
  * @param {Object} obj - the value to test
  * @returns {boolean}
  */
-export function defined (obj:unknown):Boolean {
+export function defined (obj: unknown): boolean {
     return typeof obj !== 'undefined';
 }
 
@@ -24,7 +24,7 @@ export function defined (obj:unknown):Boolean {
  * @param {Object} obj - the value to test
  * @returns {boolean}
  */
-export function isObject (obj:Object|null|undefined): boolean {
+export function isObject (obj: any): boolean {
     return typeof obj === 'object' && obj !== null;
 }
 
@@ -33,7 +33,7 @@ export function isObject (obj:Object|null|undefined): boolean {
  * @param {Object} socket - the socket
  * @returns {string}
  */
-export function socketName (socket:Socket):string {
+export function socketName (socket: Socket): string {
     let result = socket.remoteAddress as string;
     if (socket.remotePort) {
         result += `:${socket.remotePort}`;
@@ -46,7 +46,7 @@ export function socketName (socket:Socket):string {
  * @param {Object} obj - the object to clone
  * @returns {Object}
  */
-export function clone<T> (obj:T):T {
+export function clone<T> (obj: T): T {
     if (typeof obj === 'undefined') {
         return undefined as any;
     }
@@ -61,8 +61,8 @@ export function clone<T> (obj:T):T {
  * and overrides, the values for overrides will be used
  * @returns {Object}
  */
-export function merge<T1 extends IIndexed, T2 extends IIndexed>(defaults:T1, overrides:T2):T1 & T2 {
-    const result:any = clone(defaults);
+export function merge<T1 extends IIndexed, T2 extends IIndexed> (defaults: T1, overrides: T2): T1 & T2 {
+    const result: any = clone(defaults);
     Object.keys(overrides).forEach(key => {
         if (typeof overrides[key] === 'object' && overrides[key] !== null) {
             result[key] = merge(result[key] || {}, overrides[key]);
@@ -88,7 +88,7 @@ export function merge<T1 extends IIndexed, T2 extends IIndexed>(defaults:T1, ove
  * @returns {undefined}
  * from https://stackoverflow.com/a/49754647
  */
-export function setDeep (obj:Object & IIndexed, path:string[], value:Object):void {
+export function setDeep (obj: Record<string, any> & IIndexed, path: string[], value: Record<string, any> | boolean): void {
     if (path.length === 1) {
         obj[path[0]] = value;
         return;

@@ -1,4 +1,4 @@
-'use strict';
+
 
 function add (current: string | string[], value: string | string[]) {
     return Array.isArray(current) ? current.concat(value) : [current].concat(value);
@@ -9,11 +9,11 @@ function arrayifyIfExists (current: string | string[], value: string) {
 }
 
 interface IHeadersMap {
-    [key:string]:string | string[];
+    [key: string]: string | string[];
 }
 
 export function headersFor (rawHeaders: string[]): IHeadersMap {
-    const result:IHeadersMap = {};
+    const result: IHeadersMap = {};
     for (let i = 0; i < rawHeaders.length; i += 2) {
         const name = rawHeaders[i];
         const value = rawHeaders[i + 1];
@@ -35,8 +35,8 @@ export function setHeader (headerName: string, value: string, headers: IHeadersM
 }
 
 export function headerNameFor (headerName: string, headers: IHeadersMap): string | undefined {
-    const helpers = require('../../util/helpers'),
-        result = Object.keys(headers).find(header => header.toLowerCase() === headerName.toLowerCase());
+    const helpers = require('../../util/helpers');
+    const result = Object.keys(headers).find(header => header.toLowerCase() === headerName.toLowerCase());
 
     if (!helpers.defined(result)) {
         return headerName;
@@ -48,7 +48,7 @@ export function headerNameFor (headerName: string, headers: IHeadersMap): string
 
 export function getJar (headers: IHeadersMap) {
     return {
-        get: (header:string) => getHeader(header, headers),
+        get: (header: string) => getHeader(header, headers),
         set: (header: string, value: string) => setHeader(header, value, headers)
     };
 }

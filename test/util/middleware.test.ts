@@ -1,4 +1,4 @@
-'use strict';
+
 
 import * as middleware from '../../src/util/middleware';
 import {FakeResponse} from '../fakes/fakeResponse';

@@ -1,18 +1,17 @@
-'use strict';
 
 
-import {IStub} from "./stubs/IStub";
-import {IBehaviorsConfig} from "./behaviors/IBehaviorsConfig";
-import {IJsonPathConfig, IXPathConfig} from "./predicates/IPredicate";
-import {IProxyConfig} from "./stubs/IStubConfig";
+import { IStub } from './stubs/IStub';
+import { IBehaviorsConfig } from './behaviors/IBehaviorsConfig';
+import { IJsonPathConfig, IXPathConfig } from './predicates/IPredicate';
+import { IProxyConfig } from './stubs/IStubConfig';
 
 export interface IRequest {
     protocol?: string;
     method: string;
     data: never;
-    stubs:IStub[];
-    isDryRun?:boolean;
-    endOfRequestResolver?:any;
+    stubs: IStub[];
+    isDryRun?: boolean;
+    endOfRequestResolver?: any;
     [key: string]: IStub[] | string | boolean | undefined;
     body?: string;
     path?: string;
@@ -21,7 +20,7 @@ export interface IRequest {
 type SetMetadataFunction = (responseType: any, metadata: any) => void;
 
 export interface IResponse {
-    proxy?:IProxy;
+    proxy?: IProxy;
     _behaviors?: IBehaviorsConfig | IProxyConfig;
     setMetadata?: SetMetadataFunction;
     is?: {
@@ -29,7 +28,7 @@ export interface IResponse {
     } & any;
 
     _proxyResponseTime?: number;
-    [key: string]:IProxy | IBehaviorsConfig | undefined | SetMetadataFunction | unknown;
+    [key: string]: IProxy | IBehaviorsConfig | undefined | SetMetadataFunction | unknown;
 }
 
 export interface IProxy {
@@ -40,11 +39,11 @@ export interface IProxy {
 }
 
 export interface IMatch {
-    [key : string]: any;
+    [key: string]: any;
 }
 
 export interface IPredicateGenerator {
-    inject?:boolean;
+    inject?: boolean;
     xpath?: IXPathConfig;
     jsonpath?: IJsonPathConfig;
     predicateOperator?: string;
@@ -53,6 +52,6 @@ export interface IPredicateGenerator {
 }
 
 export type toDeclaration = {
-    host:string;
-    port:string;
+    host: string;
+    port: string;
 } & string;

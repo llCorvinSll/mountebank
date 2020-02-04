@@ -1,4 +1,4 @@
-import {StubRepository} from '../../src/models/stubs/StubRepository';
+import { StubRepository } from '../../src/models/stubs/StubRepository';
 
 describe('stubRepository', function () {
     function jsonWithoutFunctions (obj: any) {
@@ -7,9 +7,9 @@ describe('stubRepository', function () {
 
     describe('#addStub', function () {
         it('should add new stub in front of passed in response', function () {
-            const stubs = new StubRepository('utf8'),
-                firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
-                secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
+            const stubs = new StubRepository('utf8');
+            const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
+            const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
 
             stubs.addStub(firstStub);
             stubs.addStub(secondStub);
@@ -27,10 +27,10 @@ describe('stubRepository', function () {
 
     describe('#overwriteStubs', function () {
         it('should overwrite entire list', function () {
-            const stubs = new StubRepository('utf8'),
-                firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
-                secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] },
-                thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
+            const stubs = new StubRepository('utf8');
+            const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
+            const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
+            const thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
 
             stubs.addStub(firstStub);
             stubs.addStub(secondStub);
@@ -46,10 +46,10 @@ describe('stubRepository', function () {
 
     describe('#overwriteStubAtIndex', function () {
         it('should overwrite single stub', function () {
-            const stubs = new StubRepository('utf8'),
-                firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
-                secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] },
-                thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
+            const stubs = new StubRepository('utf8');
+            const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
+            const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
+            const thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
 
             stubs.addStub(firstStub);
             stubs.addStub(secondStub);
@@ -66,10 +66,10 @@ describe('stubRepository', function () {
 
     describe('#deleteeStubAtIndex', function () {
         it('should overwrite single stub', function () {
-            const stubs = new StubRepository('utf8'),
-                firstStub = { responses: [{ is: 'first' }, { is: 'second' }] },
-                secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] },
-                thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
+            const stubs = new StubRepository('utf8');
+            const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
+            const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
+            const thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
 
             stubs.addStub(firstStub);
             stubs.addStub(secondStub);
@@ -88,7 +88,7 @@ describe('stubRepository', function () {
     describe('#stubs', function () {
         it('should not allow changing state in stubRepository', function () {
             const stubs = new StubRepository('utf8', true);
-            const stub = {responses: []};
+            const stub = { responses: [] };
 
             stubs.addStub(stub);
             stubs.stubs()[0].responses!.push('RESPONSE' as any);
@@ -97,8 +97,8 @@ describe('stubRepository', function () {
         });
 
         it('should support adding responses', function () {
-            const stubs = new StubRepository('utf8', true),
-                stub = { responses: [] };
+            const stubs = new StubRepository('utf8', true);
+            const stub = { responses: [] };
 
             stubs.addStub(stub);
             stubs.stubs()[0].addResponse!('RESPONSE' as any);
@@ -110,7 +110,7 @@ describe('stubRepository', function () {
     describe('#getResponseFor', function () {
         it('should return default response if no match', function () {
             const stubs = new StubRepository('utf8');
-            const logger: any = {debug: jest.fn()};
+            const logger: any = { debug: jest.fn() };
 
             const responseConfig = stubs.getResponseFor({ field: 'value' }, logger, {});
 
@@ -119,8 +119,8 @@ describe('stubRepository', function () {
 
         it('should always match if no predicate', function () {
             const stubs = new StubRepository('utf8');
-            const logger: any = {debug: jest.fn()};
-            const stub = {responses: [{is: 'first stub'}]};
+            const logger: any = { debug: jest.fn() };
+            const stub = { responses: [{ is: 'first stub' }] };
 
             stubs.addStub(stub);
             const responseConfig = stubs.getResponseFor({ field: 'value' }, logger, {});
@@ -130,10 +130,10 @@ describe('stubRepository', function () {
 
         it('should return first match', function () {
             const stubs = new StubRepository('utf8');
-            const logger: any = {debug: jest.fn()};
-            const firstStub = {predicates: [{equals: {field: '1'}}], responses: [{is: 'first stub'}]};
-            const secondStub = {predicates: [{equals: {field: '2'}}], responses: [{is: 'second stub'}]};
-            const thirdStub = {predicates: [{equals: {field: '2'}}], responses: [{is: 'third stub'}]};
+            const logger: any = { debug: jest.fn() };
+            const firstStub = { predicates: [{ equals: { field: '1' } }], responses: [{ is: 'first stub' }] };
+            const secondStub = { predicates: [{ equals: { field: '2' } }], responses: [{ is: 'second stub' }] };
+            const thirdStub = { predicates: [{ equals: { field: '2' } }], responses: [{ is: 'third stub' }] };
 
             stubs.addStub(firstStub);
             stubs.addStub(secondStub);
@@ -145,8 +145,8 @@ describe('stubRepository', function () {
 
         it('should return responses in order, looping around', function () {
             const stubs = new StubRepository('utf8');
-            const logger: any = {debug: jest.fn()};
-            const stub = {responses: [{is: 'first response'}, {is: 'second response'}]};
+            const logger: any = { debug: jest.fn() };
+            const stub = { responses: [{ is: 'first response' }, { is: 'second response' }] };
 
             stubs.addStub(stub);
 
@@ -157,10 +157,10 @@ describe('stubRepository', function () {
 
         it('should support recording matches', function () {
             const stubs = new StubRepository('utf8');
-            const logger: any = {debug: jest.fn()};
-            const matchingRequest = {field: 'value'};
-            const mismatchingRequest = {field: 'other'};
-            const stub = {predicates: [{equals: {field: 'value'}}], responses: [{is: 'first response'}]};
+            const logger: any = { debug: jest.fn() };
+            const matchingRequest = { field: 'value' };
+            const mismatchingRequest = { field: 'other' };
+            const stub = { predicates: [{ equals: { field: 'value' } }], responses: [{ is: 'first response' }] };
 
             stubs.addStub(stub);
             stubs.getResponseFor(matchingRequest, logger, {}).recordMatch!('MATCHED');
@@ -173,8 +173,8 @@ describe('stubRepository', function () {
 
         it('should only record match once for given response', function () {
             const stubs = new StubRepository('utf8');
-            const logger: any = {debug: jest.fn()};
-            const stub = {responses: [{is: 'response'}]};
+            const logger: any = { debug: jest.fn() };
+            const stub = { responses: [{ is: 'response' }] };
 
             stubs.addStub(stub);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -188,11 +188,11 @@ describe('stubRepository', function () {
 
         it('should repeat a response and continue looping', function () {
             const stubs = new StubRepository('utf8');
-            const logger: any = {debug: jest.fn()};
+            const logger: any = { debug: jest.fn() };
             const stub: any = {
                 responses: [
-                    {is: 'first response', _behaviors: {repeat: 2}},
-                    {is: 'second response'}
+                    { is: 'first response', _behaviors: { repeat: 2 } },
+                    { is: 'second response' }
                 ]
             };
 

@@ -1,13 +1,13 @@
-import {IMountebankResponse, IServerRequestData} from "./IProtocol";
-import {IMatch, IPredicateGenerator, IRequest, IResponse} from "./IRequest";
-import {ILogger} from "../util/scopedLogger";
-import {IJsonPathConfig, IPredicate, IXPathConfig} from "./predicates/IPredicate";
-import * as errors from "../util/errors";
-import * as helpers from "../util/helpers";
-import * as xpath from "./xpath";
-import * as jsonpath from "./jsonpath";
-import {IProxyConfig} from "./stubs/IStubConfig";
-import {IBehaviorsConfig} from "./behaviors/IBehaviorsConfig";
+import { IMountebankResponse, IServerRequestData } from './IProtocol';
+import { IMatch, IPredicateGenerator, IRequest, IResponse } from './IRequest';
+import { ILogger } from '../util/scopedLogger';
+import { IJsonPathConfig, IPredicate, IXPathConfig } from './predicates/IPredicate';
+import * as errors from '../util/errors';
+import * as helpers from '../util/helpers';
+import * as xpath from './xpath';
+import * as jsonpath from './jsonpath';
+import { IProxyConfig } from './stubs/IStubConfig';
+import { IBehaviorsConfig } from './behaviors/IBehaviorsConfig';
 
 
 function xpathValue (xpathConfig: IXPathConfig, possibleXML: string, logger: ILogger) {
@@ -34,9 +34,9 @@ function selectionValue (nodes: any) {
     }
 }
 
-export function newIsResponse (this: void, response: IMountebankResponse, proxyConfig: IProxyConfig):IResponse {
-    const result:IResponse = { is: response };
-    const addBehaviors:IBehaviorsConfig = {} as any;
+export function newIsResponse (this: void, response: IMountebankResponse, proxyConfig: IProxyConfig): IResponse {
+    const result: IResponse = { is: response };
+    const addBehaviors: IBehaviorsConfig = {} as any;
 
     if (proxyConfig.addWaitBehavior && response._proxyResponseTime) {
         addBehaviors.wait = response._proxyResponseTime;
@@ -66,7 +66,7 @@ function buildEquals (request: IRequest, matchers: Readonly<IMatch>, valueOf: an
     return result;
 }
 
-function buildExists (this: void, request: IRequest | undefined, fieldName: string, matchers: Readonly<IMatch>, initialRequest: any, pathes: string[]) {
+function buildExists (this: void, request: IRequest | undefined, fieldName: string, matchers: Readonly<IMatch>, initialRequest: any, pathes: string[]): any {
     request = request || {} as IRequest;
 
     Object.keys(request || {}).forEach(key => {
@@ -85,11 +85,11 @@ function buildExists (this: void, request: IRequest | undefined, fieldName: stri
 export function predicatesFor (this: void, request: IServerRequestData, matchers: IPredicateGenerator[], pathes: string[], logger: ILogger) {
     const predicates: IPredicate[] = [];
 
-    matchers.forEach((matcher:Readonly<IPredicateGenerator> ) => {
+    matchers.forEach((matcher: Readonly<IPredicateGenerator>) => {
         if (matcher.inject) {
-            // eslint-disable-next-line no-unused-vars
+            // eslint-disable-next-line no-unused-vars,@typescript-eslint/ban-ts-ignore
             // @ts-ignore
-            const config = {request, logger};
+            const config = { request, logger };
             const injected = `(${matcher.inject})(config);`;
             try {
                 predicates.push(...eval(injected));
@@ -103,8 +103,9 @@ export function predicatesFor (this: void, request: IServerRequestData, matchers
             return;
         }
 
-        const basePredicate:IPredicate = {} as any;
-        let hasPredicateOperator: boolean = false;
+        const basePredicate: IPredicate = {} as any;
+        let hasPredicateOperator = false;
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore
         let predicateOperator; // eslint-disable-line no-unused-vars
         let valueOf = (field: any) => field;
@@ -148,6 +149,5 @@ export function predicatesFor (this: void, request: IServerRequestData, matchers
         });
     });
 
-    // @ts-ignore
     return predicates;
 }

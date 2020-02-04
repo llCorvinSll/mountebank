@@ -1,4 +1,4 @@
-'use strict';
+
 
 import * as behaviors from '../../../src/models/behaviors/behaviors';
 const Logger = require('../../fakes/fakeLogger');

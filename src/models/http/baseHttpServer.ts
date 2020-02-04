@@ -1,9 +1,7 @@
-'use strict';
-
-import {ILogger} from "../../util/scopedLogger";
-import * as Q from "q";
-import {Server} from "http";
-import {AddressInfo, Socket} from "net";
+import { ILogger } from '../../util/scopedLogger';
+import * as Q from 'q';
+import { Server } from 'http';
+import { AddressInfo, Socket } from 'net';
 import {
     IProtocolFactory,
     IServerCreationOptions,
@@ -11,33 +9,34 @@ import {
     IServerRequestData,
     IServerResponseData,
     RequestCallback
-} from "../IProtocol";
+} from '../IProtocol';
 
 /**
  * The base implementation of http/s servers
  * @module
  */
 
-export function create(createBaseServer: (options:IServerCreationOptions) => { createNodeServer():Server; metadata: unknown }): IProtocolFactory {
+export function create (createBaseServer: (options: IServerCreationOptions) => { createNodeServer(): Server; metadata: unknown }): IProtocolFactory {
 
-    function create (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback):Q.Promise<IServerImplementation> {
-        const deferred = Q.defer<IServerImplementation>(),
-            connections:{[key: string]:Socket} = {},
-            defaultResponse = options.defaultResponse || {};
+    // eslint-disable-next-line no-shadow
+    function create (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback): Q.Promise<IServerImplementation> {
+        const deferred = Q.defer<IServerImplementation>();
+        const connections: {[key: string]: Socket} = {};
+        const defaultResponse = options.defaultResponse || {};
 
-        function postProcess (stubResponse: IServerResponseData, request: IServerRequestData):IServerResponseData {
+        function postProcess (stubResponse: IServerResponseData, request: IServerRequestData): IServerResponseData {
             /* eslint complexity: 0 */
-            const headersHelper = require('./headersHelper'),
-                defaultHeaders = defaultResponse.headers || {},
-                response = {
-                    statusCode: stubResponse.statusCode || defaultResponse.statusCode || 200,
-                    headers: stubResponse.headers || defaultHeaders,
-                    body: stubResponse.body || defaultResponse.body || '',
-                    _mode: stubResponse._mode || defaultResponse._mode || 'text'
-                },
-                responseHeaders = headersHelper.getJar(response.headers),
-                encoding = response._mode === 'binary' ? 'base64' : 'utf8',
-                isObject = require('../../util/helpers').isObject;
+            const headersHelper = require('./headersHelper');
+            const defaultHeaders = defaultResponse.headers || {};
+            const response = {
+                statusCode: stubResponse.statusCode || defaultResponse.statusCode || 200,
+                headers: stubResponse.headers || defaultHeaders,
+                body: stubResponse.body || defaultResponse.body || '',
+                _mode: stubResponse._mode || defaultResponse._mode || 'text'
+            };
+            const responseHeaders = headersHelper.getJar(response.headers);
+            const encoding = response._mode === 'binary' ? 'base64' : 'utf8';
+            const isObject = require('../../util/helpers').isObject;
 
             if (isObject(response.body)) {
                 // Support JSON response bodies
@@ -45,8 +44,8 @@ export function create(createBaseServer: (options:IServerCreationOptions) => { c
             }
 
             if (options.allowCORS) {
-                const requestHeaders = headersHelper.getJar(request.headers),
-                    isCrossOriginPreflight = request.method === 'OPTIONS' &&
+                const requestHeaders = headersHelper.getJar(request.headers);
+                const isCrossOriginPreflight = request.method === 'OPTIONS' &&
                         requestHeaders.get('Access-Control-Request-Headers') &&
                         requestHeaders.get('Access-Control-Request-Method') &&
                         requestHeaders.get('Origin');
@@ -82,15 +81,15 @@ export function create(createBaseServer: (options:IServerCreationOptions) => { c
             return response;
         }
 
-        const baseServer = createBaseServer(options),
-            server = baseServer.createNodeServer();
+        const baseServer = createBaseServer(options);
+        const server = baseServer.createNodeServer();
 
         // Allow long wait behaviors
         server.timeout = 0;
 
         server.on('connection', socket => {
-            const helpers = require('../../util/helpers'),
-                name = helpers.socketName(socket);
+            const helpers = require('../../util/helpers');
+            const name = helpers.socketName(socket);
 
             logger.debug('%s ESTABLISHED', name);
 
@@ -113,33 +112,33 @@ export function create(createBaseServer: (options:IServerCreationOptions) => { c
         });
 
         server.on('request', (request, response) => {
-            const domain = require('domain').create(),
-                helpers = require('../../util/helpers'),
-                clientName = helpers.socketName(request.socket),
-                errorHandler = (error:any) => {
-                    const exceptions = require('../../util/errors');
-                    logger.error('%s X=> %s', clientName, JSON.stringify(exceptions.details(error)));
-                    response.writeHead(500, { 'content-type': 'application/json' });
-                    response.end(JSON.stringify({ errors: [exceptions.details(error)] }), 'utf8');
-                };
+            const domain = require('domain').create();
+            const helpers = require('../../util/helpers');
+            const clientName = helpers.socketName(request.socket);
+            const errorHandler = (error: any) => {
+                const exceptions = require('../../util/errors');
+                logger.error('%s X=> %s', clientName, JSON.stringify(exceptions.details(error)));
+                response.writeHead(500, { 'content-type': 'application/json' });
+                response.end(JSON.stringify({ errors: [exceptions.details(error)] }), 'utf8');
+            };
 
             logger.info(`${clientName} => ${request.method} ${request.url}`);
 
             domain.on('error', errorHandler);
             domain.run(() => {
-                let simplifiedRequest:IServerRequestData;
-                require('./httpRequest').createFrom(request).then((simpleRequest:IServerRequestData) => {
+                let simplifiedRequest: IServerRequestData;
+                require('./httpRequest').createFrom(request).then((simpleRequest: IServerRequestData) => {
                     logger.debug('%s => %s', clientName, JSON.stringify(simpleRequest));
                     simplifiedRequest = simpleRequest;
                     return responseFn(simpleRequest, { rawUrl: request.url });
-                }).done((mbResponse:IServerResponseData) => {
+                }).done((mbResponse: IServerResponseData) => {
                     if (mbResponse.blocked) {
                         request.socket.end();
                         return;
                     }
 
-                    const stubResponse = postProcess(mbResponse, simplifiedRequest),
-                        encoding = stubResponse._mode === 'binary' ? 'base64' : 'utf8';
+                    const stubResponse = postProcess(mbResponse, simplifiedRequest);
+                    const encoding = stubResponse._mode === 'binary' ? 'base64' : 'utf8';
 
                     response.writeHead(stubResponse.statusCode, stubResponse.headers);
                     response.end(stubResponse.body.toString(), encoding);
@@ -153,7 +152,7 @@ export function create(createBaseServer: (options:IServerCreationOptions) => { c
 
         // Bind the socket to a port (the || 0 bit auto-selects a port if one isn't provided)
         server.listen(options.port || 0, options.host, () => {
-            const address:AddressInfo = server.address() as AddressInfo;
+            const address: AddressInfo = server.address() as AddressInfo;
             deferred.resolve({
                 port: address.port,
                 metadata: baseServer.metadata,

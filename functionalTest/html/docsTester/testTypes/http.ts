@@ -1,8 +1,8 @@
-'use strict';
+
 
 import * as  Q from 'q';
 import * as util from 'util';
-import {HashMap} from "../../../../src/util/types";
+import {IHashMap} from "../../../../src/util/types";
 import {ISubElement} from "../docsTestScenario";
 const httpClient = require('../../../api/http/baseHttpClient').create('http');
 
@@ -21,7 +21,7 @@ function parseHeader (line: string): {
 interface ISpec {
     method:string;
     path:string;
-    headers:HashMap<string>;
+    headers:IHashMap<string>;
     body:string;
     hostname?:string;
     port?:number;
@@ -33,7 +33,7 @@ function parse (text: string) {
     const spec:ISpec = {
             method: firstLineParts[0],
             path: firstLineParts[1],
-            headers: <HashMap<string>>{},
+            headers: <IHashMap<string>>{},
             body: ''
         };
 
@@ -55,7 +55,7 @@ function parse (text: string) {
 }
 
 function messageFor (statusCode:number) {
-    const codes: HashMap<string> = {
+    const codes: IHashMap<string> = {
         200: 'OK',
         201: 'Created',
         400: 'Bad Request',

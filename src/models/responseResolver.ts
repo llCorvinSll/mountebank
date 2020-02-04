@@ -1,14 +1,14 @@
-import {ILogger} from "../util/scopedLogger";
-import * as Q from "q";
-import * as errors from "../util/errors";
-import {InjectionError, ValidationError} from "../util/errors";
-import {IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
-import * as behaviors from "./behaviors/behaviors";
-import {IProxyConfig, IStubConfig} from "./stubs/IStubConfig";
-import * as  helpers from '../util/helpers';
+import { ILogger } from '../util/scopedLogger';
+import * as Q from 'q';
+import * as errors from '../util/errors';
+import { InjectionError, ValidationError } from '../util/errors';
+import { IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData } from './IProtocol';
+import * as behaviors from './behaviors/behaviors';
+import { IProxyConfig, IStubConfig } from './stubs/IStubConfig';
+import * as helpers from '../util/helpers';
 import * as compatibility from './compatibility';
-import {IStubRepository} from "./stubs/IStubRepository";
-import {newIsResponse, predicatesFor} from "./predicatesFor";
+import { IStubRepository } from './stubs/IStubRepository';
+import { newIsResponse, predicatesFor } from './predicatesFor';
 
 
 interface IPendingProxyResolution {
@@ -18,8 +18,8 @@ interface IPendingProxyResolution {
     requestDetails: unknown;
 }
 
-function hasMultipleTypes (this:void, responseConfig: IMountebankResponse):boolean {
-    return !!((responseConfig.is && responseConfig.proxy) ||
+function hasMultipleTypes (this: void, responseConfig: IMountebankResponse): boolean {
+    return Boolean((responseConfig.is && responseConfig.proxy) ||
         (responseConfig.is && responseConfig.inject) ||
         (responseConfig.proxy && responseConfig.inject));
 }
@@ -33,20 +33,18 @@ function hasMultipleTypes (this:void, responseConfig: IMountebankResponse):boole
  * @returns {Object}
  */
 export class ResponseResolver implements IResolver {
-    public constructor(
+    public constructor (
         protected stubs: IStubRepository,
-        protected proxy: IProxyImplementation | undefined  | null,
+        protected proxy: IProxyImplementation | undefined | null,
         protected callbackURL?: string) {
         this.inProcessProxy = Boolean(proxy);
     }
 
-    private path:string[] = [];
+    private path: string[] = [];
     private nextProxyResolutionKey = 0;
-    private pendingProxyResolutions: {[key: number]:IPendingProxyResolution } = {};
-    private readonly inProcessProxy:boolean = false;
-    // @ts-ignore
-    private injectState:any = {}; // eslint-disable-line no-unused-vars
-
+    private pendingProxyResolutions: {[key: number]: IPendingProxyResolution } = {};
+    private readonly inProcessProxy: boolean = false;
+    private injectState: any = {}; // eslint-disable-line no-unused-vars
 
 
     /**
@@ -70,14 +68,16 @@ export class ResponseResolver implements IResolver {
             // in the new stub. If so, we need to ensure we don't re-run it
             if (responseConfig.proxy) {
                 return Q(response);
-            } else {
+            }
+            else {
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
             }
         }).then((response: IMountebankResponse) => {
             if (this.inProcessProxy) {
                 return Q<IMountebankResponse>(response);
-            } else {
-                return responseConfig.proxy ? Q<IMountebankResponse>(response) : Q<IMountebankResponse>({response});
+            }
+            else {
+                return responseConfig.proxy ? Q<IMountebankResponse>(response) : Q<IMountebankResponse>({ response });
             }
         });
     }
@@ -101,7 +101,7 @@ export class ResponseResolver implements IResolver {
             proxyResponse._proxyResponseTime = new Date().getTime() - pendingProxyConfig.startTime.getTime();
 
             return behaviors.execute(pendingProxyConfig.request, proxyResponse, pendingProxyConfig.responseConfig._behaviors, logger)
-                .then((response) => {
+                .then(response => {
                     this.recordProxyResponse(pendingProxyConfig.responseConfig, pendingProxyConfig.request, response, logger);
                     response.recordMatch = () => { pendingProxyConfig.responseConfig.recordMatch && pendingProxyConfig.responseConfig.recordMatch(response); };
                     delete this.pendingProxyResolutions[proxyResolutionKey];
@@ -115,11 +115,11 @@ export class ResponseResolver implements IResolver {
         }
     }
 
-    private proxyAndRecord (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, requestDetails: unknown):Q.Promise<any> {
+    private proxyAndRecord (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, requestDetails: unknown): Q.Promise<any> {
         const startTime = new Date().getTime();
 
         if (!responseConfig.proxy) {
-            throw ValidationError("try proxy without actual config")
+            throw ValidationError('try proxy without actual config');
         }
 
         if (['proxyOnce', 'proxyAlways', 'proxyTransparent'].indexOf(responseConfig.proxy.mode) < 0) {
@@ -133,7 +133,7 @@ export class ResponseResolver implements IResolver {
 
                 // Run behaviors here to persist decorated response
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
-            }).then((response:IMountebankResponse) => {
+            }).then((response: IMountebankResponse) => {
                 this.recordProxyResponse(responseConfig, request, response, logger);
                 return Q(response);
             });
@@ -190,14 +190,14 @@ export class ResponseResolver implements IResolver {
         return this.stubs.indexOfStubToAddResponseTo(responseConfig, request, this.path, logger) >= 0;
     }
 
-    private addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger):void {
+    private addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger): void {
         this.stubs.addNewResponse(responseConfig, request, response, this.path, logger);
     }
 
-    private addNewStub (responseConfig: IMountebankResponse, request :IServerRequestData, response: IMountebankResponse, logger: ILogger):void {
+    private addNewStub (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger): void {
         const predicates = predicatesFor(request, (responseConfig.proxy && responseConfig.proxy.predicateGenerators) || [], this.path, logger);
         const stubResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig);
-        const newStub:IStubConfig = {predicates: predicates, responses: [stubResponse]};
+        const newStub: IStubConfig = { predicates: predicates, responses: [stubResponse] };
 
         if (responseConfig.proxy && responseConfig.proxy.mode === 'proxyAlways') {
             this.stubs.addStub(newStub);
@@ -208,10 +208,11 @@ export class ResponseResolver implements IResolver {
     }
 
     private inject (request: IServerRequestData, fn: string, logger: ILogger, imposterState: unknown) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore
-        const injectState:any = this.injectState;
+        const injectState: any = this.injectState;
         const deferred = Q.defer();
-        let config:any = {
+        const config: any = {
             request: helpers.clone(request),
             state: imposterState,
             logger: logger,

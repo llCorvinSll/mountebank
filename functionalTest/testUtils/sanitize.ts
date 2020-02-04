@@ -1,6 +1,6 @@
-'use strict';
 
-export function sanitizeBody (response:any) {
+
+export function sanitizeBody (response: any) {
     const body = JSON.stringify(response.body);
     const withTimeRemoved = body.replace(/"timestamp":"[^"]+"/g, '"timestamp":"NOW"');
     const withClientPortRemoved = withTimeRemoved

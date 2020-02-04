@@ -12,7 +12,7 @@ describe('smtpRequest', function () {
                 }
             };
             let stream = new Readable();
-            stream._read = () => {}; // eslint-disable-line no-underscore-dangle
+            stream._read = () => {};
             stream.push('From: From <from@mb.org>\r\n');
             stream.push('To: To1 <to1@mb.org>\r\n');
             stream.push('To: To2 <to2@mb.org>\r\n');
