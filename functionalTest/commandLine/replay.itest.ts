@@ -1,6 +1,6 @@
 
 
-import {ApiClient} from "../api/api";
+import { ApiClient } from '../api/api';
 const client = require('../api/http/baseHttpClient').create('http');
 
 describe('mb replay', function () {
@@ -11,33 +11,33 @@ describe('mb replay', function () {
     beforeAll(() => {
         api = new ApiClient();
         port = api.port + 1;
-        mb = require('../mb').create(port)
-    })
+        mb = require('../mb').create(port);
+    });
 
     it('should remove proxies', function () {
-        const originServerPort = mb.port + 1,
-            originServerFn = (request: any, state: any) => {
-                state.count = state.count || 0;
-                state.count += 1;
-                return {
-                    body: `${state.count}. ${request.path}`
-                };
-            },
-            originServerStub = { responses: [{ inject: originServerFn.toString() }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin server'
-            },
-            proxyPort = mb.port + 2,
-            proxyDefinition = {
-                to: `http://localhost:${originServerPort}`,
-                mode: 'proxyAlways',
-                predicateGenerators: [{ matches: { path: true } }]
-            },
-            proxyStub = { responses: [{ proxy: proxyDefinition }] },
-            proxyRequest = { protocol: 'http', port: proxyPort, stubs: [proxyStub], name: 'PROXY' };
+        const originServerPort = mb.port + 1;
+        const originServerFn = (request: any, state: any) => {
+            state.count = state.count || 0;
+            state.count += 1;
+            return {
+                body: `${state.count}. ${request.path}`
+            };
+        };
+        const originServerStub = { responses: [{ inject: originServerFn.toString() }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin server'
+        };
+        const proxyPort = mb.port + 2;
+        const proxyDefinition = {
+            to: `http://localhost:${originServerPort}`,
+            mode: 'proxyAlways',
+            predicateGenerators: [{ matches: { path: true } }]
+        };
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port: proxyPort, stubs: [proxyStub], name: 'PROXY' };
 
         return mb.start(['--allowInjection'])
             .then(() => mb.post('/imposters', originServerRequest))
@@ -56,8 +56,8 @@ describe('mb replay', function () {
             .then((response: any) => {
                 expect(response.body.stubs.length).toEqual(2);
 
-                const stubs = response.body.stubs,
-                    responses = stubs.map((stub: any) => stub.responses.map((stubResponse: any) => stubResponse.is.body));
+                const stubs = response.body.stubs;
+                const responses = stubs.map((stub: any) => stub.responses.map((stubResponse: any) => stubResponse.is.body));
 
                 expect(responses).toEqual([['1. /first', '3. /first'], ['2. /second']]);
             })

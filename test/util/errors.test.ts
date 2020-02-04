@@ -4,8 +4,8 @@ import * as inherit from '../../src/util/inherit';
 describe('errors', function () {
     describe('#details', function () {
         it('should include Error prototype properties', function () {
-            const error = inherit.from(Error as any, { code: 'code' }),
-                keys = Object.keys(errors.details(error));
+            const error = inherit.from(Error as any, { code: 'code' });
+            const keys = Object.keys(errors.details(error));
 
             expect(keys).toEqual(['code', 'name', 'stack']);
         });

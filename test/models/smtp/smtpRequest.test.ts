@@ -1,17 +1,17 @@
 const SmtpRequest = require('../../../src/models/smtp/smtpRequest');
-import {Readable} from 'stream';
+import { Readable } from 'stream';
 
 describe('smtpRequest', function () {
     describe('#createFrom', function () {
         it('should parse SMTP data', function () {
-            let session = {
+            const session = {
                 remoteAddress: 'RemoteAddress',
                 envelope: {
-                    mailFrom: {address: 'EnvelopeFrom'},
-                    rcptTo: [{address: 'EnvelopeTo'}]
+                    mailFrom: { address: 'EnvelopeFrom' },
+                    rcptTo: [{ address: 'EnvelopeTo' }]
                 }
             };
-            let stream = new Readable();
+            const stream = new Readable();
             stream._read = () => {};
             stream.push('From: From <from@mb.org>\r\n');
             stream.push('To: To1 <to1@mb.org>\r\n');

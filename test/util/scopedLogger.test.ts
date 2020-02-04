@@ -4,7 +4,7 @@ describe('scopedLogger', function () {
     describe('#create', function () {
         ['debug', 'info', 'warn', 'error'].forEach(level => {
             it('should prefix protocol name and port to all ' + level + ' calls', function () {
-                const logger = {debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn()} as any;
+                const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() } as any;
                 const scopedLogger = Logger.create(logger, 'prefix');
 
                 scopedLogger[level]('log %s', level);
@@ -14,7 +14,7 @@ describe('scopedLogger', function () {
         });
 
         it('should allow nested scopes', function () {
-            const logger: any = {debug: jest.fn()};
+            const logger: any = { debug: jest.fn() };
             const scopedLogger = Logger.create(logger, 'prefix').withScope('nested');
 
             scopedLogger.debug('log');
@@ -23,7 +23,7 @@ describe('scopedLogger', function () {
         });
 
         it('should allow changing scope', function () {
-            const logger: any = {debug: jest.fn()};
+            const logger: any = { debug: jest.fn() };
             const scopedLogger = Logger.create(logger, 'original');
 
             scopedLogger.changeScope('changed');

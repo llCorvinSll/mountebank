@@ -1,8 +1,8 @@
 
 
 import * as Q from 'q';
-import * as  util from 'util';
-import {IHashMap} from "../../../src/util/types";
+import * as util from 'util';
+import { IHashMap } from '../../../src/util/types';
 
 interface IStep {
     actualResponse?: any;
@@ -14,7 +14,7 @@ export interface ISubElement {
     subElements(name: string): ISubElement[];
     attributeValue(name: string): string;
     attributes: IHashMap<string>;
-    requestText?:string;
+    requestText?: string;
     assertValid?: (actualResponse: any, message: string) => void;
     setText?: (text: string) => void;
     text?: () => string;
@@ -23,10 +23,10 @@ export interface ISubElement {
 }
 
 export class DocsTestScenario {
-    constructor(private endpoint: string, private id: string) {
+    constructor (private endpoint: string, private id: string) {
     }
 
-    public addStep(stepSpec: ISubElement): void {
+    public addStep (stepSpec: ISubElement): void {
         const step: IStep = {
             assertValid: stepSpec.assertValid,
             execute: () => {
@@ -49,7 +49,7 @@ export class DocsTestScenario {
         return chainedExecutions.then(() => {
             this.steps.forEach((step, stepIndex) => {
                 const failureMessage = util.format(
-                        '%s %s step %s failed; below is the actual result\n' +
+                    '%s %s step %s failed; below is the actual result\n' +
                         '-----------\n' +
                         '%s\n' +
                         '-----------', this.endpoint, this.id, stepIndex + 1, step.actualResponse);

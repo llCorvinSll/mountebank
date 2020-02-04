@@ -17,7 +17,7 @@ describe('behaviors', () => {
                 }]
             };
 
-            return behaviors.execute(request, response, config, logger).then((actualResponse) => {
+            return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 expect(actualResponse).toEqual({ data: 'Hello, mountebank' });
             });
         });
@@ -137,7 +137,7 @@ describe('behaviors', () => {
 
         it('should support copying regex match from object request field ignoring case of key', function () {
             const request: any = { data: { name: 'My name is mountebank', other: 'ignore' } };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -154,7 +154,7 @@ describe('behaviors', () => {
 
         it('should support copying regex indexed groups from request', function () {
             const request: any = { name: 'The date is 2016-12-29' };
-            const response: any= { data: 'Year ${DATE}[1], Month ${DATE}[2], Day ${DATE}[3]: ${DATE}' };
+            const response: any = { data: 'Year ${DATE}[1], Month ${DATE}[2], Day ${DATE}[3]: ${DATE}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -171,7 +171,7 @@ describe('behaviors', () => {
 
         it('should default to first value in multi-valued request field', function () {
             const request: any = { data: ['first', 'second', 'third'] };
-            const response: any= { data: 'Grabbed the ${num}' };
+            const response: any = { data: 'Grabbed the ${num}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -188,7 +188,7 @@ describe('behaviors', () => {
 
         it('should support copying xpath match into response', function () {
             const request: any = { field: '<doc><name>mountebank</name></doc>' };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -205,7 +205,7 @@ describe('behaviors', () => {
 
         it('should ignore xpath if does not match', function () {
             const request: any = { field: '<doc><name>mountebank</name></doc>' };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -222,7 +222,7 @@ describe('behaviors', () => {
 
         it('should ignore xpath if field is not xml', function () {
             const request: any = { field: '' };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -240,7 +240,7 @@ describe('behaviors', () => {
 
         it('should support replacing token with xml attribute', function () {
             const request: any = { field: '<doc><tool name="mountebank">Service virtualization</tool></doc>' };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -257,7 +257,7 @@ describe('behaviors', () => {
 
         it('should support replacing token with xml direct text', function () {
             const request: any = { field: '<doc><name>mountebank</name></doc>' };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -274,7 +274,7 @@ describe('behaviors', () => {
 
         it('should support replacing token with namespaced xml field', function () {
             const request: any = { field: '<doc xmlns:mb="http://example.com/mb"><mb:name>mountebank</mb:name></doc>' };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -295,7 +295,7 @@ describe('behaviors', () => {
 
         it('should support multiple indexed xpath matches into response', function () {
             const request: any = { field: '<doc><num>3</num><num>2</num><num>1</num></doc>' };
-            const response: any= { data: '${NUM}, ${NUM}[1], ${NUM}[2]' };
+            const response: any = { data: '${NUM}, ${NUM}[1], ${NUM}[2]' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -312,7 +312,7 @@ describe('behaviors', () => {
 
         it('should ignore jsonpath selector if field is not json', function () {
             const request: any = { field: 'mountebank' };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -330,7 +330,7 @@ describe('behaviors', () => {
 
         it('should support replacing token with jsonpath selector', function () {
             const request: any = { field: JSON.stringify({ name: 'mountebank' }) };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -347,7 +347,7 @@ describe('behaviors', () => {
 
         it('should not replace token if jsonpath selector does not match', function () {
             const request: any = { field: JSON.stringify({ name: 'mountebank' }) };
-            const response: any= { data: 'Hello, ${you}' };
+            const response: any = { data: 'Hello, ${you}' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -364,7 +364,7 @@ describe('behaviors', () => {
 
         it('should support replacing multiple indexed tokens with jsonpath selector', function () {
             const request: any = { field: JSON.stringify({ numbers: [{ key: 3 }, { key: 2 }, { key: 1 }] }) };
-            const response: any= { data: '${NUM}, ${NUM}[1], ${NUM}[2]' };
+            const response: any = { data: '${NUM}, ${NUM}[1], ${NUM}[2]' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{
@@ -381,7 +381,7 @@ describe('behaviors', () => {
 
         it('should accept null response fields (issue #394)', function () {
             const request: any = { field: JSON.stringify({ name: 'mountebank' }) };
-            const response: any= { first: null, second: 'TOKEN' };
+            const response: any = { first: null, second: 'TOKEN' };
             const logger: any = Logger.create();
             const config: any = {
                 copy: [{

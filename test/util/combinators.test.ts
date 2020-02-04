@@ -26,8 +26,8 @@ describe('combinators', function () {
 
     describe('#compose', function () {
         it('should compose functions', function () {
-            const increment = (i:any) => i + 1,
-                double = (j:any) => j * 2;
+            const increment = (i: any) => i + 1;
+            const double = (j: any) => j * 2;
             expect(combinators.compose(increment, double)(2)).toEqual(5);
         });
 

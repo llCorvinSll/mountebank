@@ -1,13 +1,13 @@
 'use strict';
 
-const fs = require('fs-extra'),
-    run = require('./run').run,
-    os = require('os'),
-    path = require('path'),
-    util = require('util'),
-    version = require('./version').getVersion(),
-    // parent directory to avoid interaction with project node_modules
-    testDir = '../.mb-test-dir';
+const fs = require('fs-extra');
+const run = require('./run').run;
+const os = require('os');
+const path = require('path');
+const util = require('util');
+const version = require('./version').getVersion();
+// parent directory to avoid interaction with project node_modules
+const testDir = '../.mb-test-dir';
 
 function bitness () {
     if (os.arch() === 'x64') {
@@ -33,9 +33,9 @@ module.exports = function (grunt) {
     }
 
     grunt.registerTask('install:tarball', 'Set test executable to mb inside OS-specific tarball', function (arch) {
-        const done = this.async(),
-            tarball = util.format('mountebank-v%s-%s-%s.tar.gz', version, os.platform(), arch || bitness()),
-            tarballPath = path.join(testDir, tarball);
+        const done = this.async();
+        const tarball = util.format('mountebank-v%s-%s-%s.tar.gz', version, os.platform(), arch || bitness());
+        const tarballPath = path.join(testDir, tarball);
 
         fs.removeSync(testDir);
         fs.mkdirSync(testDir);
@@ -49,12 +49,12 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('install:zip', 'Set test executable to mb inside Windows zip file', function (arch) {
-        const done = this.async(),
-            zipFile = util.format('mountebank-v%s-win-%s.zip', version, arch || bitness()),
-            zipFilePath = path.resolve('dist', zipFile),
-            testDirPath = path.resolve(testDir),
-            command = util.format('[io.compression.zipfile]::ExtractToDirectory("%s","%s")',
-                zipFilePath.replace(/\\/g, '\\\\'), testDirPath.replace(/\\/g, '\\\\'));
+        const done = this.async();
+        const zipFile = util.format('mountebank-v%s-win-%s.zip', version, arch || bitness());
+        const zipFilePath = path.resolve('dist', zipFile);
+        const testDirPath = path.resolve(testDir);
+        const command = util.format('[io.compression.zipfile]::ExtractToDirectory("%s","%s")',
+            zipFilePath.replace(/\\/g, '\\\\'), testDirPath.replace(/\\/g, '\\\\'));
 
         fs.removeSync(testDir);
         fs.mkdirSync(testDir);
@@ -66,8 +66,8 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('install:npm', 'Set test executable to mb installed through local npm from tarball', function () {
-        const done = this.async(),
-            tarball = util.format('mountebank-v%s-npm.tar.gz', version);
+        const done = this.async();
+        const tarball = util.format('mountebank-v%s-npm.tar.gz', version);
 
         fs.removeSync(testDir);
         fs.mkdirSync(testDir);
@@ -80,8 +80,8 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('install:pkg', 'Set test executable to mb installed in OSX pkg file', function () {
-        const done = this.async(),
-            pkg = util.format('mountebank-v%s.pkg', version);
+        const done = this.async();
+        const pkg = util.format('mountebank-v%s.pkg', version);
 
         fs.removeSync(testDir);
         fs.mkdirSync(testDir);
@@ -94,8 +94,8 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('install:deb', 'Set test executable to mb installed in Debian file', function () {
-        const done = this.async(),
-            deb = util.format('mountebank_%s_amd64.deb', version);
+        const done = this.async();
+        const deb = util.format('mountebank_%s_amd64.deb', version);
 
         fs.removeSync(testDir);
         fs.mkdirSync(testDir);
@@ -119,8 +119,8 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('install:rpm', 'Set test executable to mb installed in Red Hat package', function () {
-        const done = this.async(),
-            rpm = util.format('mountebank-%s-1.x86_64.rpm', version.replace('-', '_'));
+        const done = this.async();
+        const rpm = util.format('mountebank-%s-1.x86_64.rpm', version.replace('-', '_'));
 
         fs.removeSync(testDir);
         fs.mkdirSync(testDir);

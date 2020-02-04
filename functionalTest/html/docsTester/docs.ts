@@ -1,11 +1,11 @@
 
 
-import * as Q from "q";
-import * as assert from "assert";
-import {DOMWindow, JSDOM} from 'jsdom';
-import {DocsTestScenario, ISubElement} from './docsTestScenario';
-import {IHashMap} from "../../../src/util/types";
-import stringify = require("json-stable-stringify");
+import * as Q from 'q';
+import * as assert from 'assert';
+import { DOMWindow, JSDOM } from 'jsdom';
+import { DocsTestScenario, ISubElement } from './docsTestScenario';
+import { IHashMap } from '../../../src/util/types';
+import stringify = require('json-stable-stringify');
 
 const api = require('../../api/api').create();
 
@@ -100,9 +100,9 @@ function collectVolatileLines (responseElement: ISubElement) {
     const responseLines = linesOf(responseElement.text!());
 
     return responseElement.subElements('volatile').map(volatileElement => {
-        const index = responseLines.findIndex(line => line.indexOf(volatileElement.text!()) >= 0),
-            startOfPattern = `^${responseLines[index].replace(/^\s+/, '\\s+')}`,
-            pattern = `${startOfPattern.replace(volatileElement.text!(), '(.+)')}$`;
+        const index = responseLines.findIndex(line => line.indexOf(volatileElement.text!()) >= 0);
+        const startOfPattern = `^${responseLines[index].replace(/^\s+/, '\\s+')}`;
+        const pattern = `${startOfPattern.replace(volatileElement.text!(), '(.+)')}$`;
 
         // Another volatile pattern may have the exact same data as this // one
         // (esp. with timestamps). Without removing, we'll miss the second line
@@ -133,7 +133,7 @@ function replaceVolatileData (text: string, volatileLines: RegExp[]) {
 
 function stabilizeJSON (possibleJSON: string) {
     try {
-        return stringify(JSON.parse(possibleJSON), {space: "  "});
+        return stringify(JSON.parse(possibleJSON), { space: '  ' });
     }
     catch (e) {
         console.log('WARNING: FAILED STABILIZING BECAUSE OF INVALID JSON');
@@ -155,9 +155,9 @@ function normalize (text: string, responseElement: ISubElement) {
     const trimmed = (text || '').trim();
     const normalizedJSON = normalizeJSONSubstrings(trimmed);
     const volatileLines = collectVolatileLines(responseElement);
-    const sanitized_value = replaceVolatileData(normalizedJSON, volatileLines);
+    const sanitizedValue = replaceVolatileData(normalizedJSON, volatileLines);
 
-    return stabilizeJSONSubstrings(sanitized_value);
+    return stabilizeJSONSubstrings(sanitizedValue);
 }
 
 function isPartialComparison (responseElement: ISubElement) {
@@ -184,12 +184,12 @@ function setDifference (partialExpectedLines: string[], actualLines: string[]) {
             matchIndex > lastIndex &&
                 (expectedLine.trim() === actualLine.trim() || `${expectedLine.trim()},` === actualLine.trim()));
         if (matchedIndex < 0) {
-            difference.push(<IDifference>{
+            difference.push({
                 index: index,
                 missingLine: expectedLine,
                 previous: partialExpectedLines.slice(Math.max(0, index - 10), index).join('\n'),
                 next: partialExpectedLines.slice(index + 1, Math.min(partialExpectedLines.length - 1, index + 5)).join('\n')
-            });
+            } as IDifference);
         }
         else {
             lastIndex = matchedIndex;
@@ -213,8 +213,8 @@ function createStepSpecFrom (stepElement: ISubElement): ISubElement {
     stepSpec.assertValid = () => {};
 
     if (responseElements.length > 0) {
-        const responseElement = responseElements[0],
-            expectedResponse = processChangeCommands(responseElement);
+        const responseElement = responseElements[0];
+        const expectedResponse = processChangeCommands(responseElement);
 
         stepSpec.assertValid = (actualResponse: string, failureMessage: string) => {
             const actual = normalize(actualResponse, responseElement);

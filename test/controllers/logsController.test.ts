@@ -1,6 +1,6 @@
 import * as Controller from '../../src/controllers/logsController';
 import * as fs from 'fs';
-import {FakeResponse} from '../fakes/fakeResponse';
+import { FakeResponse } from '../fakes/fakeResponse';
 
 describe('logsController', function () {
     describe('#get', function () {
@@ -14,7 +14,7 @@ describe('logsController', function () {
         beforeEach(() => {
             response = new FakeResponse();
             controller = Controller.create('logsControllerTest.log');
-        })
+        });
 
         it('should return full contents of logfile as JSON array by default', function () {
             fs.writeFileSync('logsControllerTest.log', '{"key": "first"}\n{"key": "second"}\n');

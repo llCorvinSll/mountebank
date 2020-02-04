@@ -1,6 +1,6 @@
-import {ApiClient} from "../api/api";
+import { ApiClient } from '../api/api';
 const assert = require('assert');
-import {DOMWindow, JSDOM} from 'jsdom';
+import { DOMWindow, JSDOM } from 'jsdom';
 const Q = require('q');
 
 

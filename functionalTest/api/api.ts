@@ -16,13 +16,13 @@ export function create (port: number) {
 }
 
 export class ApiClient {
-    constructor(port?: number) {
+    constructor (port?: number) {
         this.port = port || parseInt((process as any).env.MB_PORT || 2525);
         this.url = `http://localhost:${this.port}`;
     }
 
     public url: string;
-    public port:number;
+    public port: number;
 
     public get = (path: string) => httpClient.get(path, this.port);
     public post = (path: string, body: any) => httpClient.post(path, body, this.port);

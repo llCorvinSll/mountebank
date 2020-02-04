@@ -1,6 +1,6 @@
 
 
-import {ApiClient} from "../api/api";
+import { ApiClient } from '../api/api';
 
 const assert = require('assert');
 const httpClient = require('../api/http/baseHttpClient').create('http');
@@ -16,19 +16,17 @@ describe('security', function () {
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-        mb = require('../mb').create(port + 1)
-    })
+        mb = require('../mb').create(port + 1);
+    });
 
-    afterEach(() => {
-        return mb.stop();
-    })
+    afterEach(() => mb.stop());
 
     describe('mb without --allowInjection', function () {
 
         it('should return a 400 if response injection is used', function () {
-            const fn = (request: any) => ({ body: `${request.method} INJECTED` }),
-                stub = { responses: [{ inject: fn.toString() }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+            const fn = (request: any) => ({ body: `${request.method} INJECTED` });
+            const stub = { responses: [{ inject: fn.toString() }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -40,12 +38,12 @@ describe('security', function () {
         });
 
         it('should return a 400 if predicate injection is used', function () {
-            const fn = () => true,
-                stub = {
-                    predicates: [{ inject: fn.toString() }],
-                    responses: [{ is: { body: 'Hello, World! ' } }]
-                },
-                request = { protocol: 'http', port, stubs: [stub] };
+            const fn = () => true;
+            const stub = {
+                predicates: [{ inject: fn.toString() }],
+                responses: [{ is: { body: 'Hello, World! ' } }]
+            };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -57,15 +55,15 @@ describe('security', function () {
         });
 
         it('should return a 400 if endOfResponseResolver is used', function () {
-            const stub = { responses: [{ is: { data: 'success' } }] },
-                resolver = () => true,
-                request = {
-                    protocol: 'tcp',
-                    port,
-                    stubs: [stub],
-                    mode: 'text',
-                    endOfRequestResolver: { inject: resolver.toString() }
-                };
+            const stub = { responses: [{ is: { data: 'success' } }] };
+            const resolver = () => true;
+            const request = {
+                protocol: 'tcp',
+                port,
+                stubs: [stub],
+                mode: 'text',
+                endOfRequestResolver: { inject: resolver.toString() }
+            };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -77,9 +75,9 @@ describe('security', function () {
         });
 
         it('should return a 400 if a decorate behavior is used', function () {
-            const fn = (response: any) => response,
-                stub = { responses: [{ is: { body: 'Hello, World! ' }, _behaviors: { decorate: fn.toString() } }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+            const fn = (response: any) => response;
+            const stub = { responses: [{ is: { body: 'Hello, World! ' }, _behaviors: { decorate: fn.toString() } }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -91,9 +89,9 @@ describe('security', function () {
         });
 
         it('should return a 400 if a wait behavior function is used', function () {
-            const fn = () => 1000,
-                stub = { responses: [{ is: { body: 'Hello, World! ' }, _behaviors: { wait: fn.toString() } }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+            const fn = () => 1000;
+            const stub = { responses: [{ is: { body: 'Hello, World! ' }, _behaviors: { wait: fn.toString() } }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -105,8 +103,8 @@ describe('security', function () {
         });
 
         it('should allow a wait behavior that directly specifies latency', function () {
-            const stub = {responses: [{is: {body: 'Hello, World! '}, _behaviors: {wait: 100}}]};
-            const request = {protocol: 'http', port, stubs: [stub]};
+            const stub = { responses: [{ is: { body: 'Hello, World! ' }, _behaviors: { wait: 100 } }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -117,8 +115,8 @@ describe('security', function () {
         });
 
         it('should return a 400 if a shellTransform behavior is used', function () {
-            const stub = { responses: [{ is: {}, _behaviors: { shellTransform: 'command' } }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+            const stub = { responses: [{ is: {}, _behaviors: { shellTransform: 'command' } }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -131,11 +129,11 @@ describe('security', function () {
 
         it('should return a 400 if a proxy addDecorateBehavior is used', function () {
             const proxy = {
-                    to: 'http://google.com',
-                    addDecorateBehavior: '(request, response) => { response.body = ""; }'
-                },
-                stub = { responses: [{ proxy: proxy }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+                to: 'http://google.com',
+                addDecorateBehavior: '(request, response) => { response.body = ""; }'
+            };
+            const stub = { responses: [{ proxy: proxy }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -148,13 +146,13 @@ describe('security', function () {
 
         it('should return a 400 if a predicateGenerator inject is used', function () {
             const proxy = {
-                    to: 'http://google.com',
-                    predicateGenerators: [{
-                        inject: 'fn () { return []; }'
-                    }]
-                },
-                stub = { responses: [{ proxy: proxy }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+                to: 'http://google.com',
+                predicateGenerators: [{
+                    inject: 'fn () { return []; }'
+                }]
+            };
+            const stub = { responses: [{ proxy: proxy }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return mb.start()
                 .then(() => mb.post('/imposters', request))
@@ -173,13 +171,13 @@ describe('security', function () {
                 && name.indexOf(' ') < 0; // This causes problems on Appveyor / Windows
         }
 
-        function ips (local: boolean):os.NetworkInterfaceInfo[] {
+        function ips (local: boolean): os.NetworkInterfaceInfo[] {
             const interfaces = os.networkInterfaces();
             const result: any[] = [];
 
             Object.keys(interfaces).forEach(name => {
                 if (useInterface(name)) {
-                    interfaces[name].forEach((address) => {
+                    interfaces[name].forEach(address => {
                         if (address.internal === local) {
                             result.push({
                                 family: address.family.replace('IPv', ''),
@@ -230,10 +228,10 @@ describe('security', function () {
         }
 
         function connectToTCPServerUsing (ip: any, destinationPort: number) {
-            const deferred = Q.defer(),
-                net = require('net'),
-                socket = net.createConnection({ family: ip.family, localAddress: ip.address, port: destinationPort },
-                    () => { socket.write('TEST'); });
+            const deferred = Q.defer();
+            const net = require('net');
+            const socket = net.createConnection({ family: ip.family, localAddress: ip.address, port: destinationPort },
+                () => { socket.write('TEST'); });
 
             socket.once('data', () => { deferred.resolve({ ip: ip.address, canConnect: true }); });
 
@@ -339,9 +337,9 @@ describe('security', function () {
                 return Q(true);
             }
 
-            const allowedIP = nonLocalIPs()[0],
-                blockedIPs = nonLocalIPs().slice(1),
-                ipWhitelist = `127.0.0.1|${allowedIP.address}`;
+            const allowedIP = nonLocalIPs()[0];
+            const blockedIPs = nonLocalIPs().slice(1);
+            const ipWhitelist = `127.0.0.1|${allowedIP.address}`;
 
             return mb.start(['--ipWhitelist', ipWhitelist])
                 .then(() => connectToHTTPServerUsing(allowedIP))
@@ -362,8 +360,8 @@ describe('security', function () {
                 return Q(true);
             }
 
-            const allowedIP = nonLocalIPs()[0],
-                ipWhitelist = `127.0.0.1|${allowedIP.address}`;
+            const allowedIP = nonLocalIPs()[0];
+            const ipWhitelist = `127.0.0.1|${allowedIP.address}`;
 
             return mb.start(['--localOnly', '--ipWhitelist', ipWhitelist])
                 .then(() => connectToHTTPServerUsing(allowedIP))

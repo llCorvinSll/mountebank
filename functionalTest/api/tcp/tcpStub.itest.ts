@@ -1,6 +1,6 @@
 
 
-import {ApiClient} from "../api";
+import { ApiClient } from '../api';
 
 const tcp = require('./tcpClient');
 const airplaneMode = process.env.MB_AIRPLANE_MODE === 'true';
@@ -12,15 +12,15 @@ describe('tcp imposter', function () {
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
     describe('POST /imposters with stubs', function () {
         it('should return stubbed response', function () {
             const stub = {
-                    predicates: [{ equals: { data: 'client' } }],
-                    responses: [{ is: { data: 'server' } }]
-                },
-                request = { protocol: 'tcp', port, stubs: [stub], mode: 'text' };
+                predicates: [{ equals: { data: 'client' } }],
+                responses: [{ is: { data: 'server' } }]
+            };
+            const request = { protocol: 'tcp', port, stubs: [stub], mode: 'text' };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -32,9 +32,9 @@ describe('tcp imposter', function () {
         });
 
         it('should allow binary stub responses', function () {
-            const buffer = Buffer.from([0, 1, 2, 3]),
-                stub = { responses: [{ is: { data: buffer.toString('base64') } }] },
-                request = { protocol: 'tcp', port, stubs: [stub], mode: 'binary' };
+            const buffer = Buffer.from([0, 1, 2, 3]);
+            const stub = { responses: [{ is: { data: buffer.toString('base64') } }] };
+            const request = { protocol: 'tcp', port, stubs: [stub], mode: 'binary' };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -42,16 +42,16 @@ describe('tcp imposter', function () {
                 return tcp.send('0', port);
             }).then((response: any) => {
                 expect(Buffer.isBuffer(response)).toBeTruthy();
-                expect(response.toJSON().data).toEqual( [0, 1, 2, 3]);
+                expect(response.toJSON().data).toEqual([0, 1, 2, 3]);
             }).finally(() => api.del('/imposters'));
         });
 
         it('should allow a sequence of stubs as a circular buffer', function () {
             const stub = {
-                    predicates: [{ equals: { data: 'request' } }],
-                    responses: [{ is: { data: 'first' } }, { is: { data: 'second' } }]
-                },
-                request = { protocol: 'tcp', port, stubs: [stub] };
+                predicates: [{ equals: { data: 'request' } }],
+                responses: [{ is: { data: 'first' } }, { is: { data: 'second' } }]
+            };
+            const request = { protocol: 'tcp', port, stubs: [stub] };
 
             return api.post('/imposters', request)
                 .then(() => tcp.send('request', port))
@@ -75,13 +75,13 @@ describe('tcp imposter', function () {
 
         it('should only return stubbed response if matches complex predicate', function () {
             const stub = {
-                    responses: [{ is: { data: 'MATCH' } }],
-                    predicates: [
-                        { equals: { data: 'test' } },
-                        { startsWith: { data: 'te' } }
-                    ]
-                },
-                request = { protocol: 'tcp', port, stubs: [stub] };
+                responses: [{ is: { data: 'MATCH' } }],
+                predicates: [
+                    { equals: { data: 'test' } },
+                    { startsWith: { data: 'te' } }
+                ]
+            };
+            const request = { protocol: 'tcp', port, stubs: [stub] };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -97,10 +97,10 @@ describe('tcp imposter', function () {
 
         it('should return 400 if uses matches predicate with binary mode', function () {
             const stub = {
-                    responses: [{ is: { data: 'dGVzdA==' } }],
-                    predicates: [{ matches: { data: 'dGVzdA==' } }]
-                },
-                request = { protocol: 'tcp', port, mode: 'binary', stubs: [stub] };
+                responses: [{ is: { data: 'dGVzdA==' } }],
+                predicates: [{ matches: { data: 'dGVzdA==' } }]
+            };
+            const request = { protocol: 'tcp', port, mode: 'binary', stubs: [stub] };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(400);
@@ -109,11 +109,11 @@ describe('tcp imposter', function () {
         });
 
         it('should allow proxy stubs', function () {
-            const proxyPort = port + 1,
-                proxyStub = { responses: [{ is: { data: 'PROXIED' } }] },
-                proxyRequest = { protocol: 'tcp', port: proxyPort, stubs: [proxyStub], name: 'PROXY' },
-                stub = { responses: [{ proxy: { to: `tcp://localhost:${proxyPort}` } }] },
-                request = { protocol: 'tcp', port, stubs: [stub], name: 'MAIN' };
+            const proxyPort = port + 1;
+            const proxyStub = { responses: [{ is: { data: 'PROXIED' } }] };
+            const proxyRequest = { protocol: 'tcp', port: proxyPort, stubs: [proxyStub], name: 'PROXY' };
+            const stub = { responses: [{ proxy: { to: `tcp://localhost:${proxyPort}` } }] };
+            const request = { protocol: 'tcp', port, stubs: [stub], name: 'MAIN' };
 
             return api.post('/imposters', proxyRequest)
                 .then(() => api.post('/imposters', request))
@@ -124,11 +124,11 @@ describe('tcp imposter', function () {
         });
 
         it('should support old proxy syntax for backwards compatibility', function () {
-            const proxyPort = port + 1,
-                proxyStub = { responses: [{ is: { data: 'PROXIED' } }] },
-                proxyRequest = { protocol: 'tcp', port: proxyPort, stubs: [proxyStub], name: 'PROXY' },
-                stub = { responses: [{ proxy: { to: { host: 'localhost', port: proxyPort } } }] },
-                request = { protocol: 'tcp', port, stubs: [stub], name: 'MAIN' };
+            const proxyPort = port + 1;
+            const proxyStub = { responses: [{ is: { data: 'PROXIED' } }] };
+            const proxyRequest = { protocol: 'tcp', port: proxyPort, stubs: [proxyStub], name: 'PROXY' };
+            const stub = { responses: [{ proxy: { to: { host: 'localhost', port: proxyPort } } }] };
+            const request = { protocol: 'tcp', port, stubs: [stub], name: 'MAIN' };
 
             return api.post('/imposters', proxyRequest)
                 .then(() => api.post('/imposters', request))
@@ -140,8 +140,8 @@ describe('tcp imposter', function () {
 
         if (!airplaneMode) {
             it('should allow proxy stubs to invalid hosts', function () {
-                const stub = { responses: [{ proxy: { to: 'tcp://remotehost:8000' } }] },
-                    request = { protocol: 'tcp', port, stubs: [stub] };
+                const stub = { responses: [{ proxy: { to: 'tcp://remotehost:8000' } }] };
+                const request = { protocol: 'tcp', port, stubs: [stub] };
 
                 return api.post('/imposters', request)
                     .then(() => tcp.send('request', port))
@@ -156,14 +156,14 @@ describe('tcp imposter', function () {
 
         it('should split each packet into a separate request by default', function () {
             // max 64k packet size, likely to hit max on the loopback interface
-            const largeRequest = `${new Array(65537).join('1')}2`,
-                stub = { responses: [{ is: { data: 'success' } }] },
-                request = {
-                    protocol: 'tcp',
-                    port,
-                    stubs: [stub],
-                    mode: 'text'
-                };
+            const largeRequest = `${new Array(65537).join('1')}2`;
+            const stub = { responses: [{ is: { data: 'success' } }] };
+            const request = {
+                protocol: 'tcp',
+                port,
+                stubs: [stub],
+                mode: 'text'
+            };
 
             return api.post('/imposters', request)
                 .then((response: any) => {
@@ -172,8 +172,8 @@ describe('tcp imposter', function () {
                 })
                 .then(() => api.get(`/imposters/${port}`))
                 .then((response: any) => {
-                    const requests = response.body.requests,
-                        dataLength = requests.reduce((sum: any, recordedRequest:any) => sum + recordedRequest.data.length, 0);
+                    const requests = response.body.requests;
+                    const dataLength = requests.reduce((sum: any, recordedRequest: any) => sum + recordedRequest.data.length, 0);
                     expect(requests.length > 1).toBeTruthy();
                     expect(65537).toEqual(dataLength);
                 })
@@ -182,16 +182,16 @@ describe('tcp imposter', function () {
 
         it('should support changing default response for stub', function () {
             const stub = {
-                    responses: [{ is: { data: 'Given response' } }],
-                    predicates: [{ equals: { data: 'MATCH ME' } }]
-                },
-                request = {
-                    protocol: 'tcp',
-                    mode: 'text',
-                    port,
-                    defaultResponse: { data: 'Default response' },
-                    stubs: [stub]
-                };
+                responses: [{ is: { data: 'Given response' } }],
+                predicates: [{ equals: { data: 'MATCH ME' } }]
+            };
+            const request = {
+                protocol: 'tcp',
+                mode: 'text',
+                port,
+                defaultResponse: { data: 'Default response' },
+                stubs: [stub]
+            };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(201);

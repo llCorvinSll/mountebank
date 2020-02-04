@@ -1,6 +1,6 @@
 
 
-import {ApiClient} from "../api";
+import { ApiClient } from '../api';
 
 const assert = require('assert');
 const HttpProxy = require('../../../src/models/http/httpProxy');
@@ -17,16 +17,16 @@ describe('http proxy', function () {
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
-    const noOp = () => {},
-        logger = { debug: noOp, info: noOp, warn: noOp, error: noOp },
-        proxy = HttpProxy.create(logger);
+    const noOp = () => {};
+    const logger = { debug: noOp, info: noOp, warn: noOp, error: noOp };
+    const proxy = HttpProxy.create(logger);
 
     describe('#to', function () {
         it('should send same request information to proxied url', function () {
-            const proxyRequest = { protocol: 'http', port },
-                request = { path: '/PATH', method: 'POST', body: 'BODY', headers: { 'X-Key': 'TRUE' } };
+            const proxyRequest = { protocol: 'http', port };
+            const request = { path: '/PATH', method: 'POST', body: 'BODY', headers: { 'X-Key': 'TRUE' } };
 
             return api.post('/imposters', proxyRequest)
                 .then(() => proxy.to(`http://localhost:${port}`, request, {}))
@@ -46,8 +46,8 @@ describe('http proxy', function () {
         });
 
         it('should return proxied result', function () {
-            const stub = { responses: [{ is: { statusCode: 400, body: 'ERROR' } }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+            const stub = { responses: [{ is: { statusCode: 400, body: 'ERROR' } }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -60,8 +60,8 @@ describe('http proxy', function () {
         });
 
         it('should proxy to https', function () {
-            const stub = { responses: [{ is: { statusCode: 400, body: 'ERROR' } }] },
-                request = { protocol: 'https', port, stubs: [stub] };
+            const stub = { responses: [{ is: { statusCode: 400, body: 'ERROR' } }] };
+            const request = { protocol: 'https', port, stubs: [stub] };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -75,10 +75,10 @@ describe('http proxy', function () {
 
         it('should update the host header to the origin server', function () {
             const stub = {
-                    responses: [{ is: { statusCode: 400, body: 'ERROR' } }],
-                    predicates: [{ equals: { headers: { host: `localhost:${port}` } } }]
-                },
-                request = { protocol: 'http', port, stubs: [stub] };
+                responses: [{ is: { statusCode: 400, body: 'ERROR' } }],
+                predicates: [{ equals: { headers: { host: `localhost:${port}` } } }]
+            };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return api.post('/imposters', request).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -117,17 +117,17 @@ describe('http proxy', function () {
 
         ['application/octet-stream', 'audio/mpeg', 'audio/mp4', 'image/gif', 'image/jpeg', 'video/avi', 'video/mpeg'].forEach(mimeType => {
             it(`should base64 encode ${mimeType} responses`, function () {
-                const buffer = Buffer.from([0, 1, 2, 3]),
-                    stub = {
-                        responses: [{
-                            is: {
-                                body: buffer.toString('base64'),
-                                headers: { 'content-type': mimeType },
-                                _mode: 'binary'
-                            }
-                        }]
-                    },
-                    request = { protocol: 'http', port, stubs: [stub] };
+                const buffer = Buffer.from([0, 1, 2, 3]);
+                const stub = {
+                    responses: [{
+                        is: {
+                            body: buffer.toString('base64'),
+                            headers: { 'content-type': mimeType },
+                            _mode: 'binary'
+                        }
+                    }]
+                };
+                const request = { protocol: 'http', port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);

@@ -1,4 +1,4 @@
-import { ApiClient } from "../api";
+import { ApiClient } from '../api';
 const BaseHttpClient = require('./baseHttpClient');
 const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
 const headersHelper = require('../../../src/models/http/headersHelper');
@@ -13,7 +13,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
         api = new ApiClient();
         port = api.port + 1;
         mb = require('../../mb').create(port + 1);
-    })
+    });
 
     describe(`${protocol} imposter`, function () {
         // this.timeout(timeout);
@@ -109,7 +109,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
             it('should default content type to json if not provided', function () {
                 const request = { port, protocol };
 
-                return api.post('/imposters', request/*, true */).then((response: any) => {
+                return api.post('/imposters', request/* , true */).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
                     return client.get('/first', port);
                 }).then((response: any) => {
@@ -154,9 +154,9 @@ const headersHelper = require('../../../src/models/http/headersHelper');
             });
 
             it('should return list of stubs in order', function () {
-                const first = { responses: [{ is: { body: '1' } }] },
-                    second = { responses: [{ is: { body: '2' } }] },
-                    request = { protocol, port, stubs: [first, second] };
+                const first = { responses: [{ is: { body: '1' } }] };
+                const second = { responses: [{ is: { body: '2' } }] };
+                const request = { protocol, port, stubs: [first, second] };
 
                 return api.post('/imposters', request)
                     .then(() => api.get(`/imposters/${port}`))
@@ -180,8 +180,8 @@ const headersHelper = require('../../../src/models/http/headersHelper');
             });
 
             it('should record matches against stubs', function () {
-                const stub = { responses: [{ is: { body: '1' } }, { is: { body: '2' } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const stub = { responses: [{ is: { body: '1' } }, { is: { body: '2' } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request)
                     .then(() => client.get('/first?q=1', port))
@@ -238,8 +238,8 @@ const headersHelper = require('../../../src/models/http/headersHelper');
             });
 
             it('should not record matches against stubs if --debug flag is missing', function () {
-                const stub = { responses: [{ is: { body: '1' } }, { is: { body: '2' } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const stub = { responses: [{ is: { body: '1' } }, { is: { body: '2' } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return mb.start()
                     .then(() => mb.post('/imposters', request))
@@ -258,8 +258,8 @@ const headersHelper = require('../../../src/models/http/headersHelper');
             });
 
             it('should record numberOfRequests even if --mock flag is missing', function () {
-                const stub = { responses: [{ is: { body: 'SUCCESS' } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const stub = { responses: [{ is: { body: 'SUCCESS' } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return mb.start()
                     .then(() => mb.post('/imposters', request))

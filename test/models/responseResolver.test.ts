@@ -1,6 +1,6 @@
 const assert = require('assert');
-import {ResponseResolver} from '../../src/models/responseResolver';
-import {StubRepository} from '../../src/models/stubs/StubRepository';
+import { ResponseResolver } from '../../src/models/responseResolver';
+import { StubRepository } from '../../src/models/stubs/StubRepository';
 const helpers = require('../../src/util/helpers');
 const mock = require('../mock').mock;
 const Q = require('q');
@@ -41,7 +41,7 @@ describe('responseResolver', function () {
             const proxy: any = {};
             const resolver = new ResponseResolver(stubs, proxy);
             const logger = Logger.create();
-            const responseConfig = {is: 'value'};
+            const responseConfig = { is: 'value' };
 
             return resolver.resolve(responseConfig, 'request' as any, logger, {}).then(response => {
                 assert.strictEqual(response, 'value');
@@ -49,9 +49,9 @@ describe('responseResolver', function () {
         });
 
         it('should resolve "proxy" by delegating to the proxy for in process resolution', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create();
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
 
             // Call through the stubRepository to have it add the setMetadata function
             stubs.addStub({ responses: [{ proxy: { to: 'where' } }] } as any);
@@ -84,9 +84,9 @@ describe('responseResolver', function () {
         });
 
         it('should default to "proxyOnce" mode', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create();
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
 
             // Call through the stubRepository to have it add the setMetadata function
             stubs.addStub({ responses: [{ proxy: { to: 'where' } }] } as any);
@@ -98,9 +98,9 @@ describe('responseResolver', function () {
         });
 
         it('should change unrecognized mode to "proxyOnce" mode', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create();
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
 
             // Call through the stubRepository to have it add the setMetadata function
             stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'unrecognized' } }] } as any);
@@ -112,12 +112,12 @@ describe('responseResolver', function () {
         });
 
         it('should resolve proxy in proxyOnce mode by adding a new "is" stub to the front of the list', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create();
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
 
             stubs.addStub({ responses: [], predicates: [{ equals: { ignore: 'true' } }] });
-            stubs.addStub({ responses: [{ proxy: { to: 'where' } }] }  as any);
+            stubs.addStub({ responses: [{ proxy: { to: 'where' } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
             return resolver.resolve(responseConfig, {}, logger, {}).then((response: any) => {
@@ -132,7 +132,7 @@ describe('responseResolver', function () {
         });
 
         it('should support adding wait behavior to newly created stub for in process imposters', function () {
-            const proxy = {to: mock().returns(Q.delay(100).then(() => Q({data: 'value'})))};
+            const proxy = { to: mock().returns(Q.delay(100).then(() => Q({ data: 'value' }))) };
             const resolver = new ResponseResolver(stubs, proxy);
             const logger = Logger.create();
             const request = {};
@@ -141,8 +141,8 @@ describe('responseResolver', function () {
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
-                const stubResponses = stubs.stubs().map(stub => stub.responses),
-                    wait = stubResponses[0]![0].is._proxyResponseTime;
+                const stubResponses = stubs.stubs().map(stub => stub.responses);
+                const wait = stubResponses[0]![0].is._proxyResponseTime;
                 assert.ok(wait > 90); // allow some variability
                 assert.deepEqual(stubResponses, [
                     [{ is: { data: 'value', _proxyResponseTime: wait }, _behaviors: { wait: wait } }],
@@ -160,21 +160,21 @@ describe('responseResolver', function () {
                 });
             }
 
-            const proxy = { to: proxyReturn },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                request = {};
+            const proxy = { to: proxyReturn };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const request = {};
 
-            stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'proxyAlways', addWaitBehavior: true } }] }  as any);
+            stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'proxyAlways', addWaitBehavior: true } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() =>
                 // First call adds the stub, second call adds a response
                 resolver.resolve(responseConfig, request, logger, {})
             ).then(() => {
-                const stubResponses = stubs.stubs().map(stub => stub.responses),
-                    firstWait = stubResponses[1]![0].is._proxyResponseTime,
-                    secondWait = stubResponses[1]![1].is._proxyResponseTime;
+                const stubResponses = stubs.stubs().map(stub => stub.responses);
+                const firstWait = stubResponses[1]![0].is._proxyResponseTime;
+                const secondWait = stubResponses[1]![1].is._proxyResponseTime;
                 assert.deepEqual(stubResponses, [
                     [{ proxy: { to: 'where', mode: 'proxyAlways', addWaitBehavior: true } }],
                     [
@@ -187,14 +187,14 @@ describe('responseResolver', function () {
 
         it('should run behaviors on proxy response before recording it', function () {
             const decorateFunc = (request: any, response: any) => { response.data += '-DECORATED'; };
-            const proxy = { to: mock().returns(Q({ data: 'RESPONSE' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: { to: 'where' },
-                    _behaviors: { decorate: decorateFunc.toString() }
-                },
-                request = {};
+            const proxy = { to: mock().returns(Q({ data: 'RESPONSE' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: { to: 'where' },
+                _behaviors: { decorate: decorateFunc.toString() }
+            };
+            const request = {};
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -210,10 +210,10 @@ describe('responseResolver', function () {
 
         it('should support adding decorate behavior to newly created stub', function () {
             const decorateFunc = '(request, response) => {}';
-            const proxy = { to: mock().returns(Q({ data: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                request = {};
+            const proxy = { to: mock().returns(Q({ data: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const request = {};
 
             stubs.addStub({ responses: [{ proxy: { to: 'where', addDecorateBehavior: decorateFunc } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -229,10 +229,10 @@ describe('responseResolver', function () {
 
         it('should support adding decorate behavior to newly created response in proxyAlways mode', function () {
             const decorateFunc = '(request, response) => {}';
-            const proxy = { to: mock().returns(Q({ data: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                request = {};
+            const proxy = { to: mock().returns(Q({ data: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const request = {};
 
             stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'proxyAlways', addDecorateBehavior: decorateFunc } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -253,16 +253,16 @@ describe('responseResolver', function () {
         });
 
         it('should resolve "proxy" and remember full objects as "deepEquals" predicates', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{ matches: { key: true } }]
-                    }
-                },
-                request = { key: { nested: { first: 'one', second: 'two' }, third: 'three' } };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{ matches: { key: true } }]
+                }
+            };
+            const request = { key: { nested: { first: 'one', second: 'two' }, third: 'three' } };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -292,17 +292,17 @@ describe('responseResolver', function () {
         });
 
         it('should resolve "proxy" and remember nested keys as "equals" predicates', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        mode: 'proxyOnce',
-                        predicateGenerators: [{ matches: { key: { nested: { first: true } } } }]
-                    }
-                },
-                request = { key: { nested: { first: 'one', second: 'two' }, third: 'three' } };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    mode: 'proxyOnce',
+                    predicateGenerators: [{ matches: { key: { nested: { first: true } } } }]
+                }
+            };
+            const request = { key: { nested: { first: 'one', second: 'two' }, third: 'three' } };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -329,21 +329,21 @@ describe('responseResolver', function () {
         });
 
         it('should add predicate parameters from predicateGenerators', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        mode: 'proxyOnce',
-                        predicateGenerators: [{
-                            matches: { key: true },
-                            caseSensitive: true,
-                            except: 'xxx'
-                        }]
-                    }
-                },
-                request = { key: 'Test' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    mode: 'proxyOnce',
+                    predicateGenerators: [{
+                        matches: { key: true },
+                        caseSensitive: true,
+                        except: 'xxx'
+                    }]
+                }
+            };
+            const request = { key: 'Test' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -368,20 +368,20 @@ describe('responseResolver', function () {
         });
 
         it('should choose predicate operator from predicateGenerators', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        mode: 'proxyOnce',
-                        predicateGenerators: [{
-                            matches: { key: true },
-                            predicateOperator: 'contains'
-                        }]
-                    }
-                },
-                request = { key: 'Test' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    mode: 'proxyOnce',
+                    predicateGenerators: [{
+                        matches: { key: true },
+                        predicateOperator: 'contains'
+                    }]
+                }
+            };
+            const request = { key: 'Test' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -405,20 +405,20 @@ describe('responseResolver', function () {
         });
 
         it('should format exists matcher from predicateOperator', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        mode: 'proxyOnce',
-                        predicateGenerators: [{
-                            matches: { key: true },
-                            predicateOperator: 'exists'
-                        }]
-                    }
-                },
-                request = { key: 'Test' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    mode: 'proxyOnce',
+                    predicateGenerators: [{
+                        matches: { key: true },
+                        predicateOperator: 'exists'
+                    }]
+                }
+            };
+            const request = { key: 'Test' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -442,7 +442,7 @@ describe('responseResolver', function () {
         });
 
         it('should format exists matcher from predicateOperator with nested match', function () {
-            const proxy = {to: mock().returns(Q({key: 'value'}))};
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
             const resolver = new ResponseResolver(stubs, proxy);
             const logger = Logger.create();
             const response = {
@@ -450,12 +450,12 @@ describe('responseResolver', function () {
                     to: 'where',
                     mode: 'proxyOnce',
                     predicateGenerators: [{
-                        matches: {key: {nested: true}},
+                        matches: { key: { nested: true } },
                         predicateOperator: 'exists'
                     }]
                 }
             };
-            const request = {key: {nested: 'Test'}};
+            const request = { key: { nested: 'Test' } };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -480,19 +480,19 @@ describe('responseResolver', function () {
 
 
         it('should support "inject" predicateGenerators', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        mode: 'proxyOnce',
-                        predicateGenerators: [{
-                            inject: 'function(config) { return [{ deepEquals: config.request, caseSensitive: true }, { not: { equals: { foo: "bar" }}}]; }'
-                        }]
-                    }
-                },
-                request = { key: 'Test' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    mode: 'proxyOnce',
+                    predicateGenerators: [{
+                        inject: 'function(config) { return [{ deepEquals: config.request, caseSensitive: true }, { not: { equals: { foo: "bar" }}}]; }'
+                    }]
+                }
+            };
+            const request = { key: 'Test' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -521,7 +521,7 @@ describe('responseResolver', function () {
 
         it('should log "inject" predicateGenerator exceptions', function () {
             const errorsLogged: any[] = [];
-            const proxy = {to: mock().returns(Q({key: 'value'}))};
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
             const resolver = new ResponseResolver(stubs, proxy);
             const logger = Logger.create();
             const response = {
@@ -533,7 +533,7 @@ describe('responseResolver', function () {
                     }]
                 }
             };
-            const request = {key: 'Test'};
+            const request = { key: 'Test' };
 
             logger.error = function () {
                 const message = util.format.apply(this, Array.prototype.slice.call(arguments));
@@ -552,19 +552,19 @@ describe('responseResolver', function () {
         });
 
         it('should add xpath predicate parameter in predicateGenerators with one match', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            xpath: { selector: '//title' }
-                        }]
-                    }
-                },
-                request = { field: '<books><book><title>Harry Potter</title></book></books>' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        xpath: { selector: '//title' }
+                    }]
+                }
+            };
+            const request = { field: '<books><book><title>Harry Potter</title></book></books>' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -588,19 +588,19 @@ describe('responseResolver', function () {
         });
 
         it('should add xpath predicate parameter in predicateGenerators with one match and a nested match key', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { parent: { child: true } },
-                            xpath: { selector: '//title' }
-                        }]
-                    }
-                },
-                request = { parent: { child: '<books><book><title>Harry Potter</title></book></books>' } };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { parent: { child: true } },
+                        xpath: { selector: '//title' }
+                    }]
+                }
+            };
+            const request = { parent: { child: '<books><book><title>Harry Potter</title></book></books>' } };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -624,27 +624,27 @@ describe('responseResolver', function () {
         });
 
         it('should add xpath predicate parameter in predicateGenerators with multiple matches', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            xpath: {
-                                selector: '//isbn:title',
-                                ns: { isbn: 'http://schemas.isbn.org/ns/1999/basic.dtd' }
-                            }
-                        }]
-                    }
-                },
-                xml = '<root xmlns:isbn="http://schemas.isbn.org/ns/1999/basic.dtd">' +
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        xpath: {
+                            selector: '//isbn:title',
+                            ns: { isbn: 'http://schemas.isbn.org/ns/1999/basic.dtd' }
+                        }
+                    }]
+                }
+            };
+            const xml = '<root xmlns:isbn="http://schemas.isbn.org/ns/1999/basic.dtd">' +
                       '  <isbn:book><isbn:title>Harry Potter</isbn:title></isbn:book>' +
                       '  <isbn:book><isbn:title>The Hobbit</isbn:title></isbn:book>' +
                       '  <isbn:book><isbn:title>Game of Thrones</isbn:title></isbn:book>' +
-                      '</root>',
-                request = { field: xml };
+                      '</root>';
+            const request = { field: xml };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -671,19 +671,19 @@ describe('responseResolver', function () {
         });
 
         it('should add xpath predicate parameter in predicateGenerators even if no xpath match', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            xpath: { selector: '//title' }
-                        }]
-                    }
-                },
-                request = { field: '<books />' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        xpath: { selector: '//title' }
+                    }]
+                }
+            };
+            const request = { field: '<books />' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -707,19 +707,19 @@ describe('responseResolver', function () {
         });
 
         it('should add xpath predicate parameter in predicateGenerators even if scalar xpath match', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            xpath: { selector: 'count(//title)' }
-                        }]
-                    }
-                },
-                request = { field: '<doc><title>first</title><title>second</title></doc>' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        xpath: { selector: 'count(//title)' }
+                    }]
+                }
+            };
+            const request = { field: '<doc><title>first</title><title>second</title></doc>' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -743,19 +743,19 @@ describe('responseResolver', function () {
         });
 
         it('should add xpath predicate parameter in predicateGenerators even if boolean match', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            xpath: { selector: 'boolean(//title)' }
-                        }]
-                    }
-                },
-                request = { field: '<doc></doc>' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        xpath: { selector: 'boolean(//title)' }
+                    }]
+                }
+            };
+            const request = { field: '<doc></doc>' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -779,19 +779,19 @@ describe('responseResolver', function () {
         });
 
         it('should add jsonpath predicate parameter in predicateGenerators with one match', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            jsonpath: { selector: '$..title' }
-                        }]
-                    }
-                },
-                request = { field: { title: 'Harry Potter' } };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        jsonpath: { selector: '$..title' }
+                    }]
+                }
+            };
+            const request = { field: { title: 'Harry Potter' } };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -815,27 +815,27 @@ describe('responseResolver', function () {
         });
 
         it('should add jsonpath predicate parameter in predicateGenerators with multiple matches', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            jsonpath: { selector: '$.books[*].title' }
-                        }]
-                    }
-                },
-                request = {
-                    field: {
-                        books: [
-                            { title: 'Harry Potter' },
-                            { title: 'The Hobbit' },
-                            { title: 'Game of Thrones' }
-                        ]
-                    }
-                };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        jsonpath: { selector: '$.books[*].title' }
+                    }]
+                }
+            };
+            const request = {
+                field: {
+                    books: [
+                        { title: 'Harry Potter' },
+                        { title: 'The Hobbit' },
+                        { title: 'Game of Thrones' }
+                    ]
+                }
+            };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -859,19 +859,19 @@ describe('responseResolver', function () {
         });
 
         it('should add jsonpath predicate parameter in predicateGenerators with no match', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            jsonpath: { selector: '$..title' }
-                        }]
-                    }
-                },
-                request = { field: false };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        jsonpath: { selector: '$..title' }
+                    }]
+                }
+            };
+            const request = { field: false };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -895,19 +895,19 @@ describe('responseResolver', function () {
         });
 
         it('should log warning if request not JSON', function () {
-            const proxy = { to: mock().returns(Q({ key: 'value' })) },
-                resolver = new ResponseResolver(stubs, proxy),
-                logger = Logger.create(),
-                response = {
-                    proxy: {
-                        to: 'where',
-                        predicateGenerators: [{
-                            matches: { field: true },
-                            jsonpath: { selector: '$..title' }
-                        }]
-                    }
-                },
-                request = { field: 'Hello, world' };
+            const proxy = { to: mock().returns(Q({ key: 'value' })) };
+            const resolver = new ResponseResolver(stubs, proxy);
+            const logger = Logger.create();
+            const response = {
+                proxy: {
+                    to: 'where',
+                    predicateGenerators: [{
+                        matches: { field: true },
+                        jsonpath: { selector: '$..title' }
+                    }]
+                }
+            };
+            const request = { field: 'Hello, world' };
 
             stubs.addStub({ responses: [response] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -934,9 +934,9 @@ describe('responseResolver', function () {
         it('should allow "inject" response', function () {
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
-            const fn = (request:any) => request.data + ' injected';
-            const responseConfig = {inject: fn.toString()};
-            const request = {data: 'request'};
+            const fn = (request: any) => request.data + ' injected';
+            const responseConfig = { inject: fn.toString() };
+            const request = { data: 'request' };
 
             return resolver.resolve(responseConfig, request, logger, {}).then(response => {
                 assert.strictEqual(response, 'request injected');
@@ -949,7 +949,7 @@ describe('responseResolver', function () {
             const fn = () => {
                 throw Error('BOOM!!!');
             };
-            const responseConfig: any = {inject: fn};
+            const responseConfig: any = { inject: fn };
 
             return resolver.resolve(responseConfig, {}, logger, {}).then(() => {
                 assert.fail('should not have resolved');
@@ -968,8 +968,8 @@ describe('responseResolver', function () {
                 state.counter += 1;
                 return state.counter;
             };
-            const responseConfig = {inject: fn.toString()};
-            const request = {key: 'request'};
+            const responseConfig = { inject: fn.toString() };
+            const request = { key: 'request' };
 
             return resolver.resolve(responseConfig, request, logger, {}).then(response => {
                 assert.strictEqual(response, 1);
@@ -983,14 +983,14 @@ describe('responseResolver', function () {
             const stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const mockedLogger = Logger.create();
-            const imposterState = {foo: 'bar', counter: 0};
+            const imposterState = { foo: 'bar', counter: 0 };
             const fn = (request: any, localState: any, logger: any, deferred: any, globalState: any) => {
                 globalState.foo = 'barbar';
                 globalState.counter += 1;
                 return globalState.foo + globalState.counter;
             };
-            const responseConfig = {inject: fn.toString()};
-            const request = {key: 'request'};
+            const responseConfig = { inject: fn.toString() };
+            const request = { key: 'request' };
 
             return resolver.resolve(responseConfig, request, mockedLogger, imposterState).then((response: any) => {
                 assert.strictEqual(response, 'barbar1');
@@ -1008,9 +1008,9 @@ describe('responseResolver', function () {
             const logger = Logger.create();
             const responseConfig: any = {
                 is: 'value',
-                _behaviors: {wait: 50}
+                _behaviors: { wait: 50 }
             };
-            const request = {key: 'request'};
+            const request = { key: 'request' };
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 const end = Date.now();
@@ -1030,9 +1030,9 @@ describe('responseResolver', function () {
             const fn = () => 50;
             const responseConfig = {
                 is: 'value',
-                _behaviors: {wait: fn.toString()}
+                _behaviors: { wait: fn.toString() }
             };
-            const request = {key: 'request'};
+            const request = { key: 'request' };
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 const end = Date.now();
@@ -1052,9 +1052,9 @@ describe('responseResolver', function () {
             };
             const responseConfig = {
                 is: 'value',
-                _behaviors: {wait: fn.toString()}
+                _behaviors: { wait: fn.toString() }
             };
-            const request = {key: 'request'};
+            const request = { key: 'request' };
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.fail('Promise resolved, should have been rejected');
@@ -1071,10 +1071,10 @@ describe('responseResolver', function () {
                     callback('value');
                 }, 1);
             };
-            const responseConfig: any = {inject: fn};
-            const request = {key: 'request'};
+            const responseConfig: any = { inject: fn };
+            const request = { key: 'request' };
 
-            return resolver.resolve(responseConfig, request, { debug: jest.fn() } as any, {}).then((response) => {
+            return resolver.resolve(responseConfig, request, { debug: jest.fn() } as any, {}).then(response => {
                 assert.strictEqual(response, 'value');
             });
         });
@@ -1087,8 +1087,8 @@ describe('responseResolver', function () {
                 request.key = 'CHANGED';
                 return 0;
             };
-            const responseConfig = {inject: fn.toString()};
-            const request = {key: 'ORIGINAL'};
+            const responseConfig = { inject: fn.toString() };
+            const request = { key: 'ORIGINAL' };
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 assert.strictEqual(request.key, 'ORIGINAL');
@@ -1102,8 +1102,8 @@ describe('responseResolver', function () {
             const fn = () => {
                 throw Error('BOOM!!!');
             };
-            const responseConfig: any = {inject: fn.toString()};
-            const request = {isDryRun: true};
+            const responseConfig: any = { inject: fn.toString() };
+            const request = { isDryRun: true };
 
             return resolver.resolve(responseConfig, request, logger, {}).then((response: any) => {
                 assert.deepEqual(response, {});
@@ -1114,7 +1114,7 @@ describe('responseResolver', function () {
             const stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
-            const responseConfig: any = {is: 'value', proxy: {to: 'http://www.google.com'}};
+            const responseConfig: any = { is: 'value', proxy: { to: 'http://www.google.com' } };
 
             return resolver.resolve(responseConfig, {}, logger, {}).then(() => {
                 assert.fail('should not have resolved');
@@ -1166,7 +1166,7 @@ describe('responseResolver', function () {
             const stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
-            const responseConfig = {proxy: {to: 'where', mode: 'proxyOnce'}};
+            const responseConfig = { proxy: { to: 'where', mode: 'proxyOnce' } };
             const request = {};
 
             stubs.addStub({ responses: [responseConfig] } as any);
@@ -1189,12 +1189,12 @@ describe('responseResolver', function () {
             const stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
-            const responseConfig: any = {proxy: {to: 'where', mode: 'proxyAlways'}};
+            const responseConfig: any = { proxy: { to: 'where', mode: 'proxyAlways' } };
             const request: any = {};
 
             stubs.addStub({ responses: [responseConfig] } as any);
 
-            return resolver.resolve(responseConfig, request, logger, {}).then((response) => {
+            return resolver.resolve(responseConfig, request, logger, {}).then(response => {
                 const proxyResolutionKey = parseInt(response.callbackURL!.replace('CALLBACK-URL/', ''));
 
                 return resolver.resolveProxy({ data: 'RESPONSE' } as any, proxyResolutionKey, logger);
@@ -1216,8 +1216,8 @@ describe('responseResolver', function () {
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const proxyResponse = {
-                proxy: {to: 'where', mode: 'proxyOnce'},
-                _behaviors: {decorate: decorateFunc.toString()}
+                proxy: { to: 'where', mode: 'proxyOnce' },
+                _behaviors: { decorate: decorateFunc.toString() }
             };
             const request = {};
 
@@ -1239,11 +1239,11 @@ describe('responseResolver', function () {
         });
 
         it('should add wait behavior based on the proxy resolution time', function () {
-            const stubs = new StubRepository('utf8'),
-                resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL'),
-                logger = Logger.create(),
-                proxyResponse = { proxy: { to: 'where', mode: 'proxyOnce', addWaitBehavior: true } },
-                request = {};
+            const stubs = new StubRepository('utf8');
+            const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
+            const logger = Logger.create();
+            const proxyResponse = { proxy: { to: 'where', mode: 'proxyOnce', addWaitBehavior: true } };
+            const request = {};
 
             stubs.addStub({ responses: [proxyResponse] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
@@ -1254,8 +1254,8 @@ describe('responseResolver', function () {
             }).then(proxyResolutionKey =>
                 resolver.resolveProxy({ data: 'RESPONSE' } as any, proxyResolutionKey, logger)
             ).then(() => {
-                const stubResponses = stubs.stubs().map(stub => stub.responses),
-                    wait = stubResponses[0]![0].is._proxyResponseTime;
+                const stubResponses = stubs.stubs().map(stub => stub.responses);
+                const wait = stubResponses[0]![0].is._proxyResponseTime;
                 assert.ok(wait > 90); // allow some variability
                 assert.deepEqual(stubResponses, [
                     [{ is: { data: 'RESPONSE', _proxyResponseTime: wait }, _behaviors: { wait: wait } }],
@@ -1265,10 +1265,10 @@ describe('responseResolver', function () {
         });
 
         it('should support recording the match', function () {
-            const stubs = new StubRepository('utf8'),
-                resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL'),
-                logger = Logger.create(),
-                request = { key: 'REQUEST' };
+            const stubs = new StubRepository('utf8');
+            const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
+            const logger = Logger.create();
+            const request = { key: 'REQUEST' };
 
             stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'proxyOnce' } }] } as any);
 
@@ -1288,10 +1288,10 @@ describe('responseResolver', function () {
         });
 
         it('should avoid race conditions when recording the match', function () {
-            const stubs = new StubRepository('utf8'),
-                resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL'),
-                logger = Logger.create(),
-                request = { key: 'REQUEST' };
+            const stubs = new StubRepository('utf8');
+            const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
+            const logger = Logger.create();
+            const request = { key: 'REQUEST' };
 
             stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'proxyAlways' } }] } as any);
 
@@ -1317,7 +1317,7 @@ describe('responseResolver', function () {
             const stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
-            const proxyResponse = {proxy: {to: 'where'}};
+            const proxyResponse = { proxy: { to: 'where' } };
             const request = {};
             let proxyResolutionKey: any;
 

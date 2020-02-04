@@ -13,14 +13,14 @@ describe('protocols', function () {
         });
 
         it('should return only builtins if no customProtocols passed in', function () {
-            const builtIns:any = {proto: {create: jest.fn()}};
+            const builtIns: any = { proto: { create: jest.fn() } };
             const protocols = loader.load(builtIns, {}, config);
             expect(Object.keys(protocols)).toEqual(['proto']);
         });
 
         describe('#outOfProcessCreate', function () {
             it('should error if invalid command passed', function () {
-                const customProtocols: any = {test: {createCommand: 'no-such-command'}};
+                const customProtocols: any = { test: { createCommand: 'no-such-command' } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
@@ -40,7 +40,7 @@ describe('protocols', function () {
                 const fn = () => { console.log('TESTING 1 2 3'); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols:any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
+                const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
@@ -55,7 +55,7 @@ describe('protocols', function () {
                 const fn = () => { console.log('{}'); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
+                const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
@@ -68,7 +68,7 @@ describe('protocols', function () {
                 const fn = () => { console.log(JSON.stringify({ port: 3000 })); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
+                const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
@@ -81,7 +81,7 @@ describe('protocols', function () {
                 const fn = () => { console.log(JSON.stringify({ mode: 'text' })); };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
+                const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
@@ -100,7 +100,7 @@ describe('protocols', function () {
                 };
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
-                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
+                const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
@@ -118,10 +118,10 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 config.callbackURLTemplate = 'CALLBACK-URL';
-                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
+                const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
-                const creationRequest = {port: 3000};
+                const creationRequest = { port: 3000 };
 
                 return protocols.test.createServer!(creationRequest, logger).then(server => {
                     expect(server.metadata.args).toEqual([
@@ -139,10 +139,10 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 config.callbackURLTemplate = 'CALLBACK-URL';
-                const customProtocols: any = {test: {createCommand: `${process.execPath} ./protocol-test.js`}};
+                const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
-                const creationRequest = {port: 3000, defaultResponse: {key: 'default'}};
+                const creationRequest = { port: 3000, defaultResponse: { key: 'default' } };
 
                 return protocols.test.createServer!(creationRequest, logger).then(server => {
                     expect(server.metadata.args).toEqual([

@@ -1,4 +1,4 @@
-import {Imposter} from '../../src/models/imposters/imposter';
+import { Imposter } from '../../src/models/imposters/imposter';
 import * as Q from 'q';
 import { IImposter } from '../../src/models/imposters/IImposter';
 const FakeLogger = require('../fakes/fakeLogger');
@@ -169,7 +169,7 @@ describe('imposter', function () {
                 stubs: [{ responses: ['FIRST'] }, { responses: ['SECOND'] }]
             };
             return new Imposter(Protocol, request, logger, {}, allow).init().then(imposter => {
-                let result: any = imposter.toJSON();
+                const result: any = imposter.toJSON();
                 expect(result.stubs).toEqual([
                     {
                         responses: ['FIRST'],
@@ -308,7 +308,7 @@ describe('imposter', function () {
         it('responseFor should increment numberOfRequests and not record requests if recordRequests = false', function () {
             server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE CONFIG');
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
-            let imposter:IImposter;
+            let imposter: IImposter;
 
             return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: false }, allow).init().then(imp => {
                 imposter = imp;
@@ -323,7 +323,7 @@ describe('imposter', function () {
         it('responseFor should increment numberOfRequests and record requests if imposter recordRequests = true', function () {
             server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE CONFIG');
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
-            let imposter:IImposter;
+            let imposter: IImposter;
 
             return new Imposter(Protocol, { recordRequests: true }, logger, { recordRequests: false }, allow).init().then(imp => {
                 imposter = imp;

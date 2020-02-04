@@ -1,18 +1,18 @@
 'use strict';
 
-const fs = require('fs-extra'),
-    Q = require('q'),
-    https = require('https'),
-    os = require('os'),
-    util = require('util'),
-    version = require('./version').getVersion(),
-    versionMajorMinor = version.replace(/\.\d+(-beta\.\d+)?$/, ''),
-    urlPrefix = 'https://s3.amazonaws.com/mountebank/v' + versionMajorMinor;
+const fs = require('fs-extra');
+const Q = require('q');
+const https = require('https');
+const os = require('os');
+const util = require('util');
+const version = require('./version').getVersion();
+const versionMajorMinor = version.replace(/\.\d+(-beta\.\d+)?$/, '');
+const urlPrefix = 'https://s3.amazonaws.com/mountebank/v' + versionMajorMinor;
 
 function download (file, destination) {
-    const deferred = Q.defer(),
-        stream = fs.createWriteStream(destination),
-        url = urlPrefix + '/' + encodeURIComponent(file);
+    const deferred = Q.defer();
+    const stream = fs.createWriteStream(destination);
+    const url = urlPrefix + '/' + encodeURIComponent(file);
 
     console.log(url + ' => ' + destination);
     stream.on('open', function () {
