@@ -1,9 +1,8 @@
-'use strict';
-
-import * as  Q from 'q';
+import * as Q from 'q';
 import * as util from 'util';
-import {HashMap} from "../../../../src/util/types";
-import {ISubElement} from "../docsTestScenario";
+import { IHashMap } from '../../../../src/util/types';
+import { ISubElement } from '../docsTestScenario';
+
 const httpClient = require('../../../api/http/baseHttpClient').create('http');
 
 function parseHeader (line: string): {
@@ -19,25 +18,26 @@ function parseHeader (line: string): {
 
 
 interface ISpec {
-    method:string;
-    path:string;
-    headers:HashMap<string>;
-    body:string;
-    hostname?:string;
-    port?:number;
+    method: string;
+    path: string;
+    headers: IHashMap<string>;
+    body: string;
+    hostname?: string;
+    port?: number;
 }
 
 function parse (text: string) {
     const lines = text.split('\n');
     const firstLineParts = lines[0].split(' ');
-    const spec:ISpec = {
-            method: firstLineParts[0],
-            path: firstLineParts[1],
-            headers: <HashMap<string>>{},
-            body: ''
-        };
+    const spec: ISpec = {
+        method: firstLineParts[0],
+        path: firstLineParts[1],
+        headers: { } as IHashMap<string>,
+        body: ''
+    };
 
-    for (var i = 1; i < lines.length; i += 1) {
+    let i;
+    for (i = 1; i < lines.length; i += 1) {
         if (lines[i].trim() === '') {
             break;
         }
@@ -54,8 +54,8 @@ function parse (text: string) {
     return spec;
 }
 
-function messageFor (statusCode:number) {
-    const codes: HashMap<string> = {
+function messageFor (statusCode: number) {
+    const codes: IHashMap<string> = {
         200: 'OK',
         201: 'Created',
         400: 'Bad Request',
@@ -72,9 +72,9 @@ function messageFor (statusCode:number) {
     }
 }
 
-function properCase (text:string) {
-    const parts = text.split('-'),
-        properCasedParts = parts.map(name => name.substring(0, 1).toUpperCase() + name.substring(1));
+function properCase (text: string) {
+    const parts = text.split('-');
+    const properCasedParts = parts.map(name => name.substring(0, 1).toUpperCase() + name.substring(1));
     return properCasedParts.join('-');
 }
 

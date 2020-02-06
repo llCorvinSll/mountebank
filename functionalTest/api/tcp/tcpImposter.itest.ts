@@ -1,6 +1,6 @@
-'use strict';
 
-import {ApiClient} from "../api";
+
+import { ApiClient } from '../api';
 const tcp = require('./tcpClient');
 const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
 
@@ -12,7 +12,7 @@ describe('tcp imposter', function () {
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
     describe('POST /imposters/:id', function () {
         it('should auto-assign port if port not provided', function () {
@@ -41,9 +41,9 @@ describe('tcp imposter', function () {
         });
 
         it('should return list of stubs in order', function () {
-            const first = { responses: [{ is: { data: '1' } }] },
-                second = { responses: [{ is: { data: '2' } }] },
-                request = { protocol: 'tcp', port, stubs: [first, second] };
+            const first = { responses: [{ is: { data: '1' } }] };
+            const second = { responses: [{ is: { data: '2' } }] };
+            const request = { protocol: 'tcp', port, stubs: [first, second] };
 
             return api.post('/imposters', request)
                 .then(() => api.get(`/imposters/${port}`))
@@ -92,8 +92,8 @@ describe('tcp imposter', function () {
         });
 
         it('should record matches against stubs', function () {
-            const stub = { responses: [{ is: { data: '1' } }, { is: { data: '2' } }] },
-                request = { protocol: 'tcp', port, stubs: [stub] };
+            const stub = { responses: [{ is: { data: '1' } }, { is: { data: '2' } }] };
+            const request = { protocol: 'tcp', port, stubs: [stub] };
 
             return api.post('/imposters', request)
                 .then(() => tcp.send('first', port))

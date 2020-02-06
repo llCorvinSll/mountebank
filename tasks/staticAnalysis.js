@@ -1,9 +1,9 @@
 'use strict';
 
-const fs = require('fs-extra'),
-    path = require('path'),
-    exec = require('child_process').exec,
-    os = require('os');
+const fs = require('fs-extra');
+const path = require('path');
+const exec = require('child_process').exec;
+const os = require('os');
 
 function exclude (exclusions, file) {
     return (exclusions || []).some(function (exclusion) {
@@ -38,20 +38,20 @@ function forEachFileIn (dir, fileCallback, options) {
 module.exports = function (grunt) {
 
     grunt.registerTask('onlyCheck', 'Look for accidental mocha .only calls', function () {
-        let errors = [],
-            check = function (file) {
-                const contents = fs.readFileSync(file, 'utf8'),
-                    lines = contents.split(os.EOL);
+        let errors = [];
+        const check = function (file) {
+            const contents = fs.readFileSync(file, 'utf8');
+            const lines = contents.split(os.EOL);
 
-                lines.forEach(function (line) {
-                    const accidentalOnlyErrors = line.match(/(describe|[Ii]t)\.only\(/) || [];
+            lines.forEach(function (line) {
+                const accidentalOnlyErrors = line.match(/(describe|[Ii]t)\.only\(/) || [];
 
-                    errors = errors.concat(accidentalOnlyErrors.map(function () {
-                        return file + ' appears to have been left with a mocha .only() call\n\t' + line;
-                    }));
-                });
-            },
-            exclusions = ['node_modules', 'dist', 'staticAnalysis.js', 'testHelpers.js', '*.pid', 'jquery', 'docs', '*.csv'];
+                errors = errors.concat(accidentalOnlyErrors.map(function () {
+                    return file + ' appears to have been left with a mocha .only() call\n\t' + line;
+                }));
+            });
+        };
+        const exclusions = ['node_modules', 'dist', 'staticAnalysis.js', 'testHelpers.js', '*.pid', 'jquery', 'docs', '*.csv'];
 
         forEachFileIn('.', check, { exclude: exclusions, filetype: '.js' });
 
@@ -61,14 +61,14 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('objectCheck', 'Look for accidental use of typeof x === "object"', function () {
-        let errors = [],
-            check = function (file) {
-                const contents = fs.readFileSync(file, 'utf8');
-                if (contents.indexOf("=== 'object'") > 0) {
-                    errors.push(`${file} appears to do a typecheck against object without using helpers.isObject`);
-                }
-            },
-            exclusions = ['node_modules', 'dist', 'functionalTest', 'staticAnalysis.js', 'helpers.js', '*.pid', 'jquery', 'docs', '*.csv'];
+        const errors = [];
+        const check = function (file) {
+            const contents = fs.readFileSync(file, 'utf8');
+            if (contents.indexOf("=== 'object'") > 0) {
+                errors.push(`${file} appears to do a typecheck against object without using helpers.isObject`);
+            }
+        };
+        const exclusions = ['node_modules', 'dist', 'functionalTest', 'staticAnalysis.js', 'helpers.js', '*.pid', 'jquery', 'docs', '*.csv'];
 
         forEachFileIn('.', check, { exclude: exclusions, filetype: '.js' });
 
@@ -80,34 +80,34 @@ module.exports = function (grunt) {
     grunt.registerTask('jsCheck', 'Run JavaScript checks not covered by eslint', ['onlyCheck', 'objectCheck']);
 
     grunt.registerTask('deadCheck', 'Check for unused dependencies in package.json', function () {
-        const thisPackage = require('../package.json'),
-            dependencies = Object.keys(thisPackage.dependencies).concat(Object.keys(thisPackage.devDependencies)),
-            usedCount = {},
-            dependencyCheck = file => {
-                const contents = fs.readFileSync(file, 'utf8');
+        const thisPackage = require('../package.json');
+        const dependencies = Object.keys(thisPackage.dependencies).concat(Object.keys(thisPackage.devDependencies));
+        const usedCount = {};
+        const dependencyCheck = file => {
+            const contents = fs.readFileSync(file, 'utf8');
 
-                dependencies.forEach(dependency => {
-                    if (contents.indexOf("require('" + dependency) >= 0 ||
+            dependencies.forEach(dependency => {
+                if (contents.indexOf("require('" + dependency) >= 0 ||
                         contents.indexOf("loadNpmTasks('" + dependency + "')") >= 0) {
-                        usedCount[dependency] += 1;
-                    }
-                });
-            },
-            exclusions = ['node_modules', 'docs', '.git', '.DS_Store', '.idea', 'images', 'dist', 'mountebank.iml', 'mb.log', '*.pid', 'package-lock.json'],
-            errors = [],
-            whitelist = [
-                'grunt',
-                'mocha',
-                'istanbul',
-                'grunt-cli',
-                'jsdoc',
-                'grunt-contrib-csslint',
-                'firebase-tools',
-                'nc',
-                'snyk',
-                'typescript',
-                '@typescript-eslint/parser'
-            ];
+                    usedCount[dependency] += 1;
+                }
+            });
+        };
+        const exclusions = ['node_modules', 'docs', '.git', '.DS_Store', '.idea', 'images', 'dist', 'mountebank.iml', 'mb.log', '*.pid', 'package-lock.json'];
+        const errors = [];
+        const whitelist = [
+            'grunt',
+            'mocha',
+            'istanbul',
+            'grunt-cli',
+            'jsdoc',
+            'grunt-contrib-csslint',
+            'firebase-tools',
+            'nc',
+            'snyk',
+            'typescript',
+            '@typescript-eslint/parser'
+        ];
 
         dependencies.forEach(dependency => { usedCount[dependency] = 0; });
         whitelist.forEach(dependency => { usedCount[dependency] += 1; });
@@ -126,8 +126,8 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('coverage', 'Generate code coverage', function () {
-        const done = this.async(),
-            command = 'node_modules/.bin/istanbul cover node_modules/.bin/grunt mochaTest:unit';
+        const done = this.async();
+        const command = 'node_modules/.bin/istanbul cover node_modules/.bin/grunt mochaTest:unit';
 
         exec(command, function (error, stdout, stderr) {
             if (stdout) { console.log(stdout); }
@@ -139,8 +139,8 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('codeclimate', 'Send coverage results to codeclimate', function () {
-        const done = this.async(),
-            command = 'scripts/codeclimate';
+        const done = this.async();
+        const command = 'scripts/codeclimate';
 
         exec(command, function (error, stdout, stderr) {
             if (stdout) { console.log(stdout); }
@@ -151,8 +151,8 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('sonar', 'Run SonarQube', function () {
-        const done = this.async(),
-            command = 'scripts/sonar';
+        const done = this.async();
+        const command = 'scripts/sonar';
 
         exec(command, function (error, stdout, stderr) {
             if (stdout) { console.log(stdout); }

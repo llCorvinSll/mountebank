@@ -1,5 +1,3 @@
-'use strict';
-
 import {
     IMountebankResponse,
     IProtocolFactory,
@@ -7,17 +5,17 @@ import {
     IResolver,
     IServer,
     IServerRequestData
-} from "../IProtocol";
-import {IImposter, IImposterConfig, ImposterPrintOptions, IpValidator} from "./IImposter";
-import * as Q from "q";
-import {ILogger} from "../../util/scopedLogger";
-import {IProtocolLoadOptions} from "../protocols";
-import * as domain_nsp from "domain";
-import {Domain} from "domain";
+} from '../IProtocol';
+import { IImposter, IImposterConfig, IImposterPrintOptions, IpValidator } from './IImposter';
+import * as Q from 'q';
+import { ILogger } from '../../util/scopedLogger';
+import { IProtocolLoadOptions } from '../protocols';
+import * as domainNsp from 'domain';
+import { Domain } from 'domain';
 import * as helpers from '../../util/helpers';
 import * as compatibility from '../compatibility';
-import {ImposterPrinter} from "./imposterPrinter";
-import { IStubRepository } from "../stubs/IStubRepository";
+import { ImposterPrinter } from './imposterPrinter';
+import { IStubRepository } from '../stubs/IStubRepository';
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -26,6 +24,8 @@ import { IStubRepository } from "../stubs/IStubRepository";
  * JSON for the end user.
  * @module
  */
+
+
 function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
     return (error: any) => {
         const errors = require('../../util/errors');
@@ -52,9 +52,9 @@ function createErrorHandler (deferred: Q.Deferred<unknown>, port: number) {
  * @returns {Object}
  */
 export class Imposter implements IImposter {
-    public constructor(
+    public constructor (
         protected Protocol: IProtocolFactory,
-        protected creationRequest:IImposterConfig,
+        protected creationRequest: IImposterConfig,
         protected baseLogger: ILogger,
         protected config: IProtocolLoadOptions,
         protected isAllowedConnection: IpValidator) {
@@ -62,7 +62,7 @@ export class Imposter implements IImposter {
 
         this.logger = require('../../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port!));
         // If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
-        this.recordRequests = !!config.recordRequests || !!creationRequest.recordRequests;
+        this.recordRequests = Boolean(config.recordRequests) || Boolean(creationRequest.recordRequests);
     }
 
     private readonly logger: ILogger;
@@ -73,12 +73,10 @@ export class Imposter implements IImposter {
     private requests: IServerRequestData[] = [];
     private readonly recordRequests: boolean = false;
     private imposterState = {};
-    private printer:any;
-    //TODO: not required field
-    public protocol:string;
+    public protocol: string;
 
-    public init(): Q.Promise<IImposter> {
-        this.domain = domain_nsp.create();
+    public init (): Q.Promise<IImposter> {
+        this.domain = domainNsp.create();
         const deferred = Q.defer<IImposter>();
 
         const errorHandler = createErrorHandler(deferred, this.creationRequest.port!);
@@ -104,10 +102,8 @@ export class Imposter implements IImposter {
 
                     this.resolver = server.resolver;
 
-                    this.printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
-
                     if (this.creationRequest.stubs) {
-                        this.creationRequest.stubs.forEach((st) => this.server.stubs.addStub(st));
+                        this.creationRequest.stubs.forEach(st => this.server.stubs.addStub(st));
                     }
 
                     return deferred.resolve(this);
@@ -117,19 +113,20 @@ export class Imposter implements IImposter {
         return deferred.promise;
     }
 
-    public get port(): number {
+    public get port (): number {
         return this.server.port;
     }
 
-    public get url(): string {
+    public get url (): string {
         return '/imposters/' + this.server.port;
     }
 
-    public toJSON(options?:ImposterPrintOptions): string {
-        return this.printer.toJSON(this.numberOfRequests, options);
+    public toJSON (options?: IImposterPrintOptions): string {
+        const printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
+        return printer.toJSON(this.numberOfRequests, options);
     }
 
-    public stop() {
+    public stop () {
         const stopDeferred = Q.defer();
         this.server.close(() => {
             this.logger.info('Ciao for now');
@@ -138,16 +135,16 @@ export class Imposter implements IImposter {
         return stopDeferred.promise;
     }
 
-    get stubRepository(): IStubRepository {
+    get stubRepository (): IStubRepository {
         return this.server.stubs;
     }
 
     // requestDetails are not stored with the imposter
     // It was created to pass the raw URL to maintain the exact querystring during http proxying
     // without having to change the path / query options on the stored request
-    public getResponseFor(request: IServerRequestData, requestDetails?: unknown): Q.Promise<IMountebankResponse> {
+    public getResponseFor (request: IServerRequestData, requestDetails?: unknown): Q.Promise<IMountebankResponse> {
         if (!this.isAllowedConnection(request.ip, this.logger)) {
-            return Q({blocked: true, code: 'unauthorized ip address'});
+            return Q({ blocked: true, code: 'unauthorized ip address' });
         }
 
         this.numberOfRequests += 1;
@@ -163,7 +160,8 @@ export class Imposter implements IImposter {
                 if (response.response) {
                     // Out of process responses wrap the result in an outer response object
                     responseConfig.recordMatch && responseConfig.recordMatch(response.response);
-                } else {
+                }
+                else {
                     // In process resolution
                     responseConfig.recordMatch && responseConfig.recordMatch(response);
                 }
@@ -172,7 +170,7 @@ export class Imposter implements IImposter {
         });
     }
 
-    public getProxyResponseFor(proxyResponse: IProxyResponse, proxyResolutionKey: number) {
+    public getProxyResponseFor (proxyResponse: IProxyResponse, proxyResolutionKey: number) {
         return this.resolver.resolveProxy(proxyResponse, proxyResolutionKey, this.logger).then(response => {
             if (this.config.recordMatches) {
                 response.recordMatch!();
@@ -181,7 +179,7 @@ export class Imposter implements IImposter {
         });
     }
 
-    private scopeFor(port: string|number): string {
+    private scopeFor (port: string|number): string {
         let scope = `${this.creationRequest.protocol}:${port}`;
 
         if (this.creationRequest.name) {

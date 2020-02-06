@@ -1,4 +1,4 @@
-'use strict';
+
 
 import { Request, Response } from 'express';
 import { IMountebankOptions } from '../models/IMountebankOptions';
@@ -15,15 +15,15 @@ import { IMountebankOptions } from '../models/IMountebankOptions';
  * @returns {Object}
  */
 export function create (version: string, options: IMountebankOptions) {
-    const helpers = require('../util/helpers'),
-        publicOptions = helpers.clone(options);
+    const helpers = require('../util/helpers');
+    const publicOptions = helpers.clone(options);
 
     delete publicOptions.heroku;
     delete publicOptions.version;
 
     // On some OS's, it duplicates camelCase as hypen-case (e.g. noParse and no-parse)
     // I assume this was a change in yargs at some point
-    for (var prop in publicOptions) {
+    for (const prop in publicOptions) {
         if (prop.indexOf('-') > 0) {
             delete publicOptions[prop];
         }

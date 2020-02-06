@@ -1,18 +1,18 @@
-'use strict';
 
-import * as Q from "q";
-import {ILogger} from "../util/scopedLogger";
+
+import * as Q from 'q';
+import { ILogger } from '../util/scopedLogger';
 import {
     IProtocolFactory,
     IServer,
     IServerCreationOptions,
     ServerCreatorFunction,
     ServerImplCreatorFunction
-} from "./IProtocol";
-import {IImposterConfig, IpValidator} from "./imposters/IImposter";
-import {Imposter} from "./imposters/imposter";
-import {ResponseResolver} from "./responseResolver";
-import {StubRepository} from "./stubs/StubRepository";
+} from './IProtocol';
+import { IImposterConfig, IpValidator } from './imposters/IImposter';
+import { Imposter } from './imposters/imposter';
+import { ResponseResolver } from './responseResolver';
+import { StubRepository } from './stubs/StubRepository';
 
 
 export interface IProtocolLoadOptions {
@@ -32,14 +32,14 @@ interface IProtocolMap {
 export function load (
     builtInProtocols: IProtocolMap,
     customProtocols: IProtocolMap,
-    options:IProtocolLoadOptions,
+    options: IProtocolLoadOptions,
     isAllowedConnection?: IpValidator,
     mbLogger?: ILogger): {[key: string]: IProtocolFactory} {
     function inProcessCreate (createProtocol: ServerImplCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn!).then(server => {
-                const stubs = new StubRepository(server.encoding || 'utf8'),
-                    resolver = new ResponseResolver(stubs, server.proxy);
+                const stubs = new StubRepository(server.encoding || 'utf8');
+                const resolver = new ResponseResolver(stubs, server.proxy);
 
                 return Q({
                     port: server.port,
@@ -53,8 +53,8 @@ export function load (
 
     function outOfProcessCreate (protocolName: string, config: any): ServerCreatorFunction {
         function customFieldsFor (creationRequest: IServerCreationOptions): any {
-            const result: any = {},
-                commonFields = ['protocol', 'port', 'name', 'recordRequests', 'stubs', 'defaultResponse'];
+            const result: any = {};
+            const commonFields = ['protocol', 'port', 'name', 'recordRequests', 'stubs', 'defaultResponse'];
             Object.keys(creationRequest).forEach(key => {
                 if (commonFields.indexOf(key) < 0) {
                     result[key] = creationRequest[key];
@@ -64,29 +64,29 @@ export function load (
         }
 
         return (creationRequest: IServerCreationOptions, logger: ILogger) => {
-            const deferred = Q.defer<IServer>(),
-                { spawn } = require('child_process'),
-                command = config.createCommand.split(' ')[0],
-                args = config.createCommand.split(' ').splice(1),
-                port = creationRequest.port,
-                commonArgs = {
-                    port,
-                    callbackURLTemplate: options.callbackURLTemplate,
-                    loglevel: options.loglevel,
-                    allowInjection: options.allowInjection
-                },
-                configArgs = require('../util/helpers').merge(commonArgs, customFieldsFor(creationRequest));
+            const deferred = Q.defer<IServer>();
+            const { spawn } = require('child_process');
+            const command = config.createCommand.split(' ')[0];
+            const args = config.createCommand.split(' ').splice(1);
+            const port = creationRequest.port;
+            const commonArgs = {
+                port,
+                callbackURLTemplate: options.callbackURLTemplate,
+                loglevel: options.loglevel,
+                allowInjection: options.allowInjection
+            };
+            const configArgs = require('../util/helpers').merge(commonArgs, customFieldsFor(creationRequest));
 
             if (typeof creationRequest.defaultResponse !== 'undefined') {
                 configArgs.defaultResponse = creationRequest.defaultResponse;
             }
 
-            const allArgs = args.concat(JSON.stringify(configArgs)),
-                imposterProcess = spawn(command, allArgs);
+            const allArgs = args.concat(JSON.stringify(configArgs));
+            const imposterProcess = spawn(command, allArgs);
 
             let closeCalled = false;
 
-            imposterProcess.on('error', (error:any) => {
+            imposterProcess.on('error', (error: any) => {
                 const errors = require('../util/errors');
                 const message = `Invalid configuration for protocol "${protocolName}": cannot run "${config.createCommand}"`;
                 deferred.reject(errors.ProtocolError(message,
@@ -95,8 +95,8 @@ export function load (
 
             imposterProcess.once('exit', (code: number) => {
                 if (code !== 0 && deferred.promise.isPending()) {
-                    const errors = require('../util/errors'),
-                        message = `"${protocolName}" start command failed (exit code ${code})`;
+                    const errors = require('../util/errors');
+                    const message = `"${protocolName}" start command failed (exit code ${code})`;
                     deferred.reject(errors.ProtocolError(message, { source: config.createCommand }));
                 }
                 else if (!closeCalled) {
@@ -117,11 +117,11 @@ export function load (
                     serverPort = metadata.port;
                     delete metadata.port;
                 }
-                const callbackURL = options.callbackURLTemplate!.replace(':port', String(serverPort)),
-                    encoding = metadata.encoding || 'utf8';
+                const callbackURL = options.callbackURLTemplate!.replace(':port', String(serverPort));
+                const encoding = metadata.encoding || 'utf8';
 
-                const stubs = new StubRepository(encoding),
-                    resolver = new ResponseResolver(stubs, undefined, callbackURL);
+                const stubs = new StubRepository(encoding);
+                const resolver = new ResponseResolver(stubs, undefined, callbackURL);
 
                 delete metadata.encoding;
 
@@ -140,9 +140,9 @@ export function load (
 
             function log (message: string) {
                 if (message.indexOf(' ') > 0) {
-                    const words = message.split(' '),
-                        level = words[0],
-                        rest = words.splice(1).join(' ').trim();
+                    const words = message.split(' ');
+                    const level = words[0];
+                    const rest = words.splice(1).join(' ').trim();
                     if (['debug', 'info', 'warn', 'error'].indexOf(level) >= 0) {
                         logger[level](rest);
                     }

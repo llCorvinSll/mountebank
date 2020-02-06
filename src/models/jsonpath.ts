@@ -1,8 +1,8 @@
-'use strict';
 
-import {ILogger} from "../util/scopedLogger";
+
+import { ILogger } from '../util/scopedLogger';
 import { JSONPath } from 'jsonpath-plus';
-import {isObject} from "../util/helpers";
+import { isObject } from '../util/helpers';
 
 /**
  * Shared logic for xpath selector
@@ -18,8 +18,8 @@ import {isObject} from "../util/helpers";
  */
 export function select (selector: string, possibleJSON: string, logger: ILogger): string | undefined {
     try {
-        const json = isObject(possibleJSON) ? possibleJSON : JSON.parse(possibleJSON),
-            result = JSONPath(selector, json, undefined, undefined);
+        const json = isObject(possibleJSON) ? possibleJSON : JSON.parse(possibleJSON);
+        const result = JSONPath(selector, json, undefined, undefined);
         if (typeof result === 'string') {
             return result;
         }

@@ -1,4 +1,4 @@
-import {ApiClient} from "../api";
+import { ApiClient } from '../api';
 import * as fs from 'fs';
 import * as path from 'path';
 const client = require('../http/baseHttpClient').create('https');
@@ -14,7 +14,7 @@ describe('https imposter', function () {
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
     it('should support sending key/cert pair during imposter creation', function () {
         const request = {
@@ -67,25 +67,25 @@ describe('https imposter', function () {
     });
 
     it('should support proxying to origin server requiring mutual auth', function () {
-        const originServerPort = port + 1,
-            originServerRequest = {
-                protocol: 'https',
-                port: originServerPort,
-                stubs: [{ responses: [{ is: { body: 'origin server' } }] }],
-                name: 'origin',
-                mutualAuth: true
-            },
-            proxy = {
-                to: `https://localhost:${originServerPort}`,
-                key,
-                cert
-            },
-            proxyRequest = {
-                protocol: 'https',
-                port,
-                stubs: [{ responses: [{ proxy: proxy }] }],
-                name: 'proxy'
-            };
+        const originServerPort = port + 1;
+        const originServerRequest = {
+            protocol: 'https',
+            port: originServerPort,
+            stubs: [{ responses: [{ is: { body: 'origin server' } }] }],
+            name: 'origin',
+            mutualAuth: true
+        };
+        const proxy = {
+            to: `https://localhost:${originServerPort}`,
+            key,
+            cert
+        };
+        const proxyRequest = {
+            protocol: 'https',
+            port,
+            stubs: [{ responses: [{ proxy: proxy }] }],
+            name: 'proxy'
+        };
 
         return api.post('/imposters', originServerRequest).then((response: any) => {
             expect(response.statusCode).toEqual(201);

@@ -1,4 +1,4 @@
-'use strict';
+
 
 const assert = require('assert');
 import * as behaviors from '../../../src/models/behaviors/behaviors';
@@ -25,11 +25,11 @@ describe('behaviors', function () {
             const response: any = { key: 'value' };
             const logger = Logger.create();
             const start = Date.now();
-            const config: any= { wait: 100 };
+            const config: any = { wait: 100 };
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 const time = Date.now() - start;
-                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); // allows for approximate timing
+                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); //allows for approximate timing
                 expect(actualResponse).toEqual({ key: 'value' });
             });
         });
@@ -40,11 +40,11 @@ describe('behaviors', function () {
             const logger = Logger.create();
             const fn = () => 100;
             const start = Date.now();
-            const config: any= { wait: fn.toString() };
+            const config: any = { wait: fn.toString() };
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 const time = Date.now() - start;
-                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); // allows for approximate timing
+                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); //allows for approximate timing
                 expect(actualResponse).toEqual({ key: 'value' });
             });
         });
@@ -53,8 +53,8 @@ describe('behaviors', function () {
             const request: any = {};
             const response: any = { key: 'value' };
             const logger = Logger.create();
-            const fn = () => { throw Error('BOOM!!!') };
-            const config: any= { wait: fn.toString() };
+            const fn = () => { throw Error('BOOM!!!'); };
+            const config: any = { wait: fn.toString() };
 
             return behaviors.execute(request, response, config, logger).then(() => {
                 assert.fail('should have rejected');
@@ -69,11 +69,11 @@ describe('behaviors', function () {
             const response: any = { key: 'value' };
             const logger = Logger.create();
             const start = Date.now();
-            const config: any= { wait: '100' };
+            const config: any = { wait: '100' };
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 const time = Date.now() - start;
-                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); // allows for approximate timing
+                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); //allows for approximate timing
                 expect(actualResponse).toEqual({ key: 'value' });
             });
         });

@@ -1,4 +1,4 @@
-import {ApiClient} from "../api";
+import { ApiClient } from '../api';
 
 const assert = require('assert');
 const BaseHttpClient = require('./baseHttpClient');
@@ -14,19 +14,19 @@ const util = require('util');
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
     describe(`${protocol} imposter`, function () {
         describe('POST /imposters with stubs', function () {
             it('should add latency when using behaviors.wait', function () {
                 const stub = {
                     responses: [{
-                        is: {body: 'stub'},
-                        _behaviors: {wait: 1000}
+                        is: { body: 'stub' },
+                        _behaviors: { wait: 1000 }
                     }]
                 };
                 const stubs = [stub];
-                const request = {protocol, port, stubs: stubs};
+                const request = { protocol, port, stubs: stubs };
                 let timer: number;
 
                 return api.post('/imposters', request).then((response: any) => {
@@ -43,15 +43,15 @@ const util = require('util');
             });
 
             it('should add latency when using behaviors.wait as a function', function () {
-                const fn = () => 1000,
-                    stub = {
-                        responses: [{
-                            is: { body: 'stub' },
-                            _behaviors: { wait: fn.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                const fn = () => 1000;
+                const stub = {
+                    responses: [{
+                        is: { body: 'stub' },
+                        _behaviors: { wait: fn.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
                 let timer: number;
 
                 return api.post('/imposters', request).then((response: any) => {
@@ -69,16 +69,16 @@ const util = require('util');
 
             it('should support post-processing when using behaviors.decorate (old interface)', function () {
                 const decorator = (request: any, response: any) => {
-                        response.body = response.body.replace('${YEAR}', new Date().getFullYear());
-                    },
-                    stub = {
-                        responses: [{
-                            is: { body: 'the year is ${YEAR}' },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                    response.body = response.body.replace('${YEAR}', new Date().getFullYear());
+                };
+                const stub = {
+                    responses: [{
+                        is: { body: 'the year is ${YEAR}' },
+                        _behaviors: { decorate: decorator.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -90,16 +90,16 @@ const util = require('util');
 
             it('should support post-processing when using behaviors.decorate', function () {
                 const decorator = (config: any) => {
-                        config.response.body = config.response.body.replace('${YEAR}', new Date().getFullYear());
-                    },
-                    stub = {
-                        responses: [{
-                            is: { body: 'the year is ${YEAR}' },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                    config.response.body = config.response.body.replace('${YEAR}', new Date().getFullYear());
+                };
+                const stub = {
+                    responses: [{
+                        is: { body: 'the year is ${YEAR}' },
+                        _behaviors: { decorate: decorator.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -111,19 +111,19 @@ const util = require('util');
 
             it('should fix content-length if set and adjusted using decoration (issue #155)', function () {
                 const decorator = (request: any, response: any) => {
-                        response.body = 'length-8';
-                    },
-                    stub = {
-                        responses: [{
-                            is: {
-                                body: 'len-5',
-                                headers: { 'content-length': 5 }
-                            },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                    response.body = 'length-8';
+                };
+                const stub = {
+                    responses: [{
+                        is: {
+                            body: 'len-5',
+                            headers: { 'content-length': 5 }
+                        },
+                        _behaviors: { decorate: decorator.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -136,16 +136,16 @@ const util = require('util');
 
             it('should support using request parameters during decorating (old interface)', function () {
                 const decorator = (request: any, response: any) => {
-                        response.body = response.body.replace('${PATH}', request.path);
-                    },
-                    stub = {
-                        responses: [{
-                            is: { body: 'the path is ${PATH}' },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                    response.body = response.body.replace('${PATH}', request.path);
+                };
+                const stub = {
+                    responses: [{
+                        is: { body: 'the path is ${PATH}' },
+                        _behaviors: { decorate: decorator.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -156,17 +156,17 @@ const util = require('util');
             });
 
             it('should support using request parameters during decorating', function () {
-                const decorator = (config:any) => {
+                const decorator = (config: any) => {
                     config.response.body = config.response.body.replace('${PATH}', config.request.path);
                 };
                 const stub = {
                     responses: [{
-                        is: {body: 'the path is ${PATH}'},
-                        _behaviors: {decorate: decorator.toString()}
+                        is: { body: 'the path is ${PATH}' },
+                        _behaviors: { decorate: decorator.toString() }
                     }]
                 };
                 const stubs = [stub];
-                const request = {protocol, port, stubs: stubs};
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -178,16 +178,16 @@ const util = require('util');
 
             it('should support using request parameters during decorating multiple times (issue #173)', function () {
                 const decorator = (request: any, response: any) => {
-                        response.body = response.body.replace('${id}', request.query.id);
-                    },
-                    stub = {
-                        responses: [{
-                            is: { body: 'request ${id}' },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                    response.body = response.body.replace('${id}', request.query.id);
+                };
+                const stub = {
+                    responses: [{
+                        is: { body: 'request ${id}' },
+                        _behaviors: { decorate: decorator.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -206,18 +206,18 @@ const util = require('util');
 
             it('should support decorate functions that return a value (old interface)', function () {
                 const decorator = (request: any, response: any) => {
-                        const clonedResponse = JSON.parse(JSON.stringify(response));
-                        clonedResponse.body = 'This is a clone';
-                        return clonedResponse;
-                    },
-                    stub = {
-                        responses: [{
-                            is: { body: 'This is the original' },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                    const clonedResponse = JSON.parse(JSON.stringify(response));
+                    clonedResponse.body = 'This is a clone';
+                    return clonedResponse;
+                };
+                const stub = {
+                    responses: [{
+                        is: { body: 'This is the original' },
+                        _behaviors: { decorate: decorator.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -229,18 +229,18 @@ const util = require('util');
 
             it('should support decorate functions that return a value', function () {
                 const decorator = (config: any) => {
-                        const clonedResponse = JSON.parse(JSON.stringify(config.response));
-                        clonedResponse.body = 'This is a clone';
-                        return clonedResponse;
-                    },
-                    stub = {
-                        responses: [{
-                            is: { body: 'This is the original' },
-                            _behaviors: { decorate: decorator.toString() }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs };
+                    const clonedResponse = JSON.parse(JSON.stringify(config.response));
+                    clonedResponse.body = 'This is a clone';
+                    return clonedResponse;
+                };
+                const stub = {
+                    responses: [{
+                        is: { body: 'This is the original' },
+                        _behaviors: { decorate: decorator.toString() }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -254,12 +254,12 @@ const util = require('util');
                 const decorator = "response.body = 'This should not work';";
                 const stub = {
                     responses: [{
-                        is: {body: 'This is the original'},
-                        _behaviors: {decorate: decorator}
+                        is: { body: 'This is the original' },
+                        _behaviors: { decorate: decorator }
                     }]
                 };
                 const stubs = [stub];
-                const request = {protocol, port, stubs: stubs};
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -273,18 +273,18 @@ const util = require('util');
                             is: {
                                 body: 'first response',
                                 statusCode: 400,
-                                headers: {'Content-Type': 'text/plain'}
+                                headers: { 'Content-Type': 'text/plain' }
                             },
-                            _behaviors: {repeat: 2}
+                            _behaviors: { repeat: 2 }
                         },
                         {
-                            is: {body: 'second response'},
-                            _behaviors: {repeat: 3}
+                            is: { body: 'second response' },
+                            _behaviors: { repeat: 3 }
                         },
-                        {is: {body: 'third response'}}
+                        { is: { body: 'third response' } }
                     ]
                 };
-                const request = {protocol, port, stubs: [stub]};
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -319,18 +319,18 @@ const util = require('util');
 
             it('should repeat consistently with headers (issue #158)', function () {
                 const stub = {
-                        responses: [
-                            {
-                                is: {
-                                    body: 'first response',
-                                    headers: { 'Content-Type': 'application/xml' }
-                                },
-                                _behaviors: { repeat: 2 }
+                    responses: [
+                        {
+                            is: {
+                                body: 'first response',
+                                headers: { 'Content-Type': 'application/xml' }
                             },
-                            { is: { body: 'second response' } }
-                        ]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                            _behaviors: { repeat: 2 }
+                        },
+                        { is: { body: 'second response' } }
+                    ]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -348,20 +348,20 @@ const util = require('util');
 
             it('should repeat with JSON key of repeat (issue #237)', function () {
                 const stub = {
-                        responses: [
-                            {
-                                is: { body: 'This should repeat 2 times' },
-                                _behaviors: { repeat: 2 }
-                            },
-                            { is: { body: 'Then you should see this' } }
-                        ],
-                        predicates: [{
-                            equals: {
-                                body: { repeat: true }
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [
+                        {
+                            is: { body: 'This should repeat 2 times' },
+                            _behaviors: { repeat: 2 }
+                        },
+                        { is: { body: 'Then you should see this' } }
+                    ],
+                    predicates: [{
+                        equals: {
+                            body: { repeat: true }
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -381,16 +381,16 @@ const util = require('util');
                 // The string version of the shellTransform behavior is left for backwards
                 // compatibility. It changed in v1.13.0 to accept an array.
                 const stub = {
-                        responses: [{
-                            is: { body: 'Hello, {YOU}!' },
-                            _behaviors: { shellTransform: 'node shellTransformTest.js' }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs },
-                    shellFn = function exec () {
-                        console.log(process.argv[3].replace('{YOU}', 'mountebank'));
-                    };
+                    responses: [{
+                        is: { body: 'Hello, {YOU}!' },
+                        _behaviors: { shellTransform: 'node shellTransformTest.js' }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
+                const shellFn = function exec () {
+                    console.log(process.argv[3].replace('{YOU}', 'mountebank'));
+                };
 
                 fs.writeFileSync('shellTransformTest.js', util.format('%s\nexec();', shellFn.toString()));
 
@@ -407,25 +407,25 @@ const util = require('util');
 
             it('should support array of shell transforms in order', function () {
                 const stub = {
-                        responses: [{
-                            is: { body: 1 },
-                            _behaviors: {
-                                shellTransform: ['node double.js', 'node increment.js']
-                            }
-                        }]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs },
-                    doubleFn = function double () {
-                        const response = JSON.parse(process.argv[3]);
-                        response.body *= 2;
-                        console.log(JSON.stringify(response));
-                    },
-                    incrementFn = function increment () {
-                        const response = JSON.parse(process.argv[3]);
-                        response.body += 1;
-                        console.log(JSON.stringify(response));
-                    };
+                    responses: [{
+                        is: { body: 1 },
+                        _behaviors: {
+                            shellTransform: ['node double.js', 'node increment.js']
+                        }
+                    }]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
+                const doubleFn = function double () {
+                    const response = JSON.parse(process.argv[3]);
+                    response.body *= 2;
+                    console.log(JSON.stringify(response));
+                };
+                const incrementFn = function increment () {
+                    const response = JSON.parse(process.argv[3]);
+                    response.body += 1;
+                    console.log(JSON.stringify(response));
+                };
 
                 fs.writeFileSync('double.js', util.format('%s\ndouble();', doubleFn.toString()));
                 fs.writeFileSync('increment.js', util.format('%s\nincrement();', incrementFn.toString()));
@@ -444,40 +444,40 @@ const util = require('util');
 
             it('should support copying from request fields using regex', function () {
                 const stub = {
-                        responses: [{
-                            is: {
-                                statusCode: '${code}',
-                                headers: {
-                                    'X-Test': '${header}'
-                                },
-                                body: '${body}'
+                    responses: [{
+                        is: {
+                            statusCode: '${code}',
+                            headers: {
+                                'X-Test': '${header}'
                             },
-                            _behaviors: {
-                                copy: [
-                                    {
-                                        from: 'path',
-                                        into: '${code}',
-                                        using: { method: 'regex', selector: '\\d+' }
-                                    },
-                                    {
-                                        from: { headers: 'X-Request' },
-                                        into: '${header}',
-                                        using: { method: 'regex', selector: '.+' }
-                                    },
-                                    {
-                                        from: { query: 'body' },
-                                        into: '${body}',
-                                        using: {
-                                            method: 'regex',
-                                            selector: 'he\\w+$',
-                                            options: { ignoreCase: true }
-                                        }
+                            body: '${body}'
+                        },
+                        _behaviors: {
+                            copy: [
+                                {
+                                    from: 'path',
+                                    into: '${code}',
+                                    using: { method: 'regex', selector: '\\d+' }
+                                },
+                                {
+                                    from: { headers: 'X-Request' },
+                                    into: '${header}',
+                                    using: { method: 'regex', selector: '.+' }
+                                },
+                                {
+                                    from: { query: 'body' },
+                                    into: '${body}',
+                                    using: {
+                                        method: 'regex',
+                                        selector: 'he\\w+$',
+                                        options: { ignoreCase: true }
                                     }
-                                ]
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                                }
+                            ]
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -496,22 +496,22 @@ const util = require('util');
 
             it('should support copying from request fields using xpath', function () {
                 const stub = {
-                        responses: [{
-                            is: { body: 'Hello, NAME! Good to see you, NAME.' },
-                            _behaviors: {
-                                copy: [{
-                                    from: 'body',
-                                    into: 'NAME',
-                                    using: {
-                                        method: 'xpath',
-                                        selector: '//mb:name',
-                                        ns: { mb: 'http://example.com/mb' }
-                                    }
-                                }]
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{
+                        is: { body: 'Hello, NAME! Good to see you, NAME.' },
+                        _behaviors: {
+                            copy: [{
+                                from: 'body',
+                                into: 'NAME',
+                                using: {
+                                    method: 'xpath',
+                                    selector: '//mb:name',
+                                    ns: { mb: 'http://example.com/mb' }
+                                }
+                            }]
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -523,18 +523,18 @@ const util = require('util');
 
             it('should support copying from request fields using jsonpath', function () {
                 const stub = {
-                        responses: [{
-                            is: { body: 'Hello, NAME! Good to see you, NAME.' },
-                            _behaviors: {
-                                copy: [{
-                                    from: 'BODY',
-                                    into: 'NAME',
-                                    using: { method: 'jsonpath', selector: '$..name' }
-                                }]
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{
+                        is: { body: 'Hello, NAME! Good to see you, NAME.' },
+                        _behaviors: {
+                            copy: [{
+                                from: 'BODY',
+                                into: 'NAME',
+                                using: { method: 'jsonpath', selector: '$..name' }
+                            }]
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -546,31 +546,31 @@ const util = require('util');
 
             it('should support lookup from CSV file keyed by regex', function () {
                 const stub = {
-                        responses: [{
-                            is: {
-                                statusCode: '${mountebank}["code"]',
-                                headers: {
-                                    'X-Occupation': '${mountebank}[occupation]'
-                                },
-                                body: "Hello ${mountebank}['name']. Have you been to ${bob}[location]?"
+                    responses: [{
+                        is: {
+                            statusCode: '${mountebank}["code"]',
+                            headers: {
+                                'X-Occupation': '${mountebank}[occupation]'
                             },
-                            _behaviors: {
-                                lookup: [
-                                    {
-                                        key: { from: 'path', using: { method: 'regex', selector: '/(.*)$' }, index: 1 },
-                                        fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'name' } },
-                                        into: '${mountebank}'
-                                    },
-                                    {
-                                        key: { from: { headers: 'X-Bob' }, using: { method: 'regex', selector: '.+' } },
-                                        fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'occupation' } },
-                                        into: '${bob}'
-                                    }
-                                ]
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                            body: "Hello ${mountebank}['name']. Have you been to ${bob}[location]?"
+                        },
+                        _behaviors: {
+                            lookup: [
+                                {
+                                    key: { from: 'path', using: { method: 'regex', selector: '/(.*)$' }, index: 1 },
+                                    fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'name' } },
+                                    into: '${mountebank}'
+                                },
+                                {
+                                    key: { from: { headers: 'X-Bob' }, using: { method: 'regex', selector: '.+' } },
+                                    fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'occupation' } },
+                                    into: '${bob}'
+                                }
+                            ]
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 fs.writeFileSync('lookupTest.csv',
                     'name,code,occupation,location\n' +
@@ -598,25 +598,25 @@ const util = require('util');
 
             it('should support lookup from CSV file keyed by xpath', function () {
                 const stub = {
-                        responses: [{
-                            is: { body: "Hello, YOU[name]! How is YOU['location'] today?" },
-                            _behaviors: {
-                                lookup: [{
-                                    key: {
-                                        from: 'body',
-                                        using: {
-                                            method: 'xpath',
-                                            selector: '//mb:name',
-                                            ns: { mb: 'http://example.com/mb' }
-                                        }
-                                    },
-                                    fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'occupation' } },
-                                    into: 'YOU'
-                                }]
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{
+                        is: { body: "Hello, YOU[name]! How is YOU['location'] today?" },
+                        _behaviors: {
+                            lookup: [{
+                                key: {
+                                    from: 'body',
+                                    using: {
+                                        method: 'xpath',
+                                        selector: '//mb:name',
+                                        ns: { mb: 'http://example.com/mb' }
+                                    }
+                                },
+                                fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'occupation' } },
+                                into: 'YOU'
+                            }]
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 fs.writeFileSync('lookupTest.csv',
                     'name,occupation,location\n' +
@@ -637,18 +637,18 @@ const util = require('util');
 
             it('should support lookup from CSV file keyed by jsonpath', function () {
                 const stub = {
-                        responses: [{
-                            is: { body: 'Hello, YOU["name"]! How is YOU[location] today?' },
-                            _behaviors: {
-                                lookup: [{
-                                    key: { from: 'body', using: { method: 'jsonpath', selector: '$..occupation' } },
-                                    fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'occupation' } },
-                                    into: 'YOU'
-                                }]
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{
+                        is: { body: 'Hello, YOU["name"]! How is YOU[location] today?' },
+                        _behaviors: {
+                            lookup: [{
+                                key: { from: 'body', using: { method: 'jsonpath', selector: '$..occupation' } },
+                                fromDataSource: { csv: { path: 'lookupTest.csv', keyColumn: 'occupation' } },
+                                into: 'YOU'
+                            }]
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 fs.writeFileSync('lookupTest.csv',
                     'name,occupation,location\n' +
@@ -669,35 +669,35 @@ const util = require('util');
 
             it('should compose multiple behaviors together', function () {
                 const shellFn = function exec () {
-                        console.log(process.argv[3].replace('${SALUTATION}', 'Hello'));
-                    },
-                    decorator = (request: any, response: any) => {
-                        response.body = response.body.replace('${SUBJECT}', 'mountebank');
-                    },
-                    stub = {
-                        responses: [
-                            {
-                                is: { body: '${SALUTATION}, ${SUBJECT}${PUNCTUATION}' },
-                                _behaviors: {
-                                    wait: 300,
-                                    repeat: 2,
-                                    shellTransform: ['node shellTransformTest.js'],
-                                    decorate: decorator.toString(),
-                                    copy: [{
-                                        from: { query: 'punctuation' },
-                                        into: '${PUNCTUATION}',
-                                        using: { method: 'regex', selector: '[,.?!]' }
-                                    }]
-                                }
-                            },
-                            {
-                                is: { body: 'No behaviors' }
+                    console.log(process.argv[3].replace('${SALUTATION}', 'Hello'));
+                };
+                const decorator = (request: any, response: any) => {
+                    response.body = response.body.replace('${SUBJECT}', 'mountebank');
+                };
+                const stub = {
+                    responses: [
+                        {
+                            is: { body: '${SALUTATION}, ${SUBJECT}${PUNCTUATION}' },
+                            _behaviors: {
+                                wait: 300,
+                                repeat: 2,
+                                shellTransform: ['node shellTransformTest.js'],
+                                decorate: decorator.toString(),
+                                copy: [{
+                                    from: { query: 'punctuation' },
+                                    into: '${PUNCTUATION}',
+                                    using: { method: 'regex', selector: '[,.?!]' }
+                                }]
                             }
-                        ]
-                    },
-                    stubs = [stub],
-                    request = { protocol, port, stubs: stubs },
-                    timer = Date.now();
+                        },
+                        {
+                            is: { body: 'No behaviors' }
+                        }
+                    ]
+                };
+                const stubs = [stub];
+                const request = { protocol, port, stubs: stubs };
+                const timer = Date.now();
 
                 fs.writeFileSync('shellTransformTest.js', util.format('%s\nexec();', shellFn.toString()));
 

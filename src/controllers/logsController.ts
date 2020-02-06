@@ -1,6 +1,6 @@
-'use strict';
 
-import {Request, Response} from "express";
+
+import { Request, Response } from 'express';
 
 /**
  * The controller that exposes the logs
@@ -20,14 +20,14 @@ export function create (logfile: string) {
      * @param {Object} response - the HTTP response
      */
     function get (request: Request, response: Response) {
-        const fs = require('fs'),
-            json = '[' + fs.readFileSync(logfile).toString().split('\n').join(',').replace(/,$/, '') + ']',
-            allLogs = JSON.parse(json),
-            url = require('url'),
-            query = url.parse(request.url, true).query,
-            startIndex = parseInt(query.startIndex || 0),
-            endIndex = parseInt(query.endIndex || allLogs.length - 1),
-            logs = allLogs.slice(startIndex, endIndex + 1);
+        const fs = require('fs');
+        const json = '[' + fs.readFileSync(logfile).toString().split('\n').join(',').replace(/,$/, '') + ']';
+        const allLogs = JSON.parse(json);
+        const url = require('url');
+        const query = url.parse(request.url, true).query;
+        const startIndex = parseInt(query.startIndex || 0);
+        const endIndex = parseInt(query.endIndex || allLogs.length - 1);
+        const logs = allLogs.slice(startIndex, endIndex + 1);
 
         response.format({
             json: () => { response.send({ logs: logs }); },

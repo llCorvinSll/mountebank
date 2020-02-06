@@ -1,4 +1,4 @@
-import {ApiClient} from "../api";
+import { ApiClient } from '../api';
 
 const client = require('./smtpClient');
 
@@ -9,7 +9,7 @@ describe('smtp imposter', function () {
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
     describe('POST /imposters/:id', function () {
         it('should auto-assign port if port not provided', function () {

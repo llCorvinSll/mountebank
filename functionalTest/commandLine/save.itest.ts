@@ -1,4 +1,4 @@
-import {ApiClient} from "../api/api";
+import { ApiClient } from '../api/api';
 
 import * as path from 'path';
 const BaseHttpClient = require('../api/http/baseHttpClient');
@@ -13,8 +13,8 @@ describe('mb save', function () {
     beforeAll(() => {
         api = new ApiClient();
         port = api.port + 1;
-        mb = require('../mb').create(port)
-    })
+        mb = require('../mb').create(port);
+    });
 
     it('should allow saving replayable format', function () {
         const args = ['--configfile', path.join(__dirname, 'imposters/imposters.ejs')];
@@ -54,14 +54,14 @@ describe('mb save', function () {
 
     if (process.env.MB_AIRPLANE_MODE !== 'true') {
         it('should allow removing proxies during save', function () {
-            const proxyStub = { responses: [{ proxy: { to: 'https://google.com' } }] },
-                proxyRequest = { protocol: 'http', port: port + 1, stubs: [proxyStub], name: 'PROXY' };
+            const proxyStub = { responses: [{ proxy: { to: 'https://google.com' } }] };
+            const proxyRequest = { protocol: 'http', port: port + 1, stubs: [proxyStub], name: 'PROXY' };
             let expected: any;
 
             return mb.start()
                 .then(() => mb.post('/imposters', proxyRequest))
                 .then((response: any) => {
-                    expect(response.statusCode).toEqual( 201);
+                    expect(response.statusCode).toEqual(201);
                     return http.get('/', port + 1);
                 })
                 .then(() => mb.get('/imposters?replayable=true&removeProxies=true'))

@@ -1,4 +1,4 @@
-import {ApiClient} from "../api/api";
+import { ApiClient } from '../api/api';
 import * as path from 'path';
 const BaseHttpClient = require('../api/http/baseHttpClient');
 const smtp = require('../api/smtp/smtpClient');
@@ -13,8 +13,8 @@ describe('config file', function () {
     beforeAll(() => {
         api = new ApiClient();
         port = api.port + 1;
-        mb = require('../mb').create(port)
-    })
+        mb = require('../mb').create(port);
+    });
     // I don't normally advocate separating the data needed for the assertions from the test setup,
     // but I wanted this to be a reasonably complex regression test
     it('should support complex configuration with --configfile in multiple files', function () {

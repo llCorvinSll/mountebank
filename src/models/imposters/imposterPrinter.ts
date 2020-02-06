@@ -1,26 +1,24 @@
-'use strict';
-
-import {IServer, IServerRequestData} from "../IProtocol";
+import { IServer, IServerRequestData } from '../IProtocol';
 import * as helpers from '../../util/helpers';
-import {IImposterConfig, ImposterPrintOptions} from "./IImposter";
-import {IStub} from "../stubs/IStub";
+import { IImposterConfig, IImposterPrintOptions } from './IImposter';
+import { IStub } from '../stubs/IStub';
 
 
 export class ImposterPrinter {
-    constructor(private creationRequest:IImposterConfig, private server:IServer, private requests:IServerRequestData[]) {
+    constructor (private creationRequest: IImposterConfig, private server: IServer, private requests: IServerRequestData[]) {
 
     }
 
-    public toJSON (numberOfRequests:number, options:ImposterPrintOptions):any {
+    public toJSON (numberOfRequests: number, options?: IImposterPrintOptions): any {
         // I consider the order of fields represented important.  They won't matter for parsing,
         // but it makes a nicer user experience for developers viewing the JSON to keep the most
         // relevant information at the top
-        const result:any = {
-                protocol: this.creationRequest.protocol,
-                port: this.server.port,
-                numberOfRequests: numberOfRequests
-            },
-            baseURL = `/imposters/${this.server.port}`;
+        const result: any = {
+            protocol: this.creationRequest.protocol,
+            port: this.server.port,
+            numberOfRequests: numberOfRequests
+        };
+        const baseURL = `/imposters/${this.server.port}`;
 
         options = options || {};
 
@@ -43,7 +41,7 @@ export class ImposterPrinter {
         return result;
     }
 
-    private addDetailsTo (result:any, baseURL:string) {
+    private addDetailsTo (result: any, baseURL: string) {
         if (this.creationRequest.name) {
             result.name = this.creationRequest.name;
         }
@@ -54,9 +52,7 @@ export class ImposterPrinter {
         });
 
         result.requests = this.requests;
-        result.stubs = this.server.stubs.stubs().map((stub) => {
-            return JSON.parse(JSON.stringify(stub));
-        });
+        result.stubs = this.server.stubs.stubs().map(stub => helpers.clone(stub));
 
         for (let i = 0; i < result.stubs.length; i += 1) {
             result.stubs[i]._links = {
@@ -65,8 +61,8 @@ export class ImposterPrinter {
         }
     }
 
-    private removeNonEssentialInformationFrom (result:any) {
-        result.stubs.forEach((stub:IStub) => {
+    private removeNonEssentialInformationFrom (result: any) {
+        result.stubs.forEach((stub: IStub) => {
             /* eslint-disable no-underscore-dangle */
             if (stub.matches) {
                 delete stub.matches;
@@ -87,12 +83,12 @@ export class ImposterPrinter {
         delete result._links;
     }
 
-    private removeProxiesFrom (result:any) {
-        result.stubs.forEach((stub:IStub) => {
+    private removeProxiesFrom (result: any) {
+        result.stubs.forEach((stub: IStub) => {
             // eslint-disable-next-line no-prototype-builtins
             stub.responses = (stub.responses || []).filter(response => !response.hasOwnProperty('proxy'));
         });
-        result.stubs = result.stubs.filter((stub:IStub) => (stub.responses || []).length > 0);
+        result.stubs = result.stubs.filter((stub: IStub) => (stub.responses || []).length > 0);
     }
 
 }

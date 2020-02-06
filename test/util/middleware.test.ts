@@ -1,7 +1,7 @@
-'use strict';
+
 
 import * as middleware from '../../src/util/middleware';
-import {FakeResponse} from '../fakes/fakeResponse';
+import { FakeResponse } from '../fakes/fakeResponse';
 
 describe('middleware', function () {
     let request: any;
@@ -110,18 +110,18 @@ describe('middleware', function () {
         });
 
         it('should not change links within stub responses', function () {
-            const middlewareFn = middleware.useAbsoluteUrls(9000),
-                userRequest = ({
-                    stubs: [{
-                        responses: [{
-                            is: {
-                                body: {
-                                    _links: { self: { href: '/path/to' } }
-                                }
+            const middlewareFn = middleware.useAbsoluteUrls(9000);
+            const userRequest = ({
+                stubs: [{
+                    responses: [{
+                        is: {
+                            body: {
+                                _links: { self: { href: '/path/to' } }
                             }
-                        }]
+                        }
                     }]
-                });
+                }]
+            });
 
             middlewareFn(request, response, next);
             response.send(userRequest);
@@ -130,8 +130,8 @@ describe('middleware', function () {
         });
 
         it('should change links within stub _links', function () {
-            const middlewareFn = middleware.useAbsoluteUrls(9000),
-                userRequest = ({ stubs: [{ _links: { self: { href: '/path/to' } } }] });
+            const middlewareFn = middleware.useAbsoluteUrls(9000);
+            const userRequest = ({ stubs: [{ _links: { self: { href: '/path/to' } } }] });
 
             middlewareFn(request, response, next);
             response.send(userRequest);
@@ -140,12 +140,12 @@ describe('middleware', function () {
         });
 
         it('should change links within stub _links with root imposters array', function () {
-            const middlewareFn = middleware.useAbsoluteUrls(9000),
-                userRequest = ({
-                    imposters: [{
-                        stubs: [{ _links: { self: { href: '/path/to' } } }]
-                    }]
-                });
+            const middlewareFn = middleware.useAbsoluteUrls(9000);
+            const userRequest = ({
+                imposters: [{
+                    stubs: [{ _links: { self: { href: '/path/to' } } }]
+                }]
+            });
 
             middlewareFn(request, response, next);
             response.send(userRequest);
@@ -158,13 +158,13 @@ describe('middleware', function () {
         });
 
         it('should not change links within response elements sent back to protocol implementations', function () {
-            const middlewareFn = middleware.useAbsoluteUrls(9000),
-                userRequest = {
-                    response: {
-                        statusCode: 200,
-                        body: { _links: { self: { href: '/path/to' } } }
-                    }
-                };
+            const middlewareFn = middleware.useAbsoluteUrls(9000);
+            const userRequest = {
+                response: {
+                    statusCode: 200,
+                    body: { _links: { self: { href: '/path/to' } } }
+                }
+            };
 
             middlewareFn(request, response, next);
             response.send(userRequest);
@@ -184,7 +184,7 @@ describe('middleware', function () {
         });
 
         it('should call next if imposter exists', function () {
-            const imposters = {1: {}} as any;
+            const imposters = { 1: {} } as any;
             const middlewareFn = middleware.createImposterValidator(imposters);
             request.params.id = 1;
 
@@ -196,7 +196,7 @@ describe('middleware', function () {
 
     describe('#logger', function () {
         it('should log request at info level', function () {
-            const log = {info: jest.fn()} as any;
+            const log = { info: jest.fn() } as any;
             const middlewareFn = middleware.logger(log, 'TEST MESSAGE');
             request = { url: '', headers: { accept: '' } };
 
@@ -206,7 +206,7 @@ describe('middleware', function () {
         });
 
         it('should log protocol implementation requests at debug level', function () {
-            const log: any = {debug: jest.fn()};
+            const log: any = { debug: jest.fn() };
             const middlewareFn = middleware.logger(log, 'TEST MESSAGE');
             request = { url: '/_requests/0', headers: { accept: '' } };
 
@@ -216,7 +216,7 @@ describe('middleware', function () {
         });
 
         it('should log request url and method', function () {
-            const log: any = {info: jest.fn()};
+            const log: any = { info: jest.fn() };
             const middlewareFn = middleware.logger(log, 'MESSAGE WITH :method :url');
             request = { method: 'METHOD', url: 'URL', headers: { accept: '' } };
 
@@ -226,7 +226,7 @@ describe('middleware', function () {
         });
 
         it('should not log static asset requests', function () {
-            const log: any = {info: jest.fn()};
+            const log: any = { info: jest.fn() };
             const middlewareFn = middleware.logger(log, 'TEST');
 
             ['.js', '.css', '.png', '.ico'].forEach(ext => {
@@ -237,7 +237,7 @@ describe('middleware', function () {
         });
 
         it('should not log html requests', function () {
-            const log: any = {info: jest.fn()};
+            const log: any = { info: jest.fn() };
             const middlewareFn = middleware.logger(log, 'TEST');
             request = { method: 'METHOD', url: 'URL', headers: { accept: 'text/html' } };
 
@@ -247,7 +247,7 @@ describe('middleware', function () {
         });
 
         it('should not log AJAX requests', function () {
-            const log: any = {info: jest.fn()};
+            const log: any = { info: jest.fn() };
             const middlewareFn = middleware.logger(log, 'TEST');
             request = { method: 'METHOD', url: 'URL', headers: { 'x-requested-with': 'XMLHttpRequest' } };
 
@@ -257,7 +257,7 @@ describe('middleware', function () {
         });
 
         it('should call next', function () {
-            const log: any = {info: jest.fn()};
+            const log: any = { info: jest.fn() };
             const middlewareFn = middleware.logger(log, 'TEST');
             request = { url: '', headers: { accept: '' } };
 
@@ -270,7 +270,7 @@ describe('middleware', function () {
     describe('#globals', function () {
         it('should pass variables to all render calls', function () {
             const render = jest.fn();
-            const middlewareFn = middleware.globals({first: 1, second: 2});
+            const middlewareFn = middleware.globals({ first: 1, second: 2 });
             response = { render: render };
 
             middlewareFn({} as any, response, next);
@@ -281,7 +281,7 @@ describe('middleware', function () {
 
         it('should merge variables to all render calls', function () {
             const render = jest.fn();
-            const middlewareFn = middleware.globals({first: 1, second: 2});
+            const middlewareFn = middleware.globals({ first: 1, second: 2 });
             response = { render: render };
 
             middlewareFn({} as any, response, next);
@@ -292,7 +292,7 @@ describe('middleware', function () {
 
         it('should overwrite variables of the same name', function () {
             const render = jest.fn();
-            const middlewareFn = middleware.globals({key: 'global'});
+            const middlewareFn = middleware.globals({ key: 'global' });
             response = { render: render };
 
             middlewareFn({} as any, response, next);

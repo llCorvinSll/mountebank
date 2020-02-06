@@ -27,18 +27,56 @@ describe('helpers', function () {
             expect(clone !== original).toBeTruthy();
             expect(clone).toEqual(original);
         });
+
+        it('should clone array', function () {
+            const original = [
+                {
+                    level: 1,
+                    key: 'value1'
+                },
+                {
+                    level: 1,
+                    key: 'value2'
+                }
+            ];
+
+            const clone = helpers.clone(original);
+            expect(clone !== original).toBeTruthy();
+            expect(clone).toEqual(original);
+        });
+
+        it('should return null if null passed', function () {
+            const original = null;
+
+            const clone = helpers.clone(original);
+            expect(clone).toBeNull();
+        });
+
+        it('should return undefined if undefined passed', function () {
+            const original = undefined;
+
+            const clone = helpers.clone(original);
+            expect(clone).toBeUndefined();
+        });
+
+        it('should return boolean if boolean passed', function () {
+            const original = true;
+
+            const clone = helpers.clone(original);
+            expect(clone).toEqual(true);
+        });
     });
 
     describe('#merge', function () {
         it('should deep merge two object', function () {
             const first = {
-                    first: 1,
-                    second: { third: 3 }
-                },
-                second = {
-                    fourth: 4,
-                    fifth: { sixth: 6 }
-                };
+                first: 1,
+                second: { third: 3 }
+            };
+            const second = {
+                fourth: 4,
+                fifth: { sixth: 6 }
+            };
 
             const merged = helpers.merge(first, second);
 
@@ -51,8 +89,8 @@ describe('helpers', function () {
         });
 
         it('should use second parameter for conflict resolution', function () {
-            const defaults = { onlyInDefault: 1, inBoth: 1 },
-                overrides = { onlyInOverrides: 2, inBoth: 2 };
+            const defaults = { onlyInDefault: 1, inBoth: 1 };
+            const overrides = { onlyInOverrides: 2, inBoth: 2 };
 
             const merged = helpers.merge(defaults, overrides);
 
@@ -64,8 +102,8 @@ describe('helpers', function () {
         });
 
         it('should not change state of either parameter', function () {
-            const first = { one: 1 },
-                second = { two: 2 };
+            const first = { one: 1 };
+            const second = { two: 2 };
 
             helpers.merge(first, second);
 
@@ -74,8 +112,8 @@ describe('helpers', function () {
         });
 
         it('should be able to handle null values', function () {
-            const defaults = { onlyInDefault: 1, inBoth: 1 },
-                overrides = { onlyInOverrides: 2, inBoth: null };
+            const defaults = { onlyInDefault: 1, inBoth: 1 };
+            const overrides = { onlyInOverrides: 2, inBoth: null };
 
             const merged = helpers.merge(defaults, overrides);
 

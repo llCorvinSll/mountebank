@@ -1,4 +1,4 @@
-import { ApiClient } from "./api";
+import { ApiClient } from './api';
 
 const sanitizeBody = require('../testUtils/sanitize').sanitizeBody;
 const client = require('./http/baseHttpClient').create('http');
@@ -81,8 +81,8 @@ describe('DELETE /imposters', function () {
     });
 
     it('deletes all imposters and returns replayable body', function (done) {
-        const firstImposter = { protocol: 'http', port, name: 'imposter 1' },
-            secondImposter = { protocol: 'http', port: port + 1, name: 'imposter 1' };
+        const firstImposter = { protocol: 'http', port, name: 'imposter 1' };
+        const secondImposter = { protocol: 'http', port: port + 1, name: 'imposter 1' };
 
         return api.post('/imposters', firstImposter).then((response: any) => {
             expect(response.statusCode).toEqual(201);
@@ -126,13 +126,13 @@ describe('DELETE /imposters', function () {
             protocol: 'http',
             port,
             name: 'imposter-is',
-            stubs: [{responses: [{is: {body: 'Hello, World!'}}]}]
+            stubs: [{ responses: [{ is: { body: 'Hello, World!' } }] }]
         };
         const proxyImposter = {
             protocol: 'http',
             port: port + 1,
             name: 'imposter-proxy',
-            stubs: [{responses: [{proxy: {to: 'http://www.google.com'}}]}]
+            stubs: [{ responses: [{ proxy: { to: 'http://www.google.com' } }] }]
         };
 
         return api.post('/imposters', isImposter).then((response: any) => {
@@ -193,7 +193,7 @@ describe('PUT /imposters', function () {
 
     afterEach(() => {
         api.del('/imposters');
-    })
+    });
 
     it('creates all imposters provided when no imposters previously exist', () => {
         const request = {
@@ -219,14 +219,14 @@ describe('PUT /imposters', function () {
     });
 
     it('overwrites previous imposters', function () {
-        const postRequest = { protocol: 'smtp', port: port },
-            putRequest = {
-                imposters: [
-                    { protocol: 'http', port, name: 'imposter 1' },
-                    { protocol: 'http', port: port + 1, name: 'imposter 2' },
-                    { protocol: 'http', port: port + 2, name: 'imposter 3' }
-                ]
-            };
+        const postRequest = { protocol: 'smtp', port: port };
+        const putRequest = {
+            imposters: [
+                { protocol: 'http', port, name: 'imposter 1' },
+                { protocol: 'http', port: port + 1, name: 'imposter 2' },
+                { protocol: 'http', port: port + 2, name: 'imposter 3' }
+            ]
+        };
 
         return api.post('/imposters', postRequest).then((response: any) => {
             expect(response.statusCode).toEqual(201);

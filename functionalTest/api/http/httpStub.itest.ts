@@ -1,6 +1,4 @@
-'use strict';
-
-import {ApiClient} from "../api";
+import { ApiClient } from '../api';
 
 const BaseHttpClient = require('./baseHttpClient');
 const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
@@ -13,25 +11,25 @@ const helpers = require('../../../src/util/helpers');
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
     describe(`${protocol} imposter`, function () {
 
         describe('POST /imposters with stubs', function () {
             it('should return stubbed response', function () {
                 const stub = {
-                        responses: [{
-                            is: {
-                                statusCode: 400,
-                                headers: { 'X-Test': 'test header' },
-                                body: 'test body',
-                                query: {
-                                    key: true
-                                }
+                    responses: [{
+                        is: {
+                            statusCode: 400,
+                            headers: { 'X-Test': 'test header' },
+                            body: 'test body',
+                            query: {
+                                key: true
                             }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -45,8 +43,8 @@ const helpers = require('../../../src/util/helpers');
             });
 
             it('should allow a sequence of stubs as a circular buffer', function () {
-                const stub = { responses: [{ is: { statusCode: 400 } }, { is: { statusCode: 405 } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const stub = { responses: [{ is: { statusCode: 400 } }, { is: { statusCode: 405 } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request)
                     .then(() => client.get('/test', port))
@@ -70,34 +68,34 @@ const helpers = require('../../../src/util/helpers');
 
             it('should only return stubbed response if matches complex predicate', function () {
                 const spec = {
-                        path: '/test?key=value&next=true',
-                        port,
-                        method: 'POST',
-                        headers: {
-                            'X-One': 'Test',
-                            'X-Two': 'Test',
-                            'Content-Type': 'text/plain'
-                        }
-                    },
-                    stub = {
-                        responses: [{ is: { statusCode: 400 } }],
-                        predicates: [
-                            { equals: { path: '/test', method: 'POST' } },
-                            { equals: { query: { key: 'value' } } },
-                            { exists: { headers: { 'X-One': true } } },
-                            { exists: { headers: { 'X-Two': true } } },
-                            { equals: { headers: { 'X-Two': 'Test' } } },
-                            { exists: { headers: { 'X-Three': false } } },
-                            { not: { exists: { headers: { 'X-Four': true } } } },
-                            { startsWith: { body: 'T' } },
-                            { contains: { body: 'ES' } },
-                            { endsWith: { body: 'T' } },
-                            { matches: { body: '^TEST$' } },
-                            { equals: { body: 'TEST' } },
-                            { exists: { body: true } }
-                        ]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    path: '/test?key=value&next=true',
+                    port,
+                    method: 'POST',
+                    headers: {
+                        'X-One': 'Test',
+                        'X-Two': 'Test',
+                        'Content-Type': 'text/plain'
+                    }
+                };
+                const stub = {
+                    responses: [{ is: { statusCode: 400 } }],
+                    predicates: [
+                        { equals: { path: '/test', method: 'POST' } },
+                        { equals: { query: { key: 'value' } } },
+                        { exists: { headers: { 'X-One': true } } },
+                        { exists: { headers: { 'X-Two': true } } },
+                        { equals: { headers: { 'X-Two': 'Test' } } },
+                        { exists: { headers: { 'X-Three': false } } },
+                        { not: { exists: { headers: { 'X-Four': true } } } },
+                        { startsWith: { body: 'T' } },
+                        { contains: { body: 'ES' } },
+                        { endsWith: { body: 'T' } },
+                        { matches: { body: '^TEST$' } },
+                        { equals: { body: 'TEST' } },
+                        { exists: { body: true } }
+                    ]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then(() => {
                     const options = helpers.merge(spec, { path: '/', body: 'TEST' });
@@ -138,19 +136,19 @@ const helpers = require('../../../src/util/helpers');
 
             it('should correctly handle deepEquals object predicates', function () {
                 const stubWithEmptyObjectPredicate = {
-                        responses: [{ is: { body: 'first stub' } }],
-                        predicates: [{ deepEquals: { query: {} } }]
-                    },
-                    stubWithPredicateKeywordInObject = {
-                        responses: [{ is: { body: 'second stub' } }],
-                        predicates: [{ deepEquals: { query: { equals: 1 } } }]
-                    },
-                    stubWithTwoKeywordsInObject = {
-                        responses: [{ is: { body: 'third stub' } }],
-                        predicates: [{ deepEquals: { query: { equals: 'true', contains: false } } }]
-                    },
-                    stubs = [stubWithEmptyObjectPredicate, stubWithPredicateKeywordInObject, stubWithTwoKeywordsInObject],
-                    request = { protocol, port, stubs: stubs };
+                    responses: [{ is: { body: 'first stub' } }],
+                    predicates: [{ deepEquals: { query: {} } }]
+                };
+                const stubWithPredicateKeywordInObject = {
+                    responses: [{ is: { body: 'second stub' } }],
+                    predicates: [{ deepEquals: { query: { equals: 1 } } }]
+                };
+                const stubWithTwoKeywordsInObject = {
+                    responses: [{ is: { body: 'third stub' } }],
+                    predicates: [{ deepEquals: { query: { equals: 'true', contains: false } } }]
+                };
+                const stubs = [stubWithEmptyObjectPredicate, stubWithPredicateKeywordInObject, stubWithTwoKeywordsInObject];
+                const request = { protocol, port, stubs: stubs };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -173,9 +171,9 @@ const helpers = require('../../../src/util/helpers');
             });
 
             it('should support sending binary response', function () {
-                const buffer = Buffer.from([0, 1, 2, 3]),
-                    stub = { responses: [{ is: { body: buffer.toString('base64'), _mode: 'binary' } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const buffer = Buffer.from([0, 1, 2, 3]);
+                const stub = { responses: [{ is: { body: buffer.toString('base64'), _mode: 'binary' } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -187,28 +185,28 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support JSON bodies', function () {
                 const stub = {
-                        responses: [
-                            {
-                                is: {
-                                    body: {
-                                        key: 'value',
-                                        sub: {
-                                            'string-key': 'value'
-                                        },
-                                        arr: [1, 2]
-                                    }
-                                }
-                            },
-                            {
-                                is: {
-                                    body: {
-                                        key: 'second request'
-                                    }
+                    responses: [
+                        {
+                            is: {
+                                body: {
+                                    key: 'value',
+                                    sub: {
+                                        'string-key': 'value'
+                                    },
+                                    arr: [1, 2]
                                 }
                             }
-                        ]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                        },
+                        {
+                            is: {
+                                body: {
+                                    key: 'second request'
+                                }
+                            }
+                        }
+                    ]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -230,15 +228,15 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support treating the body as a JSON object for predicate matching', function () {
                 const stub = {
-                        responses: [{ is: { body: 'SUCCESS' } }],
-                        predicates: [
-                            { equals: { body: { key: 'value' } } },
-                            { equals: { body: { arr: 3 } } },
-                            { deepEquals: { body: { key: 'value', arr: [2, 1, 3] } } },
-                            { matches: { body: { key: '^v' } } }
-                        ]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{ is: { body: 'SUCCESS' } }],
+                    predicates: [
+                        { equals: { body: { key: 'value' } } },
+                        { equals: { body: { arr: 3 } } },
+                        { deepEquals: { body: { key: 'value', arr: [2, 1, 3] } } },
+                        { matches: { body: { key: '^v' } } }
+                    ]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -250,14 +248,14 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support changing default response for stub', function () {
                 const stub = {
-                        responses: [
-                            { is: { body: 'Wrong address' } },
-                            { is: { statusCode: 500 } }
-                        ],
-                        predicates: [{ equals: { path: '/' } }]
-                    },
-                    defaultResponse = { statusCode: 404, body: 'Not found' },
-                    request = { protocol, port, defaultResponse: defaultResponse, stubs: [stub] };
+                    responses: [
+                        { is: { body: 'Wrong address' } },
+                        { is: { statusCode: 500 } }
+                    ],
+                    predicates: [{ equals: { path: '/' } }]
+                };
+                const defaultResponse = { statusCode: 404, body: 'Not found' };
+                const request = { protocol, port, defaultResponse: defaultResponse, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -277,9 +275,9 @@ const helpers = require('../../../src/util/helpers');
             });
 
             it('should support keepalive connections', function () {
-                const stub = { responses: [{ is: { body: 'Success' } }] },
-                    defaultResponse = { headers: { CONNECTION: 'Keep-Alive' } }, // tests case-sensitivity of header match
-                    request = { protocol, port, defaultResponse: defaultResponse, stubs: [stub] };
+                const stub = { responses: [{ is: { body: 'Success' } }] };
+                const defaultResponse = { headers: { CONNECTION: 'Keep-Alive' } }; // tests case-sensitivity of header match
+                const request = { protocol, port, defaultResponse: defaultResponse, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -291,8 +289,8 @@ const helpers = require('../../../src/util/helpers');
             });
 
             it('should support sending multiple values back for same header', function () {
-                const stub = { responses: [{ is: { headers: { 'Set-Cookie': ['first', 'second'] } } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const stub = { responses: [{ is: { headers: { 'Set-Cookie': ['first', 'second'] } } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -304,10 +302,10 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support sending JSON bodies with _links field for canned responses', function () {
                 const stub = { responses: [{ is: {
-                        headers: { 'Content-Type': 'application/json' },
-                        body: { _links: { self: { href: '/products/123' } } }
-                    } }] },
-                    request = { protocol, port, stubs: [stub] };
+                    headers: { 'Content-Type': 'application/json' },
+                    body: { _links: { self: { href: '/products/123' } } }
+                } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -320,48 +318,48 @@ const helpers = require('../../../src/util/helpers');
             it('should correctly set content-length for binary data', function () {
                 // https://github.com/bbyars/mountebank/issues/204
                 const stub = {
-                        responses: [{
-                            is: {
-                                headers: { 'Content-Length': 852 },
-                                body: 'H4sIAAAAAAAEAO29B2AcSZYlJi9tynt/SvVK1+B0oQiAYBMk2JBAEOzBiM3mkuwdaUcjKasqgcplVmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/In7xR8Xso0cfzab3p/vn053t/NPZbHt/cn5/++D+5N72pwefTnd2JtP8/CD7aPRR02btuqH2zXo6zZuGPpplbfbRo1/80arMlviZXWZFmU2Ksmiv8XdbLPIfVMucXsqb9vfPZy29VC3LAh/94o8WFb91XlcLarFz/9HODn3fVvTH3h7++CX015qbbmxzldMwbmjTztc3tjmvixvbNFnrt3mIj02bXfyBNutgXJE2v4RagWi//zRftnVWonlZXVALmpNFdpH//uuaPvxo3rar5tHdu9NFsz3LL8fL7JJIOivejafV4m5z3bT54u55UebN3d27/GIzXi0vqDei8VsPCMEI3gWadd5U65qm8qNH3/vFHy2zBVH6o5d1dVnM8jp9WtT5tK3qawLWg7PM2zH9n6C4F+dZvcim1+//YlUW0yJv0l+YUufTfLYmxG757vG6nVd18YOsLapl+rxowGC3efFZVS/WZXZ7JA1ZXuXneZ0vpzmh+0oJmH6+pu9ui/MJTU0xzUqM9qLOFrd9z9I1rc7Tb+dZ2c4BgtFq0mKZvsiv0t+nqt9uhPd9YnMa+8Cc5wugtJoX0/RsiXZC2Ff5L1qTAKeg2kboDtuTqqpnxVLeJ4Sf5Mv8vGib94JRZsXivd54WefbJ3ndFudEYe76xpeJINNqdV0XF3OSbPd72rR1sbxIdyGtv+T/AdOWKsArBQAA',
-                                _mode: 'binary'
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{
+                        is: {
+                            headers: { 'Content-Length': 852 },
+                            body: 'H4sIAAAAAAAEAO29B2AcSZYlJi9tynt/SvVK1+B0oQiAYBMk2JBAEOzBiM3mkuwdaUcjKasqgcplVmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/In7xR8Xso0cfzab3p/vn053t/NPZbHt/cn5/++D+5N72pwefTnd2JtP8/CD7aPRR02btuqH2zXo6zZuGPpplbfbRo1/80arMlviZXWZFmU2Ksmiv8XdbLPIfVMucXsqb9vfPZy29VC3LAh/94o8WFb91XlcLarFz/9HODn3fVvTH3h7++CX015qbbmxzldMwbmjTztc3tjmvixvbNFnrt3mIj02bXfyBNutgXJE2v4RagWi//zRftnVWonlZXVALmpNFdpH//uuaPvxo3rar5tHdu9NFsz3LL8fL7JJIOivejafV4m5z3bT54u55UebN3d27/GIzXi0vqDei8VsPCMEI3gWadd5U65qm8qNH3/vFHy2zBVH6o5d1dVnM8jp9WtT5tK3qawLWg7PM2zH9n6C4F+dZvcim1+//YlUW0yJv0l+YUufTfLYmxG757vG6nVd18YOsLapl+rxowGC3efFZVS/WZXZ7JA1ZXuXneZ0vpzmh+0oJmH6+pu9ui/MJTU0xzUqM9qLOFrd9z9I1rc7Tb+dZ2c4BgtFq0mKZvsiv0t+nqt9uhPd9YnMa+8Cc5wugtJoX0/RsiXZC2Ff5L1qTAKeg2kboDtuTqqpnxVLeJ4Sf5Mv8vGib94JRZsXivd54WefbJ3ndFudEYe76xpeJINNqdV0XF3OSbPd72rR1sbxIdyGtv+T/AdOWKsArBQAA',
+                            _mode: 'binary'
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
                 }).then((response: any) => {
-                    expect(response.headers['content-length']).toEqual("639");
+                    expect(response.headers['content-length']).toEqual('639');
                 }).finally(() => api.del('/imposters'));
             });
 
             it('should correctly set content-length for binary data when using multiline base64', function () {
                 const stub = {
-                        responses: [{
-                            is: {
-                                headers: { 'Content-Length': 274 },
-                                body: 'iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyBAMAAABYG2ONAAAAFVBMVEUAAAD///9/f39fX1+fn58f\nHx8/Pz8rYiDqAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAo0lEQVRIie2Qyw7CIBBFb2DwO5q+1o0L\n1w0NrrHRPQnV//8EAUl0ga1ujIs5CZAz4YYZAIZhmN/QQOkjzq3LLuv6xUrQHmTJGphcEGE9rUQ3\nY4bqqrDjAlgQoJK9Z8YBmFy8Gp8DeSeTfRSBCf2I6/JN5ORiRfrNiIfqh9S9SVPL27A1C0G4EX2e\nJR7J1iI7rbG0Vf4x0UwPW0Uh3i0bwzD/yR11mBj1DIKiVwAAAABJRU5ErkJggg==\n',
-                                _mode: 'binary'
-                            }
-                        }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{
+                        is: {
+                            headers: { 'Content-Length': 274 },
+                            body: 'iVBORw0KGgoAAAANSUhEUgAAAGQAAAAyBAMAAABYG2ONAAAAFVBMVEUAAAD///9/f39fX1+fn58f\nHx8/Pz8rYiDqAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAo0lEQVRIie2Qyw7CIBBFb2DwO5q+1o0L\n1w0NrrHRPQnV//8EAUl0ga1ujIs5CZAz4YYZAIZhmN/QQOkjzq3LLuv6xUrQHmTJGphcEGE9rUQ3\nY4bqqrDjAlgQoJK9Z8YBmFy8Gp8DeSeTfRSBCf2I6/JN5ORiRfrNiIfqh9S9SVPL27A1C0G4EX2e\nJR7J1iI7rbG0Vf4x0UwPW0Uh3i0bwzD/yR11mBj1DIKiVwAAAABJRU5ErkJggg==\n',
+                            _mode: 'binary'
+                        }
+                    }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
                     return client.get('/', port);
                 }).then((response: any) => {
-                    expect(response.headers['content-length']).toEqual("274");
+                    expect(response.headers['content-length']).toEqual('274');
                 }).finally(() => api.del('/imposters'));
             });
 
             it('should handle JSON null values', function () {
                 // https://github.com/bbyars/mountebank/issues/209
-                const stub = { responses: [{ is: { body: { name: 'test', type: null } } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const stub = { responses: [{ is: { body: { name: 'test', type: null } } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -373,10 +371,10 @@ const helpers = require('../../../src/util/helpers');
 
             it('should handle null values in deepEquals predicate (issue #229)', function () {
                 const stub = {
-                        predicates: [{ deepEquals: { body: { field: null } } }],
-                        responses: [{ is: { body: 'SUCCESS' } }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    predicates: [{ deepEquals: { body: { field: null } } }],
+                    responses: [{ is: { body: 'SUCCESS' } }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(201).toEqual(response.statusCode);
@@ -388,14 +386,14 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support array predicates with xpath', function () {
                 const stub = {
-                        responses: [{ is: { body: 'SUCCESS' } }],
-                        predicates: [{
-                            equals: { body: ['first', 'third', 'second'] },
-                            xpath: { selector: '//value' }
-                        }]
-                    },
-                    xml = '<values><value>first</value><value>second</value><value>third</value></values>',
-                    request = { protocol, port, stubs: [stub] };
+                    responses: [{ is: { body: 'SUCCESS' } }],
+                    predicates: [{
+                        equals: { body: ['first', 'third', 'second'] },
+                        xpath: { selector: '//value' }
+                    }]
+                };
+                const xml = '<values><value>first</value><value>second</value><value>third</value></values>';
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -407,10 +405,10 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support matches predicate on uppercase JSON key (issue #228)', function () {
                 const stub = {
-                        predicates: [{ matches: { body: { Key: '^Value' } } }],
-                        responses: [{ is: { body: 'SUCCESS' } }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    predicates: [{ matches: { body: { Key: '^Value' } } }],
+                    responses: [{ is: { body: 'SUCCESS' } }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -422,10 +420,10 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support predicate matching with null value (issue #262)', function () {
                 const stub = {
-                        predicates: [{ equals: { body: { version: null } } }],
-                        responses: [{ is: { body: 'SUCCESS' } }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    predicates: [{ equals: { body: { version: null } } }],
+                    responses: [{ is: { body: 'SUCCESS' } }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -447,10 +445,10 @@ const helpers = require('../../../src/util/helpers');
                 };
 
                 const stub = {
-                        predicates: [{ deepEquals: { form: { firstname: 'ruud', lastname: 'mountebank' } } }],
-                        responses: [{ is: { body: 'SUCCESS' } }]
-                    },
-                    request = { protocol, port, stubs: [stub] };
+                    predicates: [{ deepEquals: { form: { firstname: 'ruud', lastname: 'mountebank' } } }],
+                    responses: [{ is: { body: 'SUCCESS' } }]
+                };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
@@ -461,8 +459,8 @@ const helpers = require('../../../src/util/helpers');
             });
 
             it('should support overwriting the stubs without restarting the imposter', function () {
-                const stub = { responses: [{ is: { body: 'ORIGINAL' } }] },
-                    request = { protocol, port, stubs: [stub] };
+                const stub = { responses: [{ is: { body: 'ORIGINAL' } }] };
+                const request = { protocol, port, stubs: [stub] };
 
                 return api.post('/imposters', request)
                     .then(() => api.put(`/imposters/${port}/stubs`, {
@@ -502,15 +500,15 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support overwriting a single stub without restarting the imposter', function () {
                 const request = {
-                        protocol,
-                        port,
-                        stubs: [
-                            { responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }] },
-                            { responses: [{ is: { body: 'SECOND' } }] },
-                            { responses: [{ is: { body: 'third' } }] }
-                        ]
-                    },
-                    changedStub = { responses: [{ is: { body: 'CHANGED' } }] };
+                    protocol,
+                    port,
+                    stubs: [
+                        { responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }] },
+                        { responses: [{ is: { body: 'SECOND' } }] },
+                        { responses: [{ is: { body: 'third' } }] }
+                    ]
+                };
+                const changedStub = { responses: [{ is: { body: 'CHANGED' } }] };
 
                 return api.post('/imposters', request)
                     .then((response: any) => {
@@ -587,14 +585,14 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support adding single stub without restarting the imposter', function () {
                 const request = {
-                        protocol,
-                        port,
-                        stubs: [
-                            { responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }] },
-                            { responses: [{ is: { body: 'third' } }] }
-                        ]
-                    },
-                    newStub = { responses: [{ is: { body: 'SECOND' } }] };
+                    protocol,
+                    port,
+                    stubs: [
+                        { responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }] },
+                        { responses: [{ is: { body: 'third' } }] }
+                    ]
+                };
+                const newStub = { responses: [{ is: { body: 'SECOND' } }] };
 
                 return api.post('/imposters', request)
                     .then((response: any) => {
@@ -631,14 +629,14 @@ const helpers = require('../../../src/util/helpers');
 
             it('should support adding single stub at end without index ', function () {
                 const request = {
-                        protocol,
-                        port,
-                        stubs: [
-                            { responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }] },
-                            { responses: [{ is: { body: 'third' } }] }
-                        ]
-                    },
-                    newStub = { responses: [{ is: { body: 'LAST' } }] };
+                    protocol,
+                    port,
+                    stubs: [
+                        { responses: [{ is: { body: 'first' } }], predicates: [{ equals: { path: '/first' } }] },
+                        { responses: [{ is: { body: 'third' } }] }
+                    ]
+                };
+                const newStub = { responses: [{ is: { body: 'LAST' } }] };
 
                 return api.post('/imposters', request)
                     .then((response: any) => {

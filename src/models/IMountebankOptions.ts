@@ -1,6 +1,6 @@
-'use strict';
 
-import {IImposter} from "./imposters/IImposter";
+
+import { IImposter } from './imposters/IImposter';
 
 export interface IMountebankOptions {
     heroku: unknown;
@@ -9,9 +9,9 @@ export interface IMountebankOptions {
     host: string;
     allowInjection: boolean;
     logfile: string;
-    nologfile:boolean;
+    nologfile: boolean;
     loglevel: string;
-    imposters: {[key: string]: IImposter }
+    imposters: {[key: string]: IImposter };
     localOnly: boolean;
     ipWhitelist: string[];
     protofile: string;

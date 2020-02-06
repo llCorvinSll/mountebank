@@ -1,19 +1,17 @@
-'use strict';
-
-import {ILogger} from "../../util/scopedLogger";
-import {IJsonPathConfig, IPredicate, IXPathConfig} from "./IPredicate";
-import {IServerRequestData} from "../IProtocol";
-import * as errors from "../../util/errors";
+import { ILogger } from '../../util/scopedLogger';
+import { IJsonPathConfig, IPredicate, IXPathConfig } from './IPredicate';
+import { IServerRequestData } from '../IProtocol';
+import * as errors from '../../util/errors';
 import * as helpers from '../../util/helpers';
 import * as combinators from '../../util/combinators';
-import * as  stringify from 'json-stable-stringify';
+import * as stringify from 'json-stable-stringify';
 import * as compatibility from '../compatibility';
 import * as xpath from '../xpath';
 import * as jsonpath from '../jsonpath';
-import {HashMap} from "../../util/types";
+import { IHashMap } from '../../util/types';
 
 
-    /**
+/**
  * All the PREDICATES that determine whether a stub matches a request
  * @module
  */
@@ -32,7 +30,7 @@ function sortObjects (a: any, b: any): number {
     }
 }
 
-function forceStrings (value: HashMap<HashMap | any>): any {
+function forceStrings (value: IHashMap<IHashMap | any>): any {
     if (value === null) {
         return 'null';
     }
@@ -53,8 +51,7 @@ function forceStrings (value: HashMap<HashMap | any>): any {
     }
 }
 
-// @ts-ignore
-function select (type, selectFn, encoding: string) {
+function select (type: any, selectFn: Function, encoding: string) {
     if (encoding === 'base64') {
         throw errors.ValidationError(`the ${type} predicate parameter is not allowed in binary mode`);
     }
@@ -152,8 +149,8 @@ function encodingTransform (encoding: string) {
 
 function tryJSON (value: string, predicateConfig: IPredicate) {
     try {
-        const keyCaseTransform = predicateConfig.keyCaseSensitive === false ? lowercase : caseTransform(predicateConfig),
-            valueTransforms = [exceptTransform(predicateConfig), caseTransform(predicateConfig)];
+        const keyCaseTransform = predicateConfig.keyCaseSensitive === false ? lowercase : caseTransform(predicateConfig);
+        const valueTransforms = [exceptTransform(predicateConfig), caseTransform(predicateConfig)];
 
         // We can't call normalize because we want to avoid the array sort transform,
         // which will mess up indexed selectors like $..title[1]
@@ -171,8 +168,8 @@ function selectJSONPath (config: IJsonPathConfig, encoding: string, predicateCon
     return orderIndependent(select('jsonpath', selectFn, encoding));
 }
 
-// @ts-ignore
-function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
+
+function transformAll (obj: any, keyTransforms: any, valueTransforms: any, arrayTransforms: any): any {
     const apply = (fns: Function) => combinators.compose.apply(null, fns);
 
     if (Array.isArray(obj)) {
@@ -180,7 +177,7 @@ function transformAll (obj, keyTransforms, valueTransforms, arrayTransforms) {
     }
     else if (helpers.isObject(obj)) {
         return Object.keys(obj).reduce((accumulator, key) => {
-            accumulator[apply(keyTransforms)(key)] = transformAll((obj as HashMap)[key], keyTransforms, valueTransforms, arrayTransforms);
+            accumulator[apply(keyTransforms)(key)] = transformAll((obj as IHashMap)[key], keyTransforms, valueTransforms, arrayTransforms);
             return accumulator;
         }, {} as any);
     }
@@ -198,27 +195,23 @@ interface INormalizeOptions {
     shouldForceStrings?: boolean;
 }
 
-// @ts-ignore
-function normalize (obj, config: IPredicate, options: INormalizeOptions) {
+
+function normalize (obj: any, config: IPredicate, options: INormalizeOptions) {
     // Needed to solve a tricky case conversion for "matches" PREDICATES with jsonpath/xpath parameters
     if (typeof config.keyCaseSensitive === 'undefined') {
         config.keyCaseSensitive = config.caseSensitive;
     }
 
-    const keyCaseTransform = config.keyCaseSensitive === false ? lowercase : caseTransform(config),
-        sortTransform = (array:any[]) => array.sort(sortObjects),
-        transforms = [];
+    const keyCaseTransform = config.keyCaseSensitive === false ? lowercase : caseTransform(config);
+    const sortTransform = (array: any[]) => array.sort(sortObjects);
+    const transforms = [];
 
     if (options.withSelectors) {
-        // @ts-ignore
         transforms.push(selectTransform(config, options));
     }
 
-    // @ts-ignore
     transforms.push(exceptTransform(config));
-    // @ts-ignore
     transforms.push(caseTransform(config));
-    // @ts-ignore
     transforms.push(encodingTransform(options.encoding as string));
 
     // sort to provide deterministic comparison for deepEquals,
@@ -227,8 +220,7 @@ function normalize (obj, config: IPredicate, options: INormalizeOptions) {
     return transformAll(obj, [keyCaseTransform], transforms, [sortTransform]);
 }
 
-// @ts-ignore
-function testPredicate (expected, actual, predicateConfig: IPredicate, predicateFn) {
+function testPredicate (expected: any, actual: any, predicateConfig: IPredicate, predicateFn: Function): any {
     if (!helpers.defined(actual)) {
         actual = '';
     }
@@ -244,8 +236,7 @@ function bothArrays (expected: object, actual: object): any {
     return Array.isArray(actual) && Array.isArray(expected);
 }
 
-// @ts-ignore
-function allExpectedArrayValuesMatchActualArray (expectedArray: any[], actualArray: any[], predicateConfig: IPredicate, predicateFn): boolean {
+function allExpectedArrayValuesMatchActualArray (expectedArray: any[], actualArray: any[], predicateConfig: IPredicate, predicateFn: Function): boolean {
     return expectedArray.every(expectedValue =>
         actualArray.some(actualValue => testPredicate(expectedValue, actualValue, predicateConfig, predicateFn)));
 }
@@ -254,8 +245,7 @@ function onlyActualIsArray (expected: any, actual: any): boolean {
     return Array.isArray(actual) && !Array.isArray(expected);
 }
 
-// @ts-ignore
-function expectedMatchesAtLeastOneValueInActualArray (expected: any, actualArray: any[], predicateConfig: IPredicate, predicateFn):boolean {
+function expectedMatchesAtLeastOneValueInActualArray (expected: any, actualArray: any[], predicateConfig: IPredicate, predicateFn: Function): boolean {
     return actualArray.some((actual: object) => testPredicate(expected, actual, predicateConfig, predicateFn));
 }
 
@@ -263,8 +253,7 @@ function expectedLeftOffArraySyntaxButActualIsArrayOfObjects (expected: any, act
     return !Array.isArray(expected[fieldName]) && !helpers.defined(actual[fieldName]) && Array.isArray(actual);
 }
 
-// @ts-ignore
-function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredicate, predicateFn) {
+function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredicate, predicateFn: Function): boolean {
     if (!actual) {
         return false;
     }
@@ -310,17 +299,16 @@ function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredi
 
 function create (operator: string, predicateFn: (expected: string, actual: string) => boolean): PredicateFunction {
     return (predicate, request, encoding) => {
-        // @ts-ignore
-        const expected = normalize(predicate[operator], predicate, { encoding: encoding }),
-            actual = normalize(request, predicate, { encoding: encoding, withSelectors: true });
+        const expected = normalize(predicate[operator], predicate, { encoding: encoding });
+        const actual = normalize(request, predicate, { encoding: encoding, withSelectors: true });
 
         return predicateSatisfied(expected, actual, predicate, predicateFn);
     };
 }
 
 function deepEquals (predicate: IPredicate, request: IServerRequestData, encoding: string) {
-    const expected = normalize(forceStrings(predicate.deepEquals!), predicate, { encoding: encoding }),
-        actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true });
+    const expected = normalize(forceStrings(predicate.deepEquals!), predicate, { encoding: encoding });
+    const actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true });
 
     return Object.keys(expected).every(fieldName => {
         // Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
@@ -337,46 +325,46 @@ function matches (predicate: IPredicate, request: IServerRequestData, encoding: 
     // a regular expression with upper case metacharacters like \W and \S
     // However, we need to maintain the case transform for keys like http header names (issue #169)
     // eslint-disable-next-line no-unneeded-ternary
-    const caseSensitive = !!predicate.caseSensitive, // convert to boolean even if undefined
-        clone = helpers.merge(predicate, { caseSensitive: true, keyCaseSensitive: caseSensitive }),
-        noexcept = helpers.merge(clone, { except: '' }),
-        expected = normalize(predicate.matches, noexcept, { encoding: encoding }),
-        actual = normalize(request, clone, { encoding: encoding, withSelectors: true }),
-        options = caseSensitive ? '' : 'i';
+    const caseSensitive = Boolean(predicate.caseSensitive); // convert to boolean even if undefined
+    const clone = helpers.merge(predicate, { caseSensitive: true, keyCaseSensitive: caseSensitive });
+    const noexcept = helpers.merge(clone, { except: '' });
+    const expected = normalize(predicate.matches, noexcept, { encoding: encoding });
+    const actual = normalize(request, clone, { encoding: encoding, withSelectors: true });
+    const options = caseSensitive ? '' : 'i';
 
     if (encoding === 'base64') {
         throw errors.ValidationError('the matches predicate is not allowed in binary mode');
     }
 
-    return predicateSatisfied(expected, actual, clone, (a:string, b: string) => new RegExp(a, options).test(b));
+    return predicateSatisfied(expected, actual, clone, (a: string, b: string) => new RegExp(a, options).test(b));
 }
 
-function not (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
+function not (predicate: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown) {
     return !evaluate(predicate.not!, request, encoding, logger, imposterState);
 }
 
-function evaluateFn (request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
-    return (subPredicate:IPredicate) => evaluate(subPredicate, request, encoding, logger, imposterState);
+function evaluateFn (request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown) {
+    return (subPredicate: IPredicate) => evaluate(subPredicate, request, encoding, logger, imposterState);
 }
 
-function or (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
+function or (predicate: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown) {
     return predicate.or!.some(evaluateFn(request, encoding, logger, imposterState));
 }
 
-function and (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
+function and (predicate: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown) {
     return predicate.and!.every(evaluateFn(request, encoding, logger, imposterState));
 }
 
-function inject (predicate: IPredicate, request: IServerRequestData, encoding: string, logger:ILogger, imposterState: unknown) {
+function inject (predicate: IPredicate, request: IServerRequestData, encoding: string, logger: ILogger, imposterState: unknown) {
     if (request.isDryRun === true) {
         return true;
     }
 
     const config = {
-            request: helpers.clone(request),
-            state: imposterState,
-            logger: logger
-        };
+        request: helpers.clone(request),
+        state: imposterState,
+        logger: logger
+    };
 
     compatibility.downcastInjectionConfig(config);
 
@@ -432,7 +420,7 @@ const PREDICATES: { [key: string]: PredicateFunction } = {
  */
 export function evaluate (predicate: IPredicate, request: IServerRequestData, encoding?: string, logger?: ILogger, imposterState?: unknown): boolean {
     const predicateFn = Object.keys(predicate).find(key => Object.keys(PREDICATES).indexOf(key) >= 0);
-    const clone:IPredicate = helpers.clone(predicate);
+    const clone: IPredicate = helpers.clone(predicate);
 
     if (predicateFn) {
         return PREDICATES[predicateFn](clone, request, encoding, logger, imposterState);

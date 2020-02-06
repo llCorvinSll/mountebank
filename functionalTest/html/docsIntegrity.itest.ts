@@ -1,7 +1,7 @@
-'use strict';
-import * as  Q from "q";
-import {isInProcessImposter} from '../testHelpers';
-import * as  docs from './docsTester/docs';
+
+import * as Q from 'q';
+import { isInProcessImposter } from '../testHelpers';
+import * as docs from './docsTester/docs';
 
 const tcpIsInProcess = isInProcessImposter('tcp');
 const isWindows = require('os').platform().indexOf('win') === 0;

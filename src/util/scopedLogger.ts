@@ -1,16 +1,16 @@
-'use strict';
+
 
 /** @module */
 
 export interface ILogger {
-    baseLogger:ILogger;
-    [key:string]:Function|ILogger;
-    (message:string, ...args:any[]):void;
+    baseLogger: ILogger;
+    [key: string]: Function|ILogger;
+    (message: string, ...args: any[]): void;
 }
 
-function wrap (wrappedLogger:ILogger, logger:ILogger) {
+function wrap (wrappedLogger: ILogger, logger: ILogger) {
     ['debug', 'info', 'warn', 'error'].forEach(level => {
-        wrappedLogger[level] = function (...args:unknown[]) {
+        wrappedLogger[level] = function (...args: unknown[]) {
             args[0] = wrappedLogger.scopePrefix + (args[0] as any);
 
             // Format here rather than use winston's splat formatter
@@ -28,20 +28,20 @@ function wrap (wrappedLogger:ILogger, logger:ILogger) {
  * @param {string} scope - The prefix for all log messages
  * @returns {Object}
  */
-export function create (logger:ILogger, scope:string) {
-    function formatScope (scopeText:string) {
+export function create (logger: ILogger, scope: string) {
+    function formatScope (scopeText: string) {
         return scopeText.indexOf('[') === 0 ? scopeText : `[${scopeText}] `;
     }
 
-    const inherit = require('./inherit'),
-        wrappedLogger = inherit.from(logger, {
-            scopePrefix: formatScope(scope),
-            withScope: (nestedScopePrefix:string) => create(logger, `${wrappedLogger.scopePrefix}${nestedScopePrefix} `),
-            changeScope: (newScope:string) => {
-                wrappedLogger.scopePrefix = formatScope(newScope);
-                wrap(wrappedLogger, logger);
-            }
-        });
+    const inherit = require('./inherit');
+    const wrappedLogger = inherit.from(logger, {
+        scopePrefix: formatScope(scope),
+        withScope: (nestedScopePrefix: string) => create(logger, `${wrappedLogger.scopePrefix}${nestedScopePrefix} `),
+        changeScope: (newScope: string) => {
+            wrappedLogger.scopePrefix = formatScope(newScope);
+            wrap(wrappedLogger, logger);
+        }
+    });
 
     wrap(wrappedLogger, logger);
     return wrappedLogger;

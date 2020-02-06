@@ -1,9 +1,7 @@
-'use strict';
-
-import {ILogger} from "./scopedLogger";
-import { Request, Response } from "express";
-import {IImposter, IImposterConfig} from "../models/imposters/IImposter";
-import {IStubConfig} from "../models/stubs/IStubConfig";
+import { ILogger } from './scopedLogger';
+import { Request, Response } from 'express';
+import { IImposter, IImposterConfig } from '../models/imposters/IImposter';
+import { IStubConfig } from '../models/stubs/IStubConfig';
 
 /**
  * Express middleware functions to inject into the HTTP processing
@@ -11,8 +9,8 @@ import {IStubConfig} from "../models/stubs/IStubConfig";
  */
 
 interface IBody {
-    stubs:IStubConfig[];
-    imposters:IImposterConfig[];
+    stubs: IStubConfig[];
+    imposters: IImposterConfig[];
 }
 
 /**
@@ -21,44 +19,43 @@ interface IBody {
  * @param {number} port - The port of the current instance
  * @returns {Function}
  */
-export function useAbsoluteUrls (port:string|number):(request:Request, response:Response, next:() => void) => void {
+export function useAbsoluteUrls (port: string|number): (request: Request, response: Response, next: () => void) => void {
     return function (request, response, next) {
-        const setHeaderOriginal = response.setHeader,
-            sendOriginal = response.send,
-            host = request.headers.host || `localhost:${port}`,
-            absolutize = (link:string) => `http://${host}${link}`,
-            isObject = require('../util/helpers').isObject;
+        const setHeaderOriginal = response.setHeader;
+        const sendOriginal = response.send;
+        const host = request.headers.host || `localhost:${port}`;
+        const absolutize = (link: string) => `http://${host}${link}`;
+        const isObject = require('../util/helpers').isObject;
 
-        response.setHeader = function (...args:string[]) {
+        response.setHeader = function (...args: string[]) {
             if (args[0] && args[0].toLowerCase() === 'location') {
                 args[1] = absolutize(args[1]);
             }
             setHeaderOriginal.apply(this, args);
         };
 
-        // @ts-ignore
-        response.send = function (...args:IBody[]) {
-            const body = args[0],
-                changeLinks = function (obj:any) {
-                    if (obj._links) {
-                        Object.keys(obj._links).forEach(function (rel) {
-                            obj._links[rel].href = absolutize(obj._links[rel].href);
-                        });
-                    }
-                },
-                traverse = function (obj:any, fn:(obj:unknown) => void, parent?:string) {
-                    if (parent === 'stubs' || parent === 'response') {
-                        // Don't change _links within stubs or within the response
-                        // sent back to protocol implementations
-                        return;
-                    }
-                    fn(obj);
-                    Object.keys(obj).forEach(key => {
-                        if (obj[key] && isObject(obj[key])) {
-                            traverse(obj[key], fn, key);
-                        }
+        response.send = function (...args: IBody[]) {
+            const body = args[0];
+            const changeLinks = function (obj: any) {
+                if (obj._links) {
+                    Object.keys(obj._links).forEach(function (rel) {
+                        obj._links[rel].href = absolutize(obj._links[rel].href);
                     });
-                };
+                }
+            };
+            const traverse = function (obj: any, fn: (obj: unknown) => void, parent?: string) {
+                if (parent === 'stubs' || parent === 'response') {
+                    // Don't change _links within stubs or within the response
+                    // sent back to protocol implementations
+                    return;
+                }
+                fn(obj);
+                Object.keys(obj).forEach(key => {
+                    if (obj[key] && isObject(obj[key])) {
+                        traverse(obj[key], fn, key);
+                    }
+                });
+            };
 
             if (isObject(body)) {
                 traverse(body, changeLinks);
@@ -69,16 +66,15 @@ export function useAbsoluteUrls (port:string|number):(request:Request, response:
                     body.stubs.forEach(changeLinks);
                 }
                 else if (Array.isArray(body.imposters)) {
-                    body.imposters.forEach((imposter) => {
+                    body.imposters.forEach(imposter => {
                         if (Array.isArray(imposter.stubs)) {
-                            // @ts-ignore
                             imposter.stubs.forEach(changeLinks);
                         }
                     });
                 }
             }
             sendOriginal.apply(this, args);
-        };
+        } as any;
 
         next();
     };
@@ -89,10 +85,10 @@ export function useAbsoluteUrls (port:string|number):(request:Request, response:
  * @param {Object} imposters - The current dictionary of imposters
  * @returns {Function}
  */
-export function createImposterValidator (imposters:{[key:string]:IImposter}):(request:Request, response:Response, next:() => void) => void {
+export function createImposterValidator (imposters: {[key: string]: IImposter}): (request: Request, response: Response, next: () => void) => void {
     return function validateImposterExists (request, response, next) {
-        const errors = require('./errors'),
-            imposter = imposters[request.params.id];
+        const errors = require('./errors');
+        const imposter = imposters[request.params.id];
 
         if (imposter) {
             next();
@@ -112,18 +108,18 @@ export function createImposterValidator (imposters:{[key:string]:IImposter}):(re
  * @param {string} format - The log format
  * @returns {Function}
  */
-export function logger (log:ILogger, format:string) {
-    function shouldLog (request:Request) {
+export function logger (log: ILogger, format: string) {
+    function shouldLog (request: Request) {
         const isStaticAsset = (['.js', '.css', '.gif', '.png', '.ico'].some(function (fileType) {
-                return request.url.indexOf(fileType) >= 0;
-            })),
-            isHtmlRequest = (request.headers.accept || '').indexOf('html') >= 0,
-            isXHR = request.headers['x-requested-with'] === 'XMLHttpRequest';
+            return request.url.indexOf(fileType) >= 0;
+        }));
+        const isHtmlRequest = (request.headers.accept || '').indexOf('html') >= 0;
+        const isXHR = request.headers['x-requested-with'] === 'XMLHttpRequest';
 
         return !(isStaticAsset || isHtmlRequest || isXHR);
     }
 
-    return function (request:Request, response:Response, next:() => void) {
+    return function (request: Request, response: Response, next: () => void) {
         if (shouldLog(request)) {
             const message = format.replace(':method', request.method).replace(':url', request.url);
             if (request.url.indexOf('_requests') > 0) {
@@ -144,12 +140,13 @@ export function logger (log:ILogger, format:string) {
  * @param {Object} vars - the global variables to pass
  * @returns {Function}
  */
-export function globals (vars:{[key:string]:unknown}) {
-    return function (request:Request, response:Response, next:() => void) {
+export function globals (vars: {[key: string]: unknown}) {
+    return function (request: Request, response: Response, next: () => void) {
         const originalRender = response.render;
         response.render = function () {
-            const args = Array.prototype.slice.call(arguments),
-                variables = args[1] || {};
+            // eslint-disable-next-line prefer-rest-params
+            const args = Array.prototype.slice.call(arguments);
+            const variables = args[1] || {};
 
             Object.keys(vars).forEach(function (name) {
                 variables[name] = vars[name];
@@ -171,7 +168,7 @@ export function globals (vars:{[key:string]:unknown}) {
  * @param {Object} response - The http response
  * @param {Function} next - The next middleware function to call
  */
-export function defaultIEtoHTML (request:Request, response:Response, next:() => void) {
+export function defaultIEtoHTML (request: Request, response: Response, next: () => void) {
     // IE has inconsistent Accept headers, often defaulting to */*
     // Our default is JSON, which fails to render in the browser on content-negotiated pages
     if (request.headers['user-agent'] && request.headers['user-agent'].indexOf('MSIE') >= 0) {
@@ -189,8 +186,8 @@ export function defaultIEtoHTML (request:Request, response:Response, next:() => 
  * @param {Object} log - The logger
  * @returns {Function}
  */
-export function json (log:ILogger) {
-    return function (request:Request, response:Response, next:() => void) {
+export function json (log: ILogger) {
+    return function (request: Request, response: Response, next: () => void) {
         request.body = '';
         request.setEncoding('utf8');
         request.on('data', chunk => {

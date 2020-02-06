@@ -1,12 +1,12 @@
-'use strict';
 
-import {IServer} from "../IProtocol";
 
-const config = JSON.parse(process.argv[2]),
-    httpServer = require('./httpServer'),
-    mbConnection = require('../mbConnection').create(config);
+import { IServer } from '../IProtocol';
 
-httpServer.create(config, mbConnection.logger(), mbConnection.getResponse).done((server:IServer) => {
+const config = JSON.parse(process.argv[2]);
+const httpServer = require('./httpServer');
+const mbConnection = require('../mbConnection').create(config);
+
+httpServer.create(config, mbConnection.logger(), mbConnection.getResponse).done((server: IServer) => {
     mbConnection.setPort(server.port);
     mbConnection.setProxy(require('./httpProxy').create(mbConnection.logger()));
 

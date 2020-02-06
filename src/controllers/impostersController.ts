@@ -1,11 +1,9 @@
-'use strict';
-
-import {ILogger} from "../util/scopedLogger";
-import {IImposter, IImposterConfig} from "../models/imposters/IImposter";
-import {details, IMontebankError, ValidationError} from "../util/errors";
-import {Request, Response} from "express";
-import {IProtocolFactory, IValidation} from "../models/IProtocol";
-import {ParsedUrlQuery} from "querystring";
+import { ILogger } from '../util/scopedLogger';
+import { IImposter, IImposterConfig } from '../models/imposters/IImposter';
+import { details, IMontebankError, ValidationError } from '../util/errors';
+import { Request, Response } from 'express';
+import { IProtocolFactory, IValidation } from '../models/IProtocol';
+import { ParsedUrlQuery } from 'querystring';
 import * as Q from 'q';
 import * as helpers from '../util/helpers';
 import * as url from 'url';
@@ -28,7 +26,7 @@ const queryBoolean = (query: ParsedUrlQuery, key: string) => helpers.defined(que
  * @returns {{get, post, del, put}}
  */
 export class ImpostersController {
-    public constructor(
+    public constructor (
         private protocols: {[key: string]: IProtocolFactory},
         private imposters: { [key: string]: IImposter },
         private logger: ILogger | undefined,
@@ -45,17 +43,17 @@ export class ImpostersController {
     public get = (request: Request, response: Response) => {
         response.format({
             json: () => {
-                const query = url.parse(request.url, true).query,
-                    options = {
-                        replayable: queryBoolean(query, 'replayable'),
-                        removeProxies: queryBoolean(query, 'removeProxies'),
-                        list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
-                    };
+                const query = url.parse(request.url, true).query;
+                const options = {
+                    replayable: queryBoolean(query, 'replayable'),
+                    removeProxies: queryBoolean(query, 'removeProxies'),
+                    list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
+                };
 
-                response.send({imposters: this.getJSON(options)});
+                response.send({ imposters: this.getJSON(options) });
             },
             html: () => {
-                response.render('imposters', {imposters: this.getJSON()});
+                response.render('imposters', { imposters: this.getJSON() });
             }
         });
     }
@@ -68,16 +66,16 @@ export class ImpostersController {
      * @returns {Object} A promise for testing purposes
      */
     public post = (request: Request, response: Response) => {
-        const protocol = request.body.protocol,
-            validationPromise = this.validate(request.body);
+        const protocol = request.body.protocol;
+        const validationPromise = this.validate(request.body);
 
         this.logger!.debug(this.requestDetails(request));
 
         return validationPromise.then(validation => {
             if (validation.isValid) {
-                let protocol_factory = this.protocols[protocol];
-                if (protocol_factory && protocol_factory.createImposterFrom) {
-                    return protocol_factory.createImposterFrom(request.body).then(imposter => {
+                const protocolFactory = this.protocols[protocol];
+                if (protocolFactory && protocolFactory.createImposterFrom) {
+                    return protocolFactory.createImposterFrom(request.body).then(imposter => {
                         this.imposters[imposter.port] = imposter;
                         response.setHeader('Location', imposter.url);
                         response.statusCode = 201;
@@ -85,13 +83,14 @@ export class ImpostersController {
                     }, error => {
                         this.respondWithCreationError(response, error);
                     });
-                } else {
-                    this.respondWithCreationError(response, ValidationError("protocol has no creators"))
                 }
-            } else {
-                this.respondWithValidationErrors(response, validation.errors);
-                return Q<void>(false as any);
+                else {
+                    this.respondWithCreationError(response, ValidationError('protocol has no creators'));
+                }
             }
+
+            this.respondWithValidationErrors(response, validation.errors);
+            return Q<void>(false as any);
         });
     }
 
@@ -103,17 +102,16 @@ export class ImpostersController {
      * @returns {Object} A promise for testing purposes
      */
     public del = (request: Request, response: Response) => {
-        const url = require('url'),
-            query = url.parse(request.url, true).query,
-            options = {
-                // default to replayable for backwards compatibility
-                replayable: queryIsFalse(query, 'replayable'),
-                removeProxies: queryBoolean(query, 'removeProxies')
-            },
-            json = this.getJSON(options);
+        const query = url.parse(request.url, true).query;
+        const options = {
+            // default to replayable for backwards compatibility
+            replayable: queryIsFalse(query, 'replayable'),
+            removeProxies: queryBoolean(query, 'removeProxies')
+        };
+        const json = this.getJSON(options);
 
         return this.deleteAllImposters().then(() => {
-            response.send({imposters: json});
+            response.send({ imposters: json });
         });
     }
 
@@ -125,8 +123,8 @@ export class ImpostersController {
      * @returns {Object} A promise for testing purposes
      */
     public put = (request: Request, response: Response): Q.Promise<any> => {
-        const requestImposters: IImposterConfig[] = request.body.imposters || [],
-            validationPromises: Q.Promise<IValidation>[] = requestImposters.map((imposter: IImposterConfig) => this.validate(imposter));
+        const requestImposters: IImposterConfig[] = request.body.imposters || [];
+        const validationPromises: Q.Promise<IValidation>[] = requestImposters.map((imposter: IImposterConfig) => this.validate(imposter));
 
         this.logger!.debug(this.requestDetails(request));
 
@@ -137,30 +135,31 @@ export class ImpostersController {
             return Q(false);
         }
 
-        return Q.all(validationPromises).then((validations) => {
+        return Q.all(validationPromises).then(validations => {
             const isValid = validations.every(validation => validation.isValid);
 
             if (isValid) {
                 return this.deleteAllImposters().then(() => {
-                    const creationPromises = requestImposters.map((imposter) => {
-                            let protocol_factory = this.protocols[imposter.protocol!];
-                            if (protocol_factory && protocol_factory.createImposterFrom) {
-                                return protocol_factory.createImposterFrom(imposter);
-                            }
-                            return undefined;
+                    const creationPromises = requestImposters.map(imposter => {
+                        const protocolFactory = this.protocols[imposter.protocol!];
+                        if (protocolFactory && protocolFactory.createImposterFrom) {
+                            return protocolFactory.createImposterFrom(imposter);
                         }
+                        return undefined;
+                    }
                     );
                     return Q.all(creationPromises);
                 }).then((allImposters: IImposter[]) => {
-                    const json = allImposters.map(imposter => imposter.toJSON({list: true}));
+                    const json = allImposters.map(imposter => imposter.toJSON({ list: true }));
                     allImposters.forEach(imposter => {
                         this.imposters[imposter.port] = imposter;
                     });
-                    response.send({imposters: json});
+                    response.send({ imposters: json });
                 }, error => {
                     this.respondWithCreationError(response, error);
                 });
-            } else {
+            }
+            else {
                 const validationErrors = validations.reduce((accumulator, validation) => accumulator.concat(validation.errors), [] as IMontebankError[]);
                 this.respondWithValidationErrors(response, validationErrors);
                 return Q<void>(false as any);
@@ -169,9 +168,9 @@ export class ImpostersController {
     }
 
 
-    private deleteAllImposters() {
-        const ids = Object.keys(this.imposters),
-            promises = ids.map(id => this.imposters[id].stop());
+    private deleteAllImposters () {
+        const ids = Object.keys(this.imposters);
+        const promises = ids.map(id => this.imposters[id].stop());
 
         ids.forEach(id => {
             delete this.imposters[id];
@@ -179,7 +178,7 @@ export class ImpostersController {
         return Q.all(promises);
     }
 
-    private validatePort(port: number, errors: IMontebankError[]) {
+    private validatePort (port: number, errors: IMontebankError[]) {
         const portIsValid = !helpers.defined(port) || (port.toString().indexOf('.') === -1 && port > 0 && port < 65536);
 
         if (!portIsValid) {
@@ -187,19 +186,20 @@ export class ImpostersController {
         }
     }
 
-    private validateProtocol(protocol: string, errors: IMontebankError[]) {
+    private validateProtocol (protocol: string, errors: IMontebankError[]) {
         const Protocol = this.protocols[protocol];
 
         if (!helpers.defined(protocol)) {
             errors.push(ValidationError("'protocol' is a required field"));
-        } else if (!Protocol) {
+        }
+        else if (!Protocol) {
             errors.push(ValidationError(`the ${protocol} protocol is not yet supported`));
         }
     }
 
-    private validate(request: IImposterConfig): Q.Promise<IValidation> {
-        const errors: IMontebankError[] = [],
-            compatibility = require('../models/compatibility');
+    private validate (request: IImposterConfig): Q.Promise<IValidation> {
+        const errors: IMontebankError[] = [];
+        const compatibility = require('../models/compatibility');
 
         compatibility.upcast(request);
 
@@ -207,37 +207,37 @@ export class ImpostersController {
         this.validateProtocol(request.protocol!, errors);
 
         if (errors.length > 0) {
-            return Q({isValid: false, errors});
-        } else {
-            const Protocol = this.protocols[request.protocol!],
-                validator = require('../models/dryRunValidator').create({
-                    testRequest: Protocol.testRequest,
-                    testProxyResponse: Protocol.testProxyResponse,
-                    additionalValidation: Protocol.validate,
-                    allowInjection: this.allowInjection
-                });
+            return Q({ isValid: false, errors });
+        }
+        else {
+            const Protocol = this.protocols[request.protocol!];
+            const validator = require('../models/dryRunValidator').create({
+                testRequest: Protocol.testRequest,
+                testProxyResponse: Protocol.testProxyResponse,
+                additionalValidation: Protocol.validate,
+                allowInjection: this.allowInjection
+            });
             return validator.validate(request, this.logger);
         }
     }
 
-    private respondWithValidationErrors(response: Response, validationErrors: IMontebankError[]) {
-        // TODO: wrong typing for details()
+    private respondWithValidationErrors (response: Response, validationErrors: IMontebankError[]) {
         this.logger!.error(`error creating imposter: ${JSON.stringify(details(validationErrors as any))}`);
         response.statusCode = 400;
-        response.send({errors: validationErrors});
+        response.send({ errors: validationErrors });
     }
 
-    private respondWithCreationError(response: Response, error: IMontebankError) {
+    private respondWithCreationError (response: Response, error: IMontebankError) {
         this.logger!.error(`error creating imposter: ${JSON.stringify(details(error))}`);
         response.statusCode = (error.code === 'insufficient access') ? 403 : 400;
-        response.send({errors: [error]});
+        response.send({ errors: [error] });
     }
 
-    private getJSON(options?: any) {
+    private getJSON (options?: any) {
         return Object.keys(this.imposters).reduce((accumulator, id) => accumulator.concat(this.imposters[id].toJSON(options)), [] as string[]);
     }
 
-    private requestDetails(request: Request) {
+    private requestDetails (request: Request) {
         return `${helpers.socketName(request.socket)} => ${JSON.stringify(request.body)}`;
     }
 }

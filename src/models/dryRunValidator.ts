@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Validating a syntactically correct imposter creation statically is quite difficult.
  * This module validates dynamically by running test requests through each predicate and each stub
@@ -7,27 +5,26 @@
  * @module
  */
 
-import {ILogger} from "../util/scopedLogger";
-import {IResponse} from "./IRequest";
-import {IMontebankError, InjectionError, ValidationError} from "../util/errors";
-import * as Q from "q";
-import {StubRepository} from "./stubs/StubRepository";
-import {IImposterConfig} from "./imposters/IImposter";
-import {IServerRequestData, IValidation} from "./IProtocol";
-import {ResponseResolver} from "./responseResolver";
-import {IStubConfig} from "./stubs/IStubConfig";
-import * as helpers from "../util/helpers";
-import {IStubRepository} from "./stubs/IStubRepository";
-import * as combinators from "../util/combinators";
-import * as behaviors from "./behaviors/behaviors";
-
+import { ILogger } from '../util/scopedLogger';
+import { IResponse } from './IRequest';
+import { IMontebankError, InjectionError, ValidationError } from '../util/errors';
+import * as Q from 'q';
+import { StubRepository } from './stubs/StubRepository';
+import { IImposterConfig } from './imposters/IImposter';
+import { IServerRequestData, IValidation } from './IProtocol';
+import { ResponseResolver } from './responseResolver';
+import { IStubConfig } from './stubs/IStubConfig';
+import * as helpers from '../util/helpers';
+import { IStubRepository } from './stubs/IStubRepository';
+import * as combinators from '../util/combinators';
+import * as behaviors from './behaviors/behaviors';
 
 
     interface IDryRunValidatorOptions {
-    allowInjection?:boolean;
-    testRequest?:IServerRequestData;
-    testProxyResponse?:any;
-    additionalValidation?:(cfg:IImposterConfig) => Q.Promise<IValidation>
+    allowInjection?: boolean;
+    testRequest?: IServerRequestData;
+    testProxyResponse?: any;
+    additionalValidation?: (cfg: IImposterConfig) => Q.Promise<IValidation>;
 }
 
 /**
@@ -43,8 +40,8 @@ export function create (options: IDryRunValidatorOptions) {
     function stubForResponse (originalStub: IStubConfig, response: IResponse, withPredicates: boolean) {
         // Each dry run only validates the first response, so we
         // explode the number of stubs to dry run each response separately
-        const clonedStub = helpers.clone(originalStub),
-            clonedResponse = helpers.clone(response);
+        const clonedStub = helpers.clone(originalStub);
+        const clonedResponse = helpers.clone(response);
         clonedStub.responses = [clonedResponse];
 
         // If the predicates don't match the test request, we won't dry run
@@ -60,9 +57,9 @@ export function create (options: IDryRunValidatorOptions) {
     function reposToTestFor (stub: IStubConfig, encoding: string) {
         // Test with predicates (likely won't match) to make sure predicates don't blow up
         // Test without predicates (always matches) to make sure response doesn't blow up
-        const stubsToValidateWithPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, true)) : [],
-            stubsToValidateWithoutPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, false)) : [],
-            stubsToValidate = stubsToValidateWithPredicates.concat(stubsToValidateWithoutPredicates);
+        const stubsToValidateWithPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, true)) : [];
+        const stubsToValidateWithoutPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, false)) : [];
+        const stubsToValidate = stubsToValidateWithPredicates.concat(stubsToValidateWithoutPredicates);
 
         return stubsToValidate.map(stubToValidate => {
             const stubRepository: IStubRepository = new StubRepository(encoding);
@@ -86,19 +83,18 @@ export function create (options: IDryRunValidatorOptions) {
 
     function dryRun (stub: IStubConfig, encoding: string, logger: ILogger) {
         const dryRunLogger: ILogger = {
-                debug: combinators.noop,
-                info: combinators.noop,
-                warn: combinators.noop,
-                error: logger.error
-            } as any as ILogger,
-            dryRunRepositories = reposToTestFor(stub, encoding);
+            debug: combinators.noop,
+            info: combinators.noop,
+            warn: combinators.noop,
+            error: logger.error
+        } as any as ILogger;
+        const dryRunRepositories = reposToTestFor(stub, encoding);
 
         options.testRequest = options.testRequest || {};
         options.testRequest.isDryRun = true;
         return Q.all(dryRunRepositories.map(stubRepository => {
-            // @ts-ignore
-            const responseConfig = stubRepository.getResponseFor(options.testRequest, dryRunLogger, {}),
-                resolver = resolverFor(stubRepository);
+            const responseConfig = stubRepository.getResponseFor(options.testRequest!, dryRunLogger, {});
+            const resolver = resolverFor(stubRepository);
             return resolver.resolve(responseConfig, options.testRequest!, dryRunLogger, {});
         }));
     }
@@ -131,14 +127,14 @@ export function create (options: IDryRunValidatorOptions) {
 
     function hasStubInjection (stub: IStubConfig) {
         const hasResponseInjections = stub.responses && stub.responses.some((response: IResponse) => {
-                const hasDecorator = response._behaviors && response._behaviors.decorate,
-                    hasWaitFunction = response._behaviors && typeof response._behaviors.wait === 'string';
+            const hasDecorator = response._behaviors && response._behaviors.decorate;
+            const hasWaitFunction = response._behaviors && typeof response._behaviors.wait === 'string';
 
-                return response.inject || hasDecorator || hasWaitFunction || hasPredicateGeneratorInjection(response);
-            }),
-            hasPredicateInjections = Object.keys(stub.predicates || {})
-                .some(predicate => stub.predicates && stub.predicates[parseInt(predicate, 10)].inject),
-            hasAddDecorateBehaviorInProxy = stub.responses && stub.responses.some(response => response.proxy && response.proxy.addDecorateBehavior);
+            return response.inject || hasDecorator || hasWaitFunction || hasPredicateGeneratorInjection(response);
+        });
+        const hasPredicateInjections = Object.keys(stub.predicates || {})
+            .some(predicate => stub.predicates && stub.predicates[parseInt(predicate, 10)].inject);
+        const hasAddDecorateBehaviorInProxy = stub.responses && stub.responses.some(response => response.proxy && response.proxy.addDecorateBehavior);
         return hasResponseInjections || hasPredicateInjections || hasAddDecorateBehaviorInProxy;
     }
 
@@ -174,8 +170,8 @@ export function create (options: IDryRunValidatorOptions) {
     }
 
     function errorsForStub (stub: IStubConfig, encoding: string, logger: ILogger) {
-        const errors: IMontebankError[] = [],
-            deferred = Q.defer();
+        const errors: IMontebankError[] = [];
+        const deferred = Q.defer();
 
         if (!Array.isArray(stub.responses) || stub.responses.length === 0) {
             errors.push(ValidationError("'responses' must be a non-empty array", {
@@ -202,11 +198,10 @@ export function create (options: IDryRunValidatorOptions) {
     }
 
     function errorsForRequest (request: IImposterConfig) {
-        const errors = [],
-            hasRequestInjection = request.endOfRequestResolver && request.endOfRequestResolver.inject;
+        const errors = [];
+        const hasRequestInjection = request.endOfRequestResolver && request.endOfRequestResolver.inject;
 
         if (!options.allowInjection && hasRequestInjection) {
-            // @ts-ignore
             errors.push(InjectionError(
                 'JavaScript injection is not allowed unless mb is run with the --allowInjection flag',
                 { source: request.endOfRequestResolver }));
@@ -221,11 +216,11 @@ export function create (options: IDryRunValidatorOptions) {
      * @param {Object} logger - The logger
      * @returns {Object} Promise resolving to an object containing isValid and an errors array
      */
-    function validate (request: IImposterConfig, logger: ILogger):Q.Promise<IValidation> {
-        const stubs = request.stubs || [],
-            encoding = request.mode === 'binary' ? 'base64' : 'utf8',
-            validationPromises = stubs.map(stub => errorsForStub(stub, encoding, logger)),
-            deferred = Q.defer<IValidation>();
+    function validate (request: IImposterConfig, logger: ILogger): Q.Promise<IValidation> {
+        const stubs = request.stubs || [];
+        const encoding = request.mode === 'binary' ? 'base64' : 'utf8';
+        const validationPromises = stubs.map(stub => errorsForStub(stub, encoding, logger));
+        const deferred = Q.defer<IValidation>();
 
         validationPromises.push(Q(errorsForRequest(request)));
         if (typeof options.additionalValidation === 'function') {

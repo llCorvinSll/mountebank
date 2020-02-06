@@ -5,13 +5,13 @@ const util = require('util');
 describe('predicates', function () {
     describe('#inject', function () {
         it('should return true if injected function returns true', function () {
-            const predicate = {inject: 'function () { return true; }'};
+            const predicate = { inject: 'function () { return true; }' };
             const request = {};
             expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
         it('should return false if injected function returns false', function () {
-            const predicate = {inject: 'function () { return false; }'};
+            const predicate = { inject: 'function () { return false; }' };
             const request = {};
             expect(!predicates.evaluate(predicate, request)).toBeTruthy();
         });
@@ -20,8 +20,8 @@ describe('predicates', function () {
             const fn = function (obj: any) {
                 return obj.path === '/' && obj.method === 'GET';
             };
-            const predicate = {inject: fn.toString()};
-            const request = {path: '/', method: 'GET'};
+            const predicate = { inject: fn.toString() };
+            const request = { path: '/', method: 'GET' };
             expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
 
@@ -33,7 +33,7 @@ describe('predicates', function () {
                     errorsLogged.push(message);
                 }
             };
-            const predicate = {inject: 'function () {  throw Error("BOOM!!!"); }'};
+            const predicate = { inject: 'function () {  throw Error("BOOM!!!"); }' };
             const request = {};
 
             try {
@@ -47,18 +47,18 @@ describe('predicates', function () {
         });
 
         it('should allow changing the state in the injection', function () {
-            const mockedImposterState = {foo: 'bar'};
-            const expectedImposterState = {foo: 'barbar'};
+            const mockedImposterState = { foo: 'bar' };
+            const expectedImposterState = { foo: 'barbar' };
             const mockedLogger = {
                 error: function () {
                 }
             };
             const fn = function (request: any, logger: any, imposterState: any) {
-                    imposterState.foo = 'barbar';
-                    return true;
-                },
-                predicate = { inject: fn.toString() },
-                request = { path: '/', method: 'GET' };
+                imposterState.foo = 'barbar';
+                return true;
+            };
+            const predicate = { inject: fn.toString() };
+            const request = { path: '/', method: 'GET' };
             expect(predicates.evaluate(predicate, request, 'utf8', mockedLogger, mockedImposterState)).toBeTruthy();
             expect(mockedImposterState).toEqual(expectedImposterState);
         });
@@ -67,8 +67,8 @@ describe('predicates', function () {
             const fn = function () {
                 throw new Error('BOOM!');
             };
-            const predicate = {inject: fn.toString()};
-            const request = {isDryRun: true};
+            const predicate = { inject: fn.toString() };
+            const request = { isDryRun: true };
             expect(predicates.evaluate(predicate, request)).toBeTruthy();
         });
     });

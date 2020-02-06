@@ -1,6 +1,6 @@
-'use strict';
 
-import {ApiClient} from "../api";
+
+import { ApiClient } from '../api';
 
 const assert = require('assert');
 const TcpProxy = require('../../../src/models/tcp/tcpProxy');
@@ -14,16 +14,16 @@ describe('tcp proxy', function () {
     beforeEach(() => {
         api = new ApiClient();
         port = api.port + 1;
-    })
+    });
 
-    const noOp = () => {},
-        logger = { debug: noOp, info: noOp, warn: noOp, error: noOp };
+    const noOp = () => {};
+    const logger = { debug: noOp, info: noOp, warn: noOp, error: noOp };
 
     describe('#to', function () {
         it('should send same request information to proxied socket', function () {
-            const stub = { responses: [{ is: { data: 'howdy!' } }] },
-                request = { protocol: 'tcp', port, stubs: [stub] },
-                proxy = TcpProxy.create(logger, 'utf8');
+            const stub = { responses: [{ is: { data: 'howdy!' } }] };
+            const request = { protocol: 'tcp', port, stubs: [stub] };
+            const proxy = TcpProxy.create(logger, 'utf8');
 
             return api.post('/imposters', request)
                 .then(() => proxy.to(`tcp://localhost:${port}`, { data: 'hello, world!' }))
@@ -34,10 +34,10 @@ describe('tcp proxy', function () {
         });
 
         it('should proxy binary data', function () {
-            const buffer = Buffer.from([0, 1, 2, 3]),
-                stub = { responses: [{ is: { data: buffer.toString('base64') } }] },
-                request = { protocol: 'tcp', port, stubs: [stub], mode: 'binary' },
-                proxy = TcpProxy.create(logger, 'base64');
+            const buffer = Buffer.from([0, 1, 2, 3]);
+            const stub = { responses: [{ is: { data: buffer.toString('base64') } }] };
+            const request = { protocol: 'tcp', port, stubs: [stub], mode: 'binary' };
+            const proxy = TcpProxy.create(logger, 'base64');
 
             return api.post('/imposters', request)
                 .then(() => proxy.to(`tcp://localhost:${port}`, { data: buffer }))
@@ -75,7 +75,7 @@ describe('tcp proxy', function () {
             originServer.listen(port);
 
             const proxy = TcpProxy.create(logger, 'base64', resolver);
-            const request = {data: 'test'};
+            const request = { data: 'test' };
             return proxy.to(`tcp://localhost:${port}`, request).then((response: any) => {
                 assert.strictEqual(response.data, largeRequest.toString('base64'), `Response length: ${response.data.length}`);
             });

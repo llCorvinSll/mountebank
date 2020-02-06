@@ -1,10 +1,10 @@
-'use strict';
+
 
 export interface IPredicate {
-    caseSensitive?: boolean
+    caseSensitive?: boolean;
     except?: string;
     xpath?: IXPathConfig;
-    jsonpath?:IJsonPathConfig;
+    jsonpath?: IJsonPathConfig;
     keyCaseSensitive?: boolean;
 
     equals?: IPredicateConfig;
@@ -24,6 +24,7 @@ export interface IPredicate {
     [key: string]: IPredicateConfig| boolean | undefined;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IPredicateConfig {
 
 }

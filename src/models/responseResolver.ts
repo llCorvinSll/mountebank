@@ -1,20 +1,14 @@
-'use strict';
-
-import {IPredicateGenerator, IRequest, IResponse} from "./IRequest";
-import {ILogger} from "../util/scopedLogger";
-import * as Q from "q";
-import {InjectionError, ValidationError} from "../util/errors";
-import {IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData} from "./IProtocol";
-import {IJsonPathConfig, IPredicate, IXPathConfig} from "./predicates/IPredicate";
-import * as behaviors from "./behaviors/behaviors";
-import {IProxyConfig, IStubConfig} from "./stubs/IStubConfig";
-import * as  helpers from '../util/helpers';
-import * as jsonpath from './jsonpath';
-import * as compatibility from './compatibility';
-import * as xpath from './xpath';
+import { ILogger } from '../util/scopedLogger';
+import * as Q from 'q';
 import * as errors from '../util/errors';
-import * as stringify from 'json-stable-stringify';
-import {IStubRepository} from "./stubs/IStubRepository";
+import { InjectionError, ValidationError } from '../util/errors';
+import { IMountebankResponse, IProxyImplementation, IProxyResponse, IResolver, IServerRequestData } from './IProtocol';
+import * as behaviors from './behaviors/behaviors';
+import { IProxyConfig, IStubConfig } from './stubs/IStubConfig';
+import * as helpers from '../util/helpers';
+import * as compatibility from './compatibility';
+import { IStubRepository } from './stubs/IStubRepository';
+import { newIsResponse, predicatesFor } from './predicatesFor';
 
 
 interface IPendingProxyResolution {
@@ -24,60 +18,10 @@ interface IPendingProxyResolution {
     requestDetails: unknown;
 }
 
-function hasMultipleTypes (this:void, responseConfig: IMountebankResponse):boolean {
-    return !!((responseConfig.is && responseConfig.proxy) ||
+function hasMultipleTypes (this: void, responseConfig: IMountebankResponse): boolean {
+    return Boolean((responseConfig.is && responseConfig.proxy) ||
         (responseConfig.is && responseConfig.inject) ||
         (responseConfig.proxy && responseConfig.inject));
-}
-
-
-function newIsResponse (this: void, response: IMountebankResponse, proxyConfig: IProxyConfig):IResponse {
-    const result:IResponse = { is: response };
-    const addBehaviors:IProxyConfig = {} as any;
-
-    if (proxyConfig.addWaitBehavior && response._proxyResponseTime) { // eslint-disable-line no-underscore-dangle
-        // @ts-ignore
-        addBehaviors.wait = response._proxyResponseTime; // eslint-disable-line no-underscore-dangle
-    }
-    if (proxyConfig.addDecorateBehavior) {
-        addBehaviors.decorate = proxyConfig.addDecorateBehavior;
-    }
-
-    if (Object.keys(addBehaviors).length) {
-        // @ts-ignore
-        result._behaviors = addBehaviors;
-    }
-    return result;
-}
-
-
-function xpathValue (xpathConfig: IXPathConfig, possibleXML: string, logger: ILogger) {
-    const nodes = xpath.select(xpathConfig.selector, xpathConfig.ns!, possibleXML, logger);
-    return selectionValue(nodes);
-}
-
-
-function jsonpathValue (jsonpathConfig: IJsonPathConfig, possibleJSON: string, logger: ILogger) {
-    const nodes = jsonpath.select(jsonpathConfig.selector, possibleJSON, logger);
-    return selectionValue(nodes);
-}
-
-// @ts-ignore
-function selectionValue (nodes) {
-    if (!helpers.defined(nodes)) {
-        return '';
-    }
-    else if (!Array.isArray(nodes)) {
-        return nodes; // booleans and counts
-    }
-    else {
-        return (nodes.length === 1) ? nodes[0] : nodes;
-    }
-}
-
-
-function deepEqual (obj1: unknown, obj2: unknown) {
-    return stringify(obj1) === stringify(obj2);
 }
 
 
@@ -89,20 +33,18 @@ function deepEqual (obj1: unknown, obj2: unknown) {
  * @returns {Object}
  */
 export class ResponseResolver implements IResolver {
-    public constructor(
+    public constructor (
         protected stubs: IStubRepository,
-        protected proxy: IProxyImplementation | undefined  | null,
+        protected proxy: IProxyImplementation | undefined | null,
         protected callbackURL?: string) {
         this.inProcessProxy = Boolean(proxy);
     }
 
-    private path:string[] = [];
+    private path: string[] = [];
     private nextProxyResolutionKey = 0;
-    private pendingProxyResolutions: {[key: number]:IPendingProxyResolution } = {};
-    private readonly inProcessProxy:boolean = false;
-    // @ts-ignore
-    private injectState:any = {}; // eslint-disable-line no-unused-vars
-
+    private pendingProxyResolutions: {[key: number]: IPendingProxyResolution } = {};
+    private readonly inProcessProxy: boolean = false;
+    private injectState: any = {}; // eslint-disable-line no-unused-vars
 
 
     /**
@@ -126,14 +68,16 @@ export class ResponseResolver implements IResolver {
             // in the new stub. If so, we need to ensure we don't re-run it
             if (responseConfig.proxy) {
                 return Q(response);
-            } else {
+            }
+            else {
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
             }
         }).then((response: IMountebankResponse) => {
             if (this.inProcessProxy) {
                 return Q<IMountebankResponse>(response);
-            } else {
-                return responseConfig.proxy ? Q<IMountebankResponse>(response) : Q<IMountebankResponse>({response});
+            }
+            else {
+                return responseConfig.proxy ? Q<IMountebankResponse>(response) : Q<IMountebankResponse>({ response });
             }
         });
     }
@@ -157,7 +101,7 @@ export class ResponseResolver implements IResolver {
             proxyResponse._proxyResponseTime = new Date().getTime() - pendingProxyConfig.startTime.getTime();
 
             return behaviors.execute(pendingProxyConfig.request, proxyResponse, pendingProxyConfig.responseConfig._behaviors, logger)
-                .then((response) => {
+                .then(response => {
                     this.recordProxyResponse(pendingProxyConfig.responseConfig, pendingProxyConfig.request, response, logger);
                     response.recordMatch = () => { pendingProxyConfig.responseConfig.recordMatch && pendingProxyConfig.responseConfig.recordMatch(response); };
                     delete this.pendingProxyResolutions[proxyResolutionKey];
@@ -171,11 +115,11 @@ export class ResponseResolver implements IResolver {
         }
     }
 
-    private proxyAndRecord (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, requestDetails: unknown):Q.Promise<any> {
+    private proxyAndRecord (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, requestDetails: unknown): Q.Promise<any> {
         const startTime = new Date().getTime();
 
         if (!responseConfig.proxy) {
-            throw ValidationError("try proxy without actual config")
+            throw ValidationError('try proxy without actual config');
         }
 
         if (['proxyOnce', 'proxyAlways', 'proxyTransparent'].indexOf(responseConfig.proxy.mode) < 0) {
@@ -189,7 +133,7 @@ export class ResponseResolver implements IResolver {
 
                 // Run behaviors here to persist decorated response
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
-            }).then((response:IMountebankResponse) => {
+            }).then((response: IMountebankResponse) => {
                 this.recordProxyResponse(responseConfig, request, response, logger);
                 return Q(response);
             });
@@ -242,34 +186,18 @@ export class ResponseResolver implements IResolver {
         }
     }
 
-    private indexOfStubToAddResponseTo (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger) {
-        const predicates = this.predicatesFor(request, responseConfig.proxy && responseConfig.proxy.predicateGenerators || [], logger),
-            stubList = this.stubs.stubs();
-
-        for (let index = this.stubIndexFor(responseConfig) + 1; index < stubList.length; index += 1) {
-            if (deepEqual(predicates, stubList[index].predicates)) {
-                return index;
-            }
-        }
-        return -1;
-    }
-
     private canAddResponseToExistingStub (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger): boolean {
-        return this.indexOfStubToAddResponseTo(responseConfig, request, logger) >= 0;
+        return this.stubs.indexOfStubToAddResponseTo(responseConfig, request, this.path, logger) >= 0;
     }
 
-    private addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger):void {
-        const stubResponse:IResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig);
-        const responseIndex = this.indexOfStubToAddResponseTo(responseConfig, request, logger);
-
-        let i_stub = this.stubs.stubs()[responseIndex];
-        i_stub.addResponse && i_stub.addResponse(stubResponse);
+    private addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger): void {
+        this.stubs.addNewResponse(responseConfig, request, response, this.path, logger);
     }
 
-    private addNewStub (responseConfig: IMountebankResponse, request :IServerRequestData, response: IMountebankResponse, logger: ILogger):void {
-        const predicates = this.predicatesFor(request, (responseConfig.proxy && responseConfig.proxy.predicateGenerators) || [], logger),
-            stubResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig),
-            newStub:IStubConfig = { predicates: predicates, responses: [stubResponse] };
+    private addNewStub (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger): void {
+        const predicates = predicatesFor(request, (responseConfig.proxy && responseConfig.proxy.predicateGenerators) || [], this.path, logger);
+        const stubResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig);
+        const newStub: IStubConfig = { predicates: predicates, responses: [stubResponse] };
 
         if (responseConfig.proxy && responseConfig.proxy.mode === 'proxyAlways') {
             this.stubs.addStub(newStub);
@@ -279,138 +207,12 @@ export class ResponseResolver implements IResolver {
         }
     }
 
-    private predicatesFor (request: IServerRequestData, matchers: IPredicateGenerator[], logger: ILogger) {
-        const predicates: IPredicate[] = [];
-
-        // @ts-ignore
-        matchers.forEach(matcher => {
-            if (matcher.inject) {
-                // eslint-disable-next-line no-unused-vars
-                // @ts-ignore
-                const config = { request, logger },
-                    injected = `(${matcher.inject})(config);`;
-                try {
-                    // @ts-ignore
-                    predicates.push(...eval(injected));
-                }
-                catch (error) {
-                    logger.error(`injection X=> ${error}`);
-                    logger.error(`    source: ${JSON.stringify(injected)}`);
-                    logger.error(`    request: ${JSON.stringify(request)}`);
-                    throw errors.InjectionError('invalid predicateGenerator injection', { source: injected, data: error.message });
-                }
-                return;
-            }
-
-            const basePredicate:IPredicate = {} as any;
-            let hasPredicateOperator: boolean = false;
-            // @ts-ignore
-            let predicateOperator; // eslint-disable-line no-unused-vars
-            // @ts-ignore
-            let valueOf = field => field;
-
-            // Add parameters
-            Object.keys(matcher).forEach(key => {
-                if (key !== 'matches' && key !== 'predicateOperator') {
-                    // @ts-ignore
-                    basePredicate[key] = matcher[key];
-                }
-                if (key === 'xpath') {
-                    valueOf = field => xpathValue(matcher.xpath!, field, logger);
-                }
-                else if (key === 'jsonpath') {
-                    valueOf = field => jsonpathValue(matcher.jsonpath!, field, logger);
-                }
-                else if (key === 'predicateOperator') {
-                    hasPredicateOperator = true;
-                    predicateOperator = matcher[key];
-                }
-            });
-
-            Object.keys(matcher.matches!).forEach(fieldName => {
-                const matcherValue = matcher.matches![fieldName];
-                const predicate = helpers.clone(basePredicate);
-                if (matcherValue === true && !hasPredicateOperator) {
-                    predicate.deepEquals = {};
-                    // @ts-ignore
-                    predicate.deepEquals[fieldName] = valueOf(request[fieldName]);
-                }
-                else if (hasPredicateOperator && matcher.predicateOperator === 'exists') {
-                    // @ts-ignore
-                    predicate[matcher.predicateOperator] = this.buildExists(request, fieldName, matcherValue, request);
-                }
-                else if (hasPredicateOperator && matcher.predicateOperator !== 'exists') {
-                    predicate[matcher.predicateOperator!] = valueOf(request);
-                }
-                else {
-                    predicate.equals = {};
-                    // @ts-ignore
-                    predicate.equals[fieldName] = this.buildEquals(request[fieldName], matcherValue, valueOf);
-                }
-
-                // @ts-ignore
-                predicates.push(predicate);
-            });
-        });
-
-        // @ts-ignore
-        return predicates;
-    }
-
-    // @ts-ignore
-    private stubIndexFor (responseConfig) {
-        const stubList = this.stubs.stubs();
-        for (var i = 0; i < stubList.length; i += 1) {
-            let current_stub = stubList[i];
-            if (current_stub.responses && current_stub.responses.some(response => deepEqual(response, responseConfig))) {
-                break;
-            }
-        }
-        return i;
-    }
-
-    // @ts-ignore
-    private buildEquals (request: IRequest, matchers, valueOf) {
-        const result = {};
-
-        Object.keys(matchers).forEach(key => {
-            if (helpers.isObject(request[key])) {
-                // @ts-ignore
-                result[key] = this.buildEquals(request[key], matchers[key], valueOf);
-            }
-            else {
-                // @ts-ignore
-                result[key] = valueOf(request[key]);
-            }
-        });
-        return result;
-    }
-
-
-    // @ts-ignore
-    private buildExists (request: IRequest | undefined, fieldName: string, matchers, initialRequest) {
-        request = request || {} as IRequest;
-
-        Object.keys(request || {}).forEach(key => {
-            this.path.push(key);
-            // @ts-ignore
-            if (helpers.isObject(request[key])) {
-                // @ts-ignore
-                this.buildExists(request[key], fieldName, matchers[key], initialRequest);
-            }
-            else {
-                const booleanValue = (typeof fieldName !== 'undefined' && fieldName !== null && fieldName !== '');
-                helpers.setDeep(initialRequest, this.path, booleanValue);
-            }
-        });
-        return initialRequest;
-    }
-
     private inject (request: IServerRequestData, fn: string, logger: ILogger, imposterState: unknown) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore
-        const injectState:any = this.injectState;
+        const injectState: any = this.injectState;
         const deferred = Q.defer();
-        let config:any = {
+        const config: any = {
             request: helpers.clone(request),
             state: imposterState,
             logger: logger,

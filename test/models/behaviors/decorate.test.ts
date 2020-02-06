@@ -1,19 +1,19 @@
-'use strict';
+
 
 const assert = require('assert');
-import * as  behaviors from '../../../src/models/behaviors/behaviors';
+import * as behaviors from '../../../src/models/behaviors/behaviors';
 const Logger = require('../../fakes/fakeLogger');
 
 describe('behaviors', function () {
     describe('#decorate', function () {
         it('should allow changing the response directly', function () {
             const request: any = {};
-            const response: any= {key: 'ORIGINAL'};
+            const response: any = { key: 'ORIGINAL' };
             const logger = Logger.create();
             const fn = (req: any, responseToDecorate: any) => {
                 responseToDecorate.key = 'CHANGED';
             };
-            const config: any = {decorate: fn.toString()};
+            const config: any = { decorate: fn.toString() };
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 expect(actualResponse).toEqual({ key: 'CHANGED' });
@@ -22,10 +22,10 @@ describe('behaviors', function () {
 
         it('should allow returning response', function () {
             const request: any = {};
-            const response: any= {key: 'VALUE'};
+            const response: any = { key: 'VALUE' };
             const logger = Logger.create();
-            const fn = () => ({newKey: 'NEW-VALUE'});
-            const config: any = {decorate: fn.toString()};
+            const fn = () => ({ newKey: 'NEW-VALUE' });
+            const config: any = { decorate: fn.toString() };
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 expect(actualResponse).toEqual({ newKey: 'NEW-VALUE' });
@@ -34,12 +34,12 @@ describe('behaviors', function () {
 
         it('should allow logging in the decoration function', function () {
             const request: any = {};
-            const response: any= {key: 'VALUE'};
+            const response: any = { key: 'VALUE' };
             const logger = Logger.create();
             const fn = (req: any, resp: any, log: any) => {
                 log.info('test entry');
             };
-            const config: any = {decorate: fn.toString()};
+            const config: any = { decorate: fn.toString() };
 
             return behaviors.execute(request, response, config, logger).then(() => {
                 logger.info.assertLogged('test entry');
@@ -48,16 +48,16 @@ describe('behaviors', function () {
 
         it('should reject function if function throws error', function () {
             const request: any = {};
-            const response: any= {key: 'value'};
+            const response: any = { key: 'value' };
             const logger = Logger.create();
-            const fn = () => { throw Error('BOOM!!!') };
-            const config: any = {decorate: fn.toString()};
+            const fn = () => { throw Error('BOOM!!!'); };
+            const config: any = { decorate: fn.toString() };
 
             return behaviors.execute(request, response, config, logger).then(() => {
                 assert.fail('should have rejected');
             }, error => {
                 expect(error.message.indexOf('invalid decorator injection') >= 0).toBeTruthy();
-                logger.error.assertLogged("injection X=> Error: BOOM!!!");
+                logger.error.assertLogged('injection X=> Error: BOOM!!!');
             });
         });
 

@@ -1,12 +1,12 @@
-import { IStub } from "./IStub";
-import { IResponse } from "../IRequest";
-import { IPredicate } from "../predicates/IPredicate";
-import { IMountebankResponse } from "../IProtocol";
-import {IStubConfig} from "./IStubConfig";
+import { IStub } from './IStub';
+import { IResponse } from '../IRequest';
+import { IPredicate } from '../predicates/IPredicate';
+import { IMountebankResponse } from '../IProtocol';
+import { IStubConfig } from './IStubConfig';
 
 
 export class Stub implements IStub {
-    constructor(config:IStubConfig, private _uuid: string) {
+    constructor (config: IStubConfig, private _uuid: string) {
         this.responses = config.responses || [];
         this.statefulResponses = this.repeatTransform(config.responses as IMountebankResponse[]);
 
@@ -15,20 +15,20 @@ export class Stub implements IStub {
         }
     }
 
-    public get uuid() {
+    public get uuid () {
         return this._uuid;
     }
 
-    _links:string;
-    public addResponse:(resp:IResponse) => void = (response:IResponse) => {
-        this.responses && this.responses.push(response);
+    _links: string;
+    public addResponse (response: IResponse): void {
+        this.responses.push(response);
     }
 
-    matches:unknown[];
-    predicates:IPredicate[];
-    recordMatch:(responce?:any) => void;
-    responses:IResponse[];
-    statefulResponses:IMountebankResponse[];
+    matches: unknown[];
+    predicates: IPredicate[];
+    recordMatch: (responce?: any) => void;
+    responses: IResponse[];
+    statefulResponses: IMountebankResponse[];
 
     private repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
         const result = [];
@@ -39,7 +39,6 @@ export class Stub implements IStub {
             response = responses[i];
             repeats = this.repeatsFor(response);
             for (let j = 0; j < repeats; j += 1) {
-                // @ts-ignore
                 result.push(response);
             }
         }

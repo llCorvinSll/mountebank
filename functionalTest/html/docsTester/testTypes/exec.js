@@ -1,9 +1,9 @@
 'use strict';
 
-const exec = require('child_process').exec,
-    Q = require('q'),
-    fs = require('fs'),
-    path = require('path');
+const exec = require('child_process').exec;
+const Q = require('q');
+const fs = require('fs');
+const path = require('path');
 let nextTestId = 1;
 
 function execute (command) {
@@ -34,8 +34,8 @@ function usePortableNetcat (command) {
 }
 
 function runStep (step) {
-    const deferred = Q.defer(),
-        filename = `test-${nextTestId}`;
+    const deferred = Q.defer();
+    const filename = `test-${nextTestId}`;
 
     fs.writeFileSync(filename, usePortableNetcat(step.requestText), { mode: 484 /* 0744 */ });
     nextTestId += 1;

@@ -1,7 +1,7 @@
-'use strict';
+
 
 import { Request, Response } from 'express';
-import {IRelease} from "../models/IMountebankOptions";
+import { IRelease } from '../models/IMountebankOptions';
 
 /**
  * The controller that returns the base mountebank hypermedia
@@ -21,13 +21,13 @@ interface IReleaseNotice {
 export function create (releases: IRelease[]) {
     function createNotice (release: IRelease) {
         const date = require('../util/date');
-        return <IReleaseNotice>{
+        return {
             version: release.version,
             when: date.howLongAgo(release.date)
         };
     }
 
-    const isRecent = (notice:IReleaseNotice) => notice.when !== '';
+    const isRecent = (notice: IReleaseNotice) => notice.when !== '';
 
     /**
      * The function that responds to GET /
@@ -37,14 +37,14 @@ export function create (releases: IRelease[]) {
      */
     function get (request: Request, response: Response) {
         const hypermedia = {
-                _links: {
-                    imposters: { href: '/imposters' },
-                    config: { href: '/config' },
-                    logs: { href: '/logs' }
-                }
-            },
-            notices = releases.map(createNotice).filter(isRecent),
-            viewNotices:IReleaseNotice[] = [];
+            _links: {
+                imposters: { href: '/imposters' },
+                config: { href: '/config' },
+                logs: { href: '/logs' }
+            }
+        };
+        const notices = releases.map(createNotice).filter(isRecent);
+        const viewNotices: IReleaseNotice[] = [];
 
         if (notices.length > 0) {
             notices.reverse();

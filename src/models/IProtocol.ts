@@ -1,23 +1,21 @@
-'use strict';
-
-import {IImposter, IImposterConfig} from "./imposters/IImposter";
-import {IMontebankError} from "../util/errors";
-import * as Q from "q";
-import {ILogger} from "../util/scopedLogger";
-import {IProxyConfig} from "./stubs/IStubConfig";
-import {IStubRepository} from "./stubs/IStubRepository";
-import {IBehaviorsConfig} from "./behaviors/IBehaviorsConfig";
+import { IImposter, IImposterConfig } from './imposters/IImposter';
+import { IMontebankError } from '../util/errors';
+import * as Q from 'q';
+import { ILogger } from '../util/scopedLogger';
+import { IProxyConfig } from './stubs/IStubConfig';
+import { IStubRepository } from './stubs/IStubRepository';
+import { IBehaviorsConfig } from './behaviors/IBehaviorsConfig';
 
 
 export interface IProtocol {
-    port:number;
+    port: number;
     metadata: any;
     close: () => void;
     proxy: IProxyImplementation;
     encoding: string;
-    validate?:(imposter_config:IImposterConfig) => Q.Promise<IValidation>;
-    createImposterFrom?:(imposter_config:IImposterConfig) => Q.Promise<IImposter>;
-    createServer?:(params:unknown, logger:ILogger, req_creator:(request: any, details: any) => Q.Promise<any>) => Q.Promise<IServer>;
+    validate?: (imposterConfig: IImposterConfig) => Q.Promise<IValidation>;
+    createImposterFrom?: (imposterConfig: IImposterConfig) => Q.Promise<IImposter>;
+    createServer?: (params: unknown, logger: ILogger, reqCreator: (request: any, details: any) => Q.Promise<any>) => Q.Promise<IServer>;
 }
 
 
@@ -34,10 +32,10 @@ export type ServerCreatorFunction = (options: IServerCreationOptions, logger: IL
 export type RequestCallback = (arg1: IServerRequestData, arg2: any) => any;
 
 export interface IProtocolFactory {
-    validate?:(imposter_config:IImposterConfig) => Q.Promise<IValidation>;
-    testRequest:IServerRequestData;
+    validate?: (imposterConfig: IImposterConfig) => Q.Promise<IValidation>;
+    testRequest: IServerRequestData;
     testProxyResponse: IServerResponseData;
-    create:ServerImplCreatorFunction;
+    create: ServerImplCreatorFunction;
 
     createServer?: ServerCreatorFunction;
     createImposterFrom?: (creationRequest: IImposterConfig) => Q.Promise<IImposter>;
@@ -45,10 +43,10 @@ export interface IProtocolFactory {
 
 
 export interface IServerImplementation {
-    encoding?:string;
+    encoding?: string;
     port: number;
     metadata: any;
-    close(cb:(err?: Error) => void): void;
+    close(cb: (err?: Error) => void): void;
     proxy: IProxyImplementation;
 }
 
@@ -58,9 +56,9 @@ export interface IServer {
     metadata: any;
     stubs: IStubRepository;
     resolver: IResolver;
-    encoding?:string;
-    proxy?:IProxyImplementation;
-    close(cb:(err?: Error) => void): void;
+    encoding?: string;
+    proxy?: IProxyImplementation;
+    close(cb: (err?: Error) => void): void;
 }
 
 export interface IServerRequestData {
@@ -71,13 +69,13 @@ export interface IServerRequestData {
     headers?: any;
     body?: string;
     form?: any | undefined;
-    data?:unknown;
+    data?: unknown;
 
     ip?: string;
-    timestamp?:string;
-    isDryRun?:boolean;
+    timestamp?: string;
+    isDryRun?: boolean;
 
-    [key:string]:string|undefined|unknown;
+    [key: string]: string|undefined|unknown;
 }
 
 
@@ -99,11 +97,11 @@ export interface IMountebankResponse {
 
 
     _behaviors?: IBehaviorsConfig;
-    _proxyResponseTime?:number;
+    _proxyResponseTime?: number;
 
     is?: any;
 
-    inject?:string;
+    inject?: string;
 
     recordMatch?: (match?: any) => void;
     setMetadata?: (responseType: string, metadata: any) => void;
@@ -112,7 +110,7 @@ export interface IMountebankResponse {
 
 
 export interface IProxyResponse {
-    _proxyResponseTime?:number;
+    _proxyResponseTime?: number;
 }
 
 export interface IResolver {
@@ -122,7 +120,7 @@ export interface IResolver {
 
 
 export interface IProxyImplementation {
-    to(to: string, request: unknown, cfg: IProxyConfig, requestDetails?: unknown): Q.Promise<IMountebankResponse>
+    to(to: string, request: unknown, cfg: IProxyConfig, requestDetails?: unknown): Q.Promise<IMountebankResponse>;
 }
 
 export interface IValidation {

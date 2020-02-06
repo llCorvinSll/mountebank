@@ -1,16 +1,16 @@
-'use strict';
+
 
 import * as headersHelper from '../../../src/models/http/headersHelper';
 
 describe('headersHelper', function () {
     describe('#getHeader', function () {
         const request = {
-                headers: {
-                    'My-First-header': 'first-value',
-                    'my-Second-Header': 'second-value'
-                }
-            },
-            getHeader = headersHelper.getHeader;
+            headers: {
+                'My-First-header': 'first-value',
+                'my-Second-Header': 'second-value'
+            }
+        };
+        const getHeader = headersHelper.getHeader;
 
         it('should search for the header with case-insensity', function () {
             expect(getHeader('my-first-headEr', request.headers)).toEqual('first-value');
@@ -67,12 +67,12 @@ describe('headersHelper', function () {
         describe('#get', function () {
             it('should search for the header with case-insensity', function () {
                 const request = {
-                        headers: {
-                            'My-First-header': 'first-value',
-                            'my-Second-Header': 'second-value'
-                        }
-                    },
-                    headersJar = headersHelper.getJar(request.headers);
+                    headers: {
+                        'My-First-header': 'first-value',
+                        'my-Second-Header': 'second-value'
+                    }
+                };
+                const headersJar = headersHelper.getJar(request.headers);
 
                 expect(headersJar.get('my-first-headEr')).toEqual('first-value');
                 expect(headersJar.get('my-SECOND-header')).toEqual('second-value');
@@ -80,12 +80,12 @@ describe('headersHelper', function () {
 
             it('should return undefined if the header is not present', function () {
                 const request = {
-                        headers: {
-                            'My-First-header': 'first-value',
-                            'my-Second-Header': 'second-value'
-                        }
-                    },
-                    headersJar = headersHelper.getJar(request.headers);
+                    headers: {
+                        'My-First-header': 'first-value',
+                        'my-Second-Header': 'second-value'
+                    }
+                };
+                const headersJar = headersHelper.getJar(request.headers);
 
                 expect(headersJar.get('Missing-Header')).toEqual(undefined);
             });
@@ -94,12 +94,12 @@ describe('headersHelper', function () {
         describe('#set', function () {
             it('should not change the casing if the header exists', function () {
                 const request = {
-                        headers: {
-                            'My-First-header': 'first-value',
-                            'my-Second-Header': 'second-value'
-                        }
-                    },
-                    headersJar = headersHelper.getJar(request.headers);
+                    headers: {
+                        'My-First-header': 'first-value',
+                        'my-Second-Header': 'second-value'
+                    }
+                };
+                const headersJar = headersHelper.getJar(request.headers);
 
                 headersJar.set('my-first-headEr', 'new-value');
                 expect(request.headers['My-First-header']).toEqual('new-value');
@@ -107,15 +107,15 @@ describe('headersHelper', function () {
 
             it('should keep the casing intact for new headers', function () {
                 const request = {
-                        headers: {
-                            'My-First-header': 'first-value',
-                            'my-Second-Header': 'second-value'
-                        }
-                    },
-                    headersJar = headersHelper.getJar(request.headers);
+                    headers: {
+                        'My-First-header': 'first-value',
+                        'my-Second-Header': 'second-value'
+                    }
+                };
+                const headersJar = headersHelper.getJar(request.headers);
 
                 headersJar.set('My-Third-Header', 'third-value');
-                // @ts-ignore
+                //@ts-ignore
                 expect(request.headers['My-Third-Header']).toEqual('third-value');
             });
         });

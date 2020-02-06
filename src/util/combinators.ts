@@ -1,4 +1,4 @@
-'use strict';
+
 
 /**
  * Helpful combinators
@@ -20,10 +20,11 @@
  * @param {...*} args - The arguments to curry
  * @returns {Function}
  */
-export function curry (fn:Function, ...args:unknown[]):Function {
-    return function (...carry_args:unknown[]) {
-        const allArgs = args.concat(carry_args);
+export function curry (fn: Function, ...args: unknown[]): Function {
+    return function (...carryArgs: unknown[]) {
+        const allArgs = args.concat(carryArgs);
 
+        // eslint-disable-next-line prefer-spread
         return fn.apply(null, allArgs);
     };
 }
@@ -38,23 +39,23 @@ export function curry (fn:Function, ...args:unknown[]):Function {
  * @param {...Function} args - The functions to compose
  * @returns {Function} A single function that represents the composition of the functions provided
  */
-export function compose (...funcs:Array<Function>):Function {
+export function compose (...funcs: Array<Function>): Function {
     const args = Array.prototype.slice.call(funcs).reverse();
-    return (obj:object) => args.reduce((result:unknown, F:(obj:unknown) => unknown) => F(result), obj);
+    return (obj: object) => args.reduce((result: unknown, F: (obj: unknown) => unknown) => F(result), obj);
 }
 
 /**
  * A function that does nothing, occasionally useful to avoid special case logic
  */
-export function noop():void {}
+export function noop (): void {}
 
 /**
  * Ignores its parameters, and instead always returns a constant value
  * @param {Object} k - The constant to return
  * @returns {Function} - A function that will always return the constant
  */
-export function constant<T>(k:T): (k:T) => T {
-  return () => k
+export function constant<T> (k: T): (k: T) => T {
+    return () => k;
 }
 
 /**
@@ -63,6 +64,6 @@ export function constant<T>(k:T): (k:T) => T {
  * @param {Object} i - The input
  * @returns {Object} Exactly what was passed in
  */
-export function identity<T> (i:T):T {
+export function identity<T> (i: T): T {
     return i;
 }

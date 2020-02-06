@@ -1,4 +1,4 @@
-import {ApiClient} from "../api";
+import { ApiClient } from '../api';
 
 const assert = require('assert');
 const fs = require('fs');
@@ -24,8 +24,8 @@ describe('http proxy stubs', function () {
 
     if (!airplaneMode) {
         it('should allow proxy stubs to invalid domains', function () {
-            const stub = { responses: [{ proxy: { to: 'http://invalid.domain' } }] },
-                request = { protocol: 'http', port, stubs: [stub] };
+            const stub = { responses: [{ proxy: { to: 'http://invalid.domain' } }] };
+            const request = { protocol: 'http', port, stubs: [stub] };
 
             return api.post('/imposters', request)
                 .then(() => client.get('/', port))
@@ -38,16 +38,16 @@ describe('http proxy stubs', function () {
     }
 
     it('should reflect default mode after first proxy if no mode passed in', function () {
-        const originServerPort = port + 1,
-            originServerStub = { responses: [{ is: { body: 'origin server' } }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin'
-            },
-            proxyStub = { responses: [{ proxy: { to: `http://localhost:${originServerPort}` } }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+        const originServerPort = port + 1;
+        const originServerStub = { responses: [{ is: { body: 'origin server' } }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin'
+        };
+        const proxyStub = { responses: [{ proxy: { to: `http://localhost:${originServerPort}` } }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -63,35 +63,35 @@ describe('http proxy stubs', function () {
     });
 
     it('should record new stubs in order in front of proxy resolver using proxyOnce mode', function () {
-        const originServerPort = port + 1,
-            originServerFn = (request: any, state: any) => {
-                state.count = state.count || 0;
-                state.count += 1;
-                return {
-                    body: `${state.count}. ${request.method} ${request.path}`
-                };
-            },
-            originServerStub = { responses: [{ inject: originServerFn.toString() }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin server'
-            },
-            proxyDefinition = {
-                to: `http://localhost:${originServerPort}`,
-                mode: 'proxyOnce',
-                predicateGenerators: [
-                    {
-                        matches: {
-                            method: true,
-                            path: true
-                        }
+        const originServerPort = port + 1;
+        const originServerFn = (request: any, state: any) => {
+            state.count = state.count || 0;
+            state.count += 1;
+            return {
+                body: `${state.count}. ${request.method} ${request.path}`
+            };
+        };
+        const originServerStub = { responses: [{ inject: originServerFn.toString() }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin server'
+        };
+        const proxyDefinition = {
+            to: `http://localhost:${originServerPort}`,
+            mode: 'proxyOnce',
+            predicateGenerators: [
+                {
+                    matches: {
+                        method: true,
+                        path: true
                     }
-                ]
-            },
-            proxyStub = { responses: [{ proxy: proxyDefinition }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+                }
+            ]
+        };
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -122,26 +122,26 @@ describe('http proxy stubs', function () {
     });
 
     it('should allow programmatic creation of predicates', function () {
-        const originServerPort = port + 1,
-            originServerStub = { responses: [{ is: { body: 'ORIGIN' } }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin server'
-            },
-            fn = function (config: any) {
-                // Ignore first element; will be empty string in front of root /
-                const pathParts = config.request.path.split('/').splice(1);
-                // eslint-disable-next-line arrow-body-style
-                return pathParts.map((part: any) => { return { contains: { path: part } }; });
-            },
-            proxyDefinition = {
-                to: `http://localhost:${originServerPort}`,
-                predicateGenerators: [{ inject: fn.toString() }]
-            },
-            proxyStub = { responses: [{ proxy: proxyDefinition }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+        const originServerPort = port + 1;
+        const originServerStub = { responses: [{ is: { body: 'ORIGIN' } }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin server'
+        };
+        const fn = function (config: any) {
+            // Ignore first element; will be empty string in front of root /
+            const pathParts = config.request.path.split('/').splice(1);
+            // eslint-disable-next-line arrow-body-style
+            return pathParts.map((part: any) => { return { contains: { path: part } }; });
+        };
+        const proxyDefinition = {
+            to: `http://localhost:${originServerPort}`,
+            predicateGenerators: [{ inject: fn.toString() }]
+        };
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -161,78 +161,28 @@ describe('http proxy stubs', function () {
     });
 
     it('should record new stubs with multiple responses behind proxy resolver in proxyAlways mode', function () {
-        const originServerPort = port + 1,
-            originServerFn = (request: any, state: any) => {
-                state.count = state.count || 0;
-                state.count += 1;
-                return {
-                    body: `${state.count}. ${request.path}`
-                };
-            },
-            originServerStub = { responses: [{ inject: originServerFn.toString() }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin server'
-            },
-            proxyDefinition = {
-                to: `http://localhost:${originServerPort}`,
-                mode: 'proxyAlways',
-                predicateGenerators: [{ matches: { path: true } }]
-            },
-            proxyStub = { responses: [{ proxy: proxyDefinition }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
-
-        return api.post('/imposters', originServerRequest)
-            .then(() => api.post('/imposters', proxyRequest))
-            .then((response: any) => {
-                expect(response.statusCode).toEqual(201);
-                return client.get('/first', port);
-            })
-            .then(() => client.get('/second', port))
-            .then(() => client.get('/first', port))
-            .then(() => api.del(`/imposters/${port}`))
-            .then((response: any) => {
-                expect(response.body.stubs.length).toEqual(3);
-
-                const stubs = response.body.stubs,
-                    responses = stubs.splice(1).map((stub: any) => stub.responses.map((stubResponse: any) => stubResponse.is.body));
-
-                assert.deepEqual(responses, [['1. /first', '3. /first'], ['2. /second']]);
-            })
-            .finally(() => api.del('/imposters'));
-    });
-
-    it('should capture responses together in proxyAlways mode even with complex predicateGenerators', function () {
-        const originServerPort = port + 1,
-            originServerFn = (request: any, state: any) => {
-                state.count = state.count || 0;
-                state.count += 1;
-                return {
-                    body: `${state.count}. ${request.path}`
-                };
-            },
-            originServerStub = { responses: [{ inject: originServerFn.toString() }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin server'
-            },
-            proxyDefinition = {
-                to: `http://localhost:${originServerPort}`,
-                mode: 'proxyAlways',
-                predicateGenerators: [{
-                    matches: {
-                        path: true,
-                        method: true
-                    },
-                    caseSensitive: false
-                }]
-            },
-            proxyStub = { responses: [{ proxy: proxyDefinition }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+        const originServerPort = port + 1;
+        const originServerFn = (request: any, state: any) => {
+            state.count = state.count || 0;
+            state.count += 1;
+            return {
+                body: `${state.count}. ${request.path}`
+            };
+        };
+        const originServerStub = { responses: [{ inject: originServerFn.toString() }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin server'
+        };
+        const proxyDefinition = {
+            to: `http://localhost:${originServerPort}`,
+            mode: 'proxyAlways',
+            predicateGenerators: [{ matches: { path: true } }]
+        };
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -247,7 +197,57 @@ describe('http proxy stubs', function () {
                 expect(response.body.stubs.length).toEqual(3);
 
                 const stubs = response.body.stubs;
-                const responses = stubs.splice(1).map((stub:any) => stub.responses.map((stubResponse:any) => stubResponse.is.body));
+                const responses = stubs.splice(1).map((stub: any) => stub.responses.map((stubResponse: any) => stubResponse.is.body));
+
+                assert.deepEqual(responses, [['1. /first', '3. /first'], ['2. /second']]);
+            })
+            .finally(() => api.del('/imposters'));
+    });
+
+    it('should capture responses together in proxyAlways mode even with complex predicateGenerators', function () {
+        const originServerPort = port + 1;
+        const originServerFn = (request: any, state: any) => {
+            state.count = state.count || 0;
+            state.count += 1;
+            return {
+                body: `${state.count}. ${request.path}`
+            };
+        };
+        const originServerStub = { responses: [{ inject: originServerFn.toString() }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin server'
+        };
+        const proxyDefinition = {
+            to: `http://localhost:${originServerPort}`,
+            mode: 'proxyAlways',
+            predicateGenerators: [{
+                matches: {
+                    path: true,
+                    method: true
+                },
+                caseSensitive: false
+            }]
+        };
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+
+        return api.post('/imposters', originServerRequest)
+            .then(() => api.post('/imposters', proxyRequest))
+            .then((response: any) => {
+                expect(response.statusCode).toEqual(201);
+                return client.get('/first', port);
+            })
+            .then(() => client.get('/second', port))
+            .then(() => client.get('/first', port))
+            .then(() => api.del(`/imposters/${port}`))
+            .then((response: any) => {
+                expect(response.body.stubs.length).toEqual(3);
+
+                const stubs = response.body.stubs;
+                const responses = stubs.splice(1).map((stub: any) => stub.responses.map((stubResponse: any) => stubResponse.is.body));
 
                 assert.deepEqual(responses, [['1. /first', '3. /first'], ['2. /second']]);
             })
@@ -255,28 +255,28 @@ describe('http proxy stubs', function () {
     });
 
     it('should match entire object graphs', function () {
-        const originServerPort = port + 1,
-            originServerFn = (request: any, state: any) => {
-                state.count = state.count || 0;
-                state.count += 1;
-                return {
-                    body: `${state.count}. ${JSON.stringify(request.query)}`
-                };
-            },
-            originServerStub = { responses: [{ inject: originServerFn.toString() }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin server'
-            },
-            proxyDefinition = {
-                to: `http://localhost:${originServerPort}`,
-                mode: 'proxyOnce',
-                predicateGenerators: [{ matches: { query: true } }]
-            },
-            proxyStub = { responses: [{ proxy: proxyDefinition }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+        const originServerPort = port + 1;
+        const originServerFn = (request: any, state: any) => {
+            state.count = state.count || 0;
+            state.count += 1;
+            return {
+                body: `${state.count}. ${JSON.stringify(request.query)}`
+            };
+        };
+        const originServerStub = { responses: [{ inject: originServerFn.toString() }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin server'
+        };
+        const proxyDefinition = {
+            to: `http://localhost:${originServerPort}`,
+            mode: 'proxyOnce',
+            predicateGenerators: [{ matches: { query: true } }]
+        };
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -299,28 +299,28 @@ describe('http proxy stubs', function () {
     });
 
     it('should match sub-objects', function () {
-        const originServerPort = port + 1,
-            originServerFn = (request: any, state: any) => {
-                state.count = state.count || 0;
-                state.count += 1;
-                return {
-                    body: `${state.count}. ${JSON.stringify(request.query)}`
-                };
-            },
-            originServerStub = { responses: [{ inject: originServerFn.toString() }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin server'
-            },
-            proxyDefinition = {
-                to: `http://localhost:${originServerPort}`,
-                mode: 'proxyOnce',
-                predicateGenerators: [{ matches: { query: { first: true } } }]
-            },
-            proxyStub = { responses: [{ proxy: proxyDefinition }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+        const originServerPort = port + 1;
+        const originServerFn = (request: any, state: any) => {
+            state.count = state.count || 0;
+            state.count += 1;
+            return {
+                body: `${state.count}. ${JSON.stringify(request.query)}`
+            };
+        };
+        const originServerStub = { responses: [{ inject: originServerFn.toString() }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin server'
+        };
+        const proxyDefinition = {
+            to: `http://localhost:${originServerPort}`,
+            mode: 'proxyOnce',
+            predicateGenerators: [{ matches: { query: { first: true } } }]
+        };
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -344,33 +344,33 @@ describe('http proxy stubs', function () {
 
     it('should persist behaviors from origin server', function () {
         const originServerPort = port + 1;
-        const originServerStub = {responses: [{is: {body: '${SALUTATION} ${NAME}'}}]};
+        const originServerStub = { responses: [{ is: { body: '${SALUTATION} ${NAME}' } }] };
         const originServerRequest = {
             protocol: 'http',
             port: originServerPort,
             stubs: [originServerStub],
             name: 'origin'
         };
-        const shellFn = function exec() {
+        const shellFn = function exec () {
             console.log(process.argv[3].replace('${SALUTATION}', 'Hello'));
         };
-        const decorator = (request:any, response:any) => {
+        const decorator = (request: any, response: any) => {
             response.headers['X-Test'] = 'decorated';
         };
         const proxyResponse = {
-            proxy: {to: `http://localhost:${originServerPort}`},
+            proxy: { to: `http://localhost:${originServerPort}` },
             _behaviors: {
                 decorate: decorator.toString(),
                 shellTransform: 'node shellTransformTest.js',
                 copy: [{
                     from: 'path',
                     into: '${NAME}',
-                    using: {method: 'regex', selector: '\\w+'}
+                    using: { method: 'regex', selector: '\\w+' }
                 }]
             }
         };
-        const proxyStub = {responses: [proxyResponse]};
-        const proxyRequest = {protocol: 'http', port, stubs: [proxyStub], name: 'proxy'};
+        const proxyStub = { responses: [proxyResponse] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         fs.writeFileSync('shellTransformTest.js', util.format('%s\nexec();', shellFn.toString()));
 
@@ -393,19 +393,19 @@ describe('http proxy stubs', function () {
     });
 
     it('should support adding latency to saved responses based on how long the origin server took to respond', function () {
-        const originServerPort = port + 1,
-            originServerStub = { responses: [{ is: { body: 'origin server' }, _behaviors: { wait: 100 } }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin'
-            },
-            proxyStub = { responses: [{ proxy: {
-                to: `http://localhost:${originServerPort}`,
-                addWaitBehavior: true
-            } }] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+        const originServerPort = port + 1;
+        const originServerStub = { responses: [{ is: { body: 'origin server' }, _behaviors: { wait: 100 } }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin'
+        };
+        const proxyStub = { responses: [{ proxy: {
+            to: `http://localhost:${originServerPort}`,
+            addWaitBehavior: true
+        } }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -424,14 +424,14 @@ describe('http proxy stubs', function () {
 
     it('should support retrieving replayable JSON with proxies removed for later playback', function () {
         const originServerPort = port + 1;
-        const originServerFn = (request:any, state:any) => {
+        const originServerFn = (request: any, state: any) => {
             state.count = state.count || 0;
             state.count += 1;
             return {
                 body: `${state.count}. ${request.path}`
             };
         };
-        const originServerStub = {responses: [{inject: originServerFn.toString()}]};
+        const originServerStub = { responses: [{ inject: originServerFn.toString() }] };
         const originServerRequest = {
             protocol: 'http',
             port: originServerPort,
@@ -441,10 +441,10 @@ describe('http proxy stubs', function () {
         const proxyDefinition = {
             to: `http://localhost:${originServerPort}`,
             mode: 'proxyAlways',
-            predicateGenerators: [{matches: {path: true}}]
+            predicateGenerators: [{ matches: { path: true } }]
         };
-        const proxyStub = {responses: [{proxy: proxyDefinition}]};
-        const proxyRequest = {protocol: 'http', port, stubs: [proxyStub], name: 'proxy'};
+        const proxyStub = { responses: [{ proxy: proxyDefinition }] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -528,25 +528,25 @@ describe('http proxy stubs', function () {
     });
 
     it('should support returning binary data from origin server based on content encoding', function () {
-        const buffer = Buffer.from([0, 1, 2, 3]),
-            originServerPort = port + 1,
-            originServerResponse = {
-                is: {
-                    body: buffer.toString('base64'),
-                    headers: { 'content-encoding': 'gzip' },
-                    _mode: 'binary'
-                }
-            },
-            originServerStub = { responses: [originServerResponse] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin'
-            },
-            proxyResponse = { proxy: { to: `http://localhost:${originServerPort}` } },
-            proxyStub = { responses: [proxyResponse] },
-            proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+        const buffer = Buffer.from([0, 1, 2, 3]);
+        const originServerPort = port + 1;
+        const originServerResponse = {
+            is: {
+                body: buffer.toString('base64'),
+                headers: { 'content-encoding': 'gzip' },
+                _mode: 'binary'
+            }
+        };
+        const originServerStub = { responses: [originServerResponse] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin'
+        };
+        const proxyResponse = { proxy: { to: `http://localhost:${originServerPort}` } };
+        const proxyStub = { responses: [proxyResponse] };
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -560,23 +560,23 @@ describe('http proxy stubs', function () {
 
     it('should persist decorated proxy responses and only run decorator once', function () {
         const originServerPort = port + 1;
-        const originServerStub = {responses: [{is: {body: 'origin server'}}]};
+        const originServerStub = { responses: [{ is: { body: 'origin server' } }] };
         const originServerRequest = {
             protocol: 'http',
             port: originServerPort,
             stubs: [originServerStub],
             name: 'origin'
         };
-        const decorator = (request:any, response:any) => {
+        const decorator = (request: any, response: any) => {
             response.body += ' decorated';
         };
         const proxyStub = {
             responses: [{
-                proxy: {to: `http://localhost:${originServerPort}`},
-                _behaviors: {decorate: decorator.toString()}
+                proxy: { to: `http://localhost:${originServerPort}` },
+                _behaviors: { decorate: decorator.toString() }
             }]
         };
-        const proxyRequest = {protocol: 'http', port, stubs: [proxyStub], name: 'proxy'};
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest).then((response: any) => {
             expect(response.statusCode).toEqual(201);
@@ -594,8 +594,8 @@ describe('http proxy stubs', function () {
 
     if (!airplaneMode) {
         it('should support http proxy to https server', function () {
-            const proxyStub = { responses: [{ proxy: { to: 'https://google.com' } }] },
-                proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+            const proxyStub = { responses: [{ proxy: { to: 'https://google.com' } }] };
+            const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
             return api.post('/imposters', proxyRequest).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -610,9 +610,9 @@ describe('http proxy stubs', function () {
         });
 
         it('should maintain case of headers from origin', function () {
-            const proxyStub = {responses: [{proxy: {to: 'http://google.com'}}]};
-            const proxyRequest = {protocol: 'http', port, stubs: [proxyStub], name: 'proxy'};
-            const isUpperCase = (header:any) => header[0] === header[0].toUpperCase();
+            const proxyStub = { responses: [{ proxy: { to: 'http://google.com' } }] };
+            const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+            const isUpperCase = (header: any) => header[0] === header[0].toUpperCase();
 
             return api.post('/imposters', proxyRequest).then((response: any) => {
                 expect(response.statusCode).toEqual(201);
@@ -629,11 +629,11 @@ describe('http proxy stubs', function () {
             const mirrorPort = port + 2;
 
             const proxyStub = { responses: [{ proxy: { to: `http://localhost:${mirrorPort}`,
-                    injectHeaders: { 'X-Forwarded-Host': 'http://www.google.com', Host: 'colbert' } } }] },
-                proxyStubRequest = { protocol: 'http', port: proxyPort, stubs: [proxyStub], name: 'proxy stub' },
-                mirrorStub = { responses: [{ is: { body: '' }, _behaviors: {
-                    decorate: ((request: any, response: any) => { response.headers = request.headers; }).toString() } }] },
-                mirrorStubRequest = { protocol: 'http', port: mirrorPort, stubs: [mirrorStub], name: 'mirror stub' };
+                injectHeaders: { 'X-Forwarded-Host': 'http://www.google.com', Host: 'colbert' } } }] };
+            const proxyStubRequest = { protocol: 'http', port: proxyPort, stubs: [proxyStub], name: 'proxy stub' };
+            const mirrorStub = { responses: [{ is: { body: '' }, _behaviors: {
+                decorate: ((request: any, response: any) => { response.headers = request.headers; }).toString() } }] };
+            const mirrorStubRequest = { protocol: 'http', port: mirrorPort, stubs: [mirrorStub], name: 'mirror stub' };
 
             return api.post('/imposters', mirrorStubRequest).then((response: any) => {
                 assert.equal(201, response.statusCode);
@@ -651,7 +651,7 @@ describe('http proxy stubs', function () {
     it('should not default to chunked encoding on proxied request (issue #132)', function () {
         const originServerPort = port + 1;
         const fn = (request: any, state: any, logger: any) => {
-            function hasHeaderKey(headerKey: any, headers: any) {
+            function hasHeaderKey (headerKey: any, headers: any) {
                 return Object.keys(headers).some(header => header.toLowerCase() === headerKey.toLowerCase());
             }
 
@@ -659,14 +659,15 @@ describe('http proxy stubs', function () {
             logger.warn(JSON.stringify(request.headers, null, 4));
             if (hasHeaderKey('Transfer-Encoding', request.headers)) {
                 encoding = 'chunked';
-            } else if (hasHeaderKey('Content-Length', request.headers)) {
+            }
+            else if (hasHeaderKey('Content-Length', request.headers)) {
                 encoding = 'content-length';
             }
             return {
                 body: `Encoding: ${encoding}`
             };
         };
-        const originServerStub = {responses: [{inject: fn.toString()}]};
+        const originServerStub = { responses: [{ inject: fn.toString() }] };
         const originServerRequest = {
             protocol: 'http',
             port: originServerPort,
@@ -688,7 +689,7 @@ describe('http proxy stubs', function () {
                 }
             }]
         };
-        const proxyRequest = {protocol: 'http', port, stubs: [proxyStub], name: 'proxy'};
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest).then((response: any) => {
             expect(response.statusCode).toEqual(201);
@@ -709,22 +710,22 @@ describe('http proxy stubs', function () {
 
     it('should add decorate behaviors to newly created response', function () {
         const originServerPort = port + 1;
-        const originServerStub = {responses: [{is: {body: 'origin server'}}]};
+        const originServerStub = { responses: [{ is: { body: 'origin server' } }] };
         const originServerRequest = {
             protocol: 'http',
             port: originServerPort,
             stubs: [originServerStub],
             name: 'origin'
         };
-        const decorator = (request:any, response:any) => {
+        const decorator = (request: any, response: any) => {
             response.body += ' decorated';
         };
         const proxyStub = {
             responses: [{
-                proxy: {to: `http://localhost:${originServerPort}`, addDecorateBehavior: decorator.toString()}
+                proxy: { to: `http://localhost:${originServerPort}`, addDecorateBehavior: decorator.toString() }
             }]
         };
-        const proxyRequest = {protocol: 'http', port, stubs: [proxyStub], name: 'proxy'};
+        const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
         return api.post('/imposters', originServerRequest).then((response: any) => {
             expect(response.statusCode).toEqual(201);
@@ -741,26 +742,26 @@ describe('http proxy stubs', function () {
     });
 
     it('DELETE /imposters/:id/requests should delete proxy stubs but not other stubs', function () {
-        const originServerPort = port + 1,
-            originServerStub = { responses: [{ is: { body: 'origin server' } }] },
-            originServerRequest = {
-                protocol: 'http',
-                port: originServerPort,
-                stubs: [originServerStub],
-                name: 'origin'
-            },
-            firstStaticStub = {
-                responses: [{ is: { body: 'first stub' } }],
-                predicates: [{ equals: { body: 'fail match so we fall through to proxy' } }]
-            },
-            proxyStub = { responses: [{ proxy: { to: `http://localhost:${originServerPort}`, mode: 'proxyAlways' } }] },
-            secondStaticStub = { responses: [{ is: { body: 'second stub' } }] },
-            proxyRequest = {
-                protocol: 'http',
-                port,
-                stubs: [firstStaticStub, proxyStub, secondStaticStub],
-                name: 'proxy'
-            };
+        const originServerPort = port + 1;
+        const originServerStub = { responses: [{ is: { body: 'origin server' } }] };
+        const originServerRequest = {
+            protocol: 'http',
+            port: originServerPort,
+            stubs: [originServerStub],
+            name: 'origin'
+        };
+        const firstStaticStub = {
+            responses: [{ is: { body: 'first stub' } }],
+            predicates: [{ equals: { body: 'fail match so we fall through to proxy' } }]
+        };
+        const proxyStub = { responses: [{ proxy: { to: `http://localhost:${originServerPort}`, mode: 'proxyAlways' } }] };
+        const secondStaticStub = { responses: [{ is: { body: 'second stub' } }] };
+        const proxyRequest = {
+            protocol: 'http',
+            port,
+            stubs: [firstStaticStub, proxyStub, secondStaticStub],
+            name: 'proxy'
+        };
 
         return api.post('/imposters', originServerRequest)
             .then(() => api.post('/imposters', proxyRequest))
@@ -795,7 +796,7 @@ describe('http proxy stubs', function () {
             const http = require('http');
             const Q = require('q');
             const originServerPort = port + 1;
-            const originServer = http.createServer((request:any, response:any) => {
+            const originServer = http.createServer((request: any, response: any) => {
                 // Uxe base http library rather than imposter to get raw url
                 response.end(request.url);
             });
@@ -809,8 +810,8 @@ describe('http proxy stubs', function () {
                 return deferred.promise;
             };
 
-            const proxyStub = { responses: [{ proxy: { to: `http://localhost:${originServerPort}`, mode: 'proxyAlways' } }] },
-                proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
+            const proxyStub = { responses: [{ proxy: { to: `http://localhost:${originServerPort}`, mode: 'proxyAlways' } }] };
+            const proxyRequest = { protocol: 'http', port, stubs: [proxyStub], name: 'proxy' };
 
             return api.post('/imposters', proxyRequest).then((response: any) => {
                 expect(response.statusCode).toEqual(201);

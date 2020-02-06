@@ -1,11 +1,11 @@
 'use strict';
 
-const fs = require('fs-extra'),
-    os = require('os'),
-    rimraf = require('rimraf'),
-    version = require('./version').getVersion(),
-    glob = require('glob'),
-    run = require('./run').run;
+const fs = require('fs-extra');
+const os = require('os');
+const rimraf = require('rimraf');
+const version = require('./version').getVersion();
+const glob = require('glob');
+const run = require('./run').run;
 
 module.exports = function (grunt) {
 
@@ -19,9 +19,9 @@ module.exports = function (grunt) {
     grunt.registerTask('dist', ['ts:production', 'dist:folder']);
 
     grunt.registerTask('dist:folder', 'Create trimmed down distribution directory', function () {
-        const done = this.async(),
-            newPackage = JSON.parse(JSON.stringify(require('../package.json'))),
-            failed = failTask('dist');
+        const done = this.async();
+        const newPackage = JSON.parse(JSON.stringify(require('../package.json')));
+        const failed = failTask('dist');
 
         rimraf.sync('dist');
         fs.mkdirSync('dist');

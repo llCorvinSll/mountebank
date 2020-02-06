@@ -1,9 +1,7 @@
-import {IRequest, toDeclaration} from "./IRequest";
-import {IStub} from "./stubs/IStub";
-import {ILogger} from "../util/scopedLogger";
-import {IServerRequestData} from "./IProtocol";
-
-'use strict';
+import { IRequest, toDeclaration } from './IRequest';
+import { IStub } from './stubs/IStub';
+import { ILogger } from '../util/scopedLogger';
+import { IServerRequestData } from './IProtocol';
 
 
 /**
@@ -20,8 +18,8 @@ import {IServerRequestData} from "./IProtocol";
  * @param {Object} request - the request to upcast
  */
 function upcastShellTransformToArray (request: any) {
-    (request.stubs || []).forEach((stub:any) => {
-        (stub.responses || []).forEach((response:any) => {
+    (request.stubs || []).forEach((stub: any) => {
+        (stub.responses || []).forEach((response: any) => {
             if (response._behaviors && response._behaviors.shellTransform &&
                 typeof response._behaviors.shellTransform === 'string') {
                 response._behaviors.shellTransform = [response._behaviors.shellTransform];
@@ -42,8 +40,8 @@ function upcastTcpProxyDestinationToUrl (request: any) {
 
     const isObject = require('../util/helpers').isObject;
 
-    (request.stubs || []).forEach((stub:any) => {
-        (stub.responses || []).forEach((response:any) => {
+    (request.stubs || []).forEach((stub: any) => {
+        (stub.responses || []).forEach((response: any) => {
             const proxy = response.proxy;
             if (proxy && isObject(proxy.to) && proxy.to.host && proxy.to.port) {
                 proxy.to = `tcp://${proxy.to.host}:${proxy.to.port}` as toDeclaration;
@@ -64,8 +62,8 @@ export function upcast (request: any) {
 
 interface IConfig {
     request: IServerRequestData;
-    state:unknown;
-    logger:ILogger;
+    state: unknown;
+    logger: ILogger;
     [key: string]: IRequest|string|IStub|unknown;
 }
 

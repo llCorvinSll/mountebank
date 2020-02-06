@@ -1,11 +1,11 @@
-'use strict';
 
-import {IMontebankError} from "../../util/errors";
+
+import { IMontebankError } from '../../util/errors';
 import * as exceptions from '../../util/errors';
 import * as helpers from '../../util/helpers';
 import * as util from 'util';
-import {IBehaviorsConfig} from "./IBehaviorsConfig";
-import {HashMap} from "../../util/types";
+import { IBehaviorsConfig } from './IBehaviorsConfig';
+import { IHashMap } from '../../util/types';
 
 
 export interface IAllowedTypes {
@@ -14,7 +14,7 @@ export interface IAllowedTypes {
         enum: string[];
         nonNegativeInteger: boolean;
         positiveInteger: boolean;
-    }
+    };
 
 }
 
@@ -25,7 +25,7 @@ export interface IValidationSpec {
 
     _allowedTypes?: IAllowedTypes;
 
-    _additionalContext?:unknown;
+    _additionalContext?: unknown;
 }
 
 type AddErrorFn = (field: any, message: string, subConfig?: any) => void;
@@ -38,16 +38,16 @@ export class BehaviorsValidator {
      * @param {Object} validationSpec - the specification to validate against
      * @returns {Object} The array of errors
      */
-    public validate (config:IBehaviorsConfig, validationSpec: IValidationSpec) {
-        const errors:IMontebankError[] = [];
+    public validate (config: IBehaviorsConfig, validationSpec: IValidationSpec) {
+        const errors: IMontebankError[] = [];
 
         Object.keys(config || {}).forEach(key => {
             const addErrorFn: AddErrorFn = function (field: any, message: string, subConfig: any) {
-                    errors.push(exceptions.ValidationError(
-                        util.format('%s behavior "%s" field %s', key, field, message),
-                        { source: subConfig || config }));
-                },
-                spec:IValidationSpec = {};
+                errors.push(exceptions.ValidationError(
+                    util.format('%s behavior "%s" field %s', key, field, message),
+                    { source: subConfig || config }));
+            };
+            const spec: IValidationSpec = {};
 
             if (validationSpec[key]) {
                 spec[key] = validationSpec[key];
@@ -99,14 +99,14 @@ export class BehaviorsValidator {
         }
     }
 
-    private static addTypeErrors (fieldSpec: IValidationSpec, path: string, field: object, config: IBehaviorsConfig, addErrorFn:AddErrorFn) {
+    private static addTypeErrors (fieldSpec: IValidationSpec, path: string, field: object, config: IBehaviorsConfig, addErrorFn: AddErrorFn) {
         /* eslint complexity: 0 */
         const fieldType = typeof field;
-        const allowedTypes = Object.keys(fieldSpec._allowedTypes!); // eslint-disable-line no-underscore-dangle
-        const typeSpec = fieldSpec._allowedTypes![fieldType]; // eslint-disable-line no-underscore-dangle
+        const allowedTypes = Object.keys(fieldSpec._allowedTypes!);
+        const typeSpec = fieldSpec._allowedTypes![fieldType];
 
         if (!helpers.defined(typeSpec)) {
-            addErrorFn(path, BehaviorsValidator.typeErrorMessageFor(allowedTypes, fieldSpec._additionalContext)); // eslint-disable-line no-underscore-dangle
+            addErrorFn(path, BehaviorsValidator.typeErrorMessageFor(allowedTypes, fieldSpec._additionalContext));
         }
         else {
             if (typeSpec.singleKeyOnly && !BehaviorsValidator.hasExactlyOneKey(field)) {
@@ -151,7 +151,7 @@ export class BehaviorsValidator {
     }
 
     private static typeErrorMessageFor (allowedTypes: string[], additionalContext: unknown) {
-        const spellings:HashMap<string> = { number: 'a', object: 'an', string: 'a' };
+        const spellings: IHashMap<string> = { number: 'a', object: 'an', string: 'a' };
         let message = util.format('must be %s %s', spellings[allowedTypes[0]], allowedTypes[0]);
 
         for (let i = 1; i < allowedTypes.length; i += 1) {
@@ -165,9 +165,9 @@ export class BehaviorsValidator {
 
     private static addErrorsFor (config: IBehaviorsConfig, pathPrefix: string, spec: IValidationSpec, addErrorFn: AddErrorFn) {
         Object.keys(spec).filter(BehaviorsValidator.nonMetadata).forEach(fieldName => {
-            const fieldSpec = spec[fieldName],
-                path = BehaviorsValidator.pathFor(pathPrefix, fieldName),
-                field = BehaviorsValidator.navigate(config, path);
+            const fieldSpec = spec[fieldName];
+            const path = BehaviorsValidator.pathFor(pathPrefix, fieldName);
+            const field = BehaviorsValidator.navigate(config, path);
 
             if (!helpers.defined(field)) {
                 BehaviorsValidator.addMissingFieldError(fieldSpec as IValidationSpec, path, addErrorFn);

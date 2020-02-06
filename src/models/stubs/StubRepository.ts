@@ -1,21 +1,27 @@
-'use strict';
-
-import {ILogger} from "../../util/scopedLogger";
-import {IResponse} from "../IRequest";
-import {IPredicate} from "../predicates/IPredicate";
-import {IStubConfig} from "./IStubConfig";
-import {IMountebankResponse, IServerRequestData} from "../IProtocol";
-import * as helpers from "../../util/helpers";
+import { ILogger } from '../../util/scopedLogger';
+import { IPredicate } from '../predicates/IPredicate';
+import { IProxyConfig, IStubConfig } from './IStubConfig';
+import { IMountebankResponse, IServerRequestData } from '../IProtocol';
+import * as helpers from '../../util/helpers';
 import * as predicates from '../predicates/predicates';
-import {IStub} from "./IStub";
-import {IStubRepository} from "./IStubRepository";
-import { Stub } from "./Stub";
-import {uniqueId} from "lodash";
+import { IStub } from './IStub';
+import { IStubRepository } from './IStubRepository';
+import { Stub } from './Stub';
+import { uniqueId } from 'lodash';
+import { StubWrapper } from './StubWrapper';
+import * as stringify from 'json-stable-stringify';
+import { predicatesFor, newIsResponse } from '../predicatesFor';
+import { IResponse } from '../IRequest';
+import { IHashMap } from '../../util/types';
 
 /**
  * Maintains all stubs for an imposter
  * @module
  */
+
+function deepEqual (obj1: unknown, obj2: unknown) {
+    return stringify(obj1) === stringify(obj2);
+}
 
 /**
  * Creates the repository
@@ -23,28 +29,21 @@ import {uniqueId} from "lodash";
  * @returns {Object}
  */
 export class StubRepository implements IStubRepository {
-    public constructor(private encoding:string, private static_uuids: boolean = false) {
+    public constructor (private encoding: string, private staticUuids: boolean = false) {
 
     }
 
-    protected _stubs:IStub[] = [];
+    protected _stubs: IStub[] = [];
+    private stubsMap: IHashMap<IStub> = {};
 
     /**
      * Returns the outside representation of the stubs
      * @memberOf module:models/stubRepository#
      * @returns {Object} - The stubs
      */
-    public stubs() {
-        const result:IStub[] = helpers.clone(this._stubs) as any;
-
-        for (let i = 0; i < this._stubs.length; i += 1) {
-            delete result[i].statefulResponses;
-            const stub = this._stubs[i];
-            result[i].addResponse = (response: IResponse) => { stub.responses && stub.responses.push(response); };
-        }
-        return result;
+    public stubs () {
+        return this._stubs.map(stub => new StubWrapper(stub));
     }
-
 
     //#region addStub
 
@@ -56,10 +55,10 @@ export class StubRepository implements IStubRepository {
      */
     public addStub (stub: IStubConfig, beforeResponse?: IMountebankResponse): void {
         if (beforeResponse) {
-            this._stubs.splice(this.stubIndexFor(beforeResponse), 0, this.decorate(stub));
+            this._stubs.splice(this.stubIndexFor(beforeResponse), 0, this.createStub(stub));
         }
         else {
-            this._stubs.push(this.decorate(stub));
+            this._stubs.push(this.createStub(stub));
         }
     }
 
@@ -70,7 +69,7 @@ export class StubRepository implements IStubRepository {
      * @param {Object} newStub - the new stub
      */
     public addStubAtIndex (index: string, newStub: IStubConfig): void {
-        this._stubs.splice(parseInt(index), 0, this.decorate(newStub));
+        this._stubs.splice(parseInt(index), 0, this.createStub(newStub));
     }
 
     /**
@@ -80,6 +79,21 @@ export class StubRepository implements IStubRepository {
      */
     public deleteStubAtIndex (index: string): void {
         this._stubs.splice(parseInt(index), 1);
+    }
+
+    public deleteStubByUuid (uuid: string): void {
+        const stubToDelete = this.stubsMap[uuid];
+
+        if (stubToDelete) {
+            delete this.stubsMap[uuid];
+
+            const start = this._stubs.map(e => e.uuid).indexOf(uuid);
+            this._stubs.splice(start, 1);
+        }
+    }
+
+    public hasUuid (uuid: string): boolean {
+        return typeof this.stubsMap[uuid] !== 'undefined';
     }
 
     /**
@@ -94,25 +108,19 @@ export class StubRepository implements IStubRepository {
         newStubs.forEach(stub => this.addStub(stub));
     }
 
-    private stubIndexFor (responseToMatch: object) {
-        let i = 0;
-        for (i; i < this._stubs.length; i += 1) {
-            let current_stub = this._stubs[i];
-            if (current_stub.responses && current_stub.responses.some(response => JSON.stringify(response) === JSON.stringify(responseToMatch))) {
-                break;
-            }
-        }
-        return i;
-    }
 
-    private decorate (stub: IStubConfig):IStub {
-        let uuid = uniqueId("stub");
+    private createStub (stub: IStubConfig): IStub {
+        let uuid = uniqueId('stub');
 
-        if (this.static_uuids) {
-            uuid = "stub";
+        if (this.staticUuids) {
+            uuid = 'stub';
         }
 
-        return new Stub(stub, uuid);
+        const finalStub = new Stub(stub, uuid);
+
+        this.stubsMap[uuid] = finalStub;
+
+        return finalStub;
     }
 
     //#endregion
@@ -124,7 +132,7 @@ export class StubRepository implements IStubRepository {
      * @param {Object} newStub - the new stub
      */
     public overwriteStubAtIndex (index: string, newStub: IStubConfig): void {
-        this._stubs[parseInt(index)] = this.decorate(newStub);
+        this._stubs[parseInt(index)] = this.createStub(newStub);
     }
 
     //#region getResponseFor
@@ -139,7 +147,7 @@ export class StubRepository implements IStubRepository {
      */
     public getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
         const stub: IStub = this.findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] };
-        const responseConfig:IMountebankResponse = stub.statefulResponses.shift() as IMountebankResponse;
+        const responseConfig: IMountebankResponse = stub.statefulResponses.shift() as IMountebankResponse;
         const cloned = helpers.clone(responseConfig);
 
         logger.debug(`generating response from ${JSON.stringify(responseConfig)}`);
@@ -147,34 +155,32 @@ export class StubRepository implements IStubRepository {
         stub.statefulResponses.push(responseConfig);
 
         cloned.recordMatch = (response?: any) => {
-            const clonedResponse = helpers.clone(response),
-                match = {
-                    timestamp: new Date().toJSON(),
-                    request,
-                    response: clonedResponse
-                };
-            if (helpers.defined(clonedResponse._proxyResponseTime)) { // eslint-disable-line no-underscore-dangle
-                delete clonedResponse._proxyResponseTime; // eslint-disable-line no-underscore-dangle
+            const clonedResponse = helpers.clone(response);
+            const match = {
+                timestamp: new Date().toJSON(),
+                request,
+                response: clonedResponse
+            };
+            if (helpers.defined(clonedResponse._proxyResponseTime)) {
+                delete clonedResponse._proxyResponseTime;
             }
             stub.matches = stub.matches || [];
             stub.matches.push(match);
-            cloned.recordMatch = () => {}; // Only record once
+            cloned.recordMatch = () => {}; //Only record once
         };
 
         cloned.setMetadata = (responseType: string, metadata: any) => {
             Object.keys(metadata).forEach(key => {
-                // @ts-ignore
-                ((responseConfig[responseType] as any)[key] as any) = metadata[key];
-                // @ts-ignore
-                cloned[responseType][key] = metadata[key];
+                (((responseConfig as any)[responseType] as any)[key] as any) = metadata[key];
+                (cloned as any)[responseType][key] = metadata[key];
             });
         };
         return cloned;
     }
 
-    // We call map before calling every so we make sure to call every
-    // predicate during dry run validation rather than short-circuiting
-    private trueForAll(list: IPredicate[], predicate: (p: IPredicate) => boolean) {
+    //We call map before calling every so we make sure to call every
+    //predicate during dry run validation rather than short-circuiting
+    private trueForAll (list: IPredicate[], predicate: (p: IPredicate) => boolean) {
         return list.map(predicate).every(result => result);
     }
 
@@ -183,13 +189,13 @@ export class StubRepository implements IStubRepository {
             return undefined;
         }
 
-        const readOnlyState = helpers.clone(imposterState),
-            matches = this._stubs.filter(stub => {
-                const stubPredicates: IPredicate[] = stub.predicates || [];
+        const readOnlyState = helpers.clone(imposterState);
+        const matches = this._stubs.filter(stub => {
+            const stubPredicates: IPredicate[] = stub.predicates || [];
 
-                return this.trueForAll(stubPredicates,
-                    (predicate: IPredicate) => predicates.evaluate(predicate, request, this.encoding, logger, readOnlyState));
-            });
+            return this.trueForAll(stubPredicates,
+                (predicate: IPredicate) => predicates.evaluate(predicate, request, this.encoding, logger, readOnlyState));
+        });
 
         if (matches.length === 0) {
             logger.debug('no predicate match');
@@ -208,16 +214,53 @@ export class StubRepository implements IStubRepository {
      */
     public resetProxies (): void {
         for (let i = this._stubs.length - 1; i >= 0; i -= 1) {
-            let current_stub = this._stubs[i];
-            current_stub.responses = current_stub.responses && current_stub.responses.filter(response => {
+            const currentStub = this._stubs[i];
+            currentStub.responses = currentStub.responses && currentStub.responses.filter(response => {
                 if (!response.is) {
                     return true;
                 }
-                return typeof response.is._proxyResponseTime === 'undefined'; // eslint-disable-line no-underscore-dangle
+                return typeof response.is._proxyResponseTime === 'undefined';
             });
-            if (current_stub.responses && current_stub.responses.length === 0) {
+            if (currentStub.responses && currentStub.responses.length === 0) {
                 this._stubs.splice(i, 1);
             }
         }
     }
+
+    //#region METHODS FOR ResponseResolver
+
+    public stubIndexFor (responseConfig: IMountebankResponse) {
+        const stubList = this._stubs;
+        let i = 0;
+        for (i = 0; i < stubList.length; i += 1) {
+            const currentStub = stubList[i];
+            if (currentStub.responses && currentStub.responses.some(response => deepEqual(response, responseConfig))) {
+                break;
+            }
+        }
+        return i;
+    }
+
+    public indexOfStubToAddResponseTo (responseConfig: IMountebankResponse, request: IServerRequestData, pathes: string[], logger: ILogger) {
+        const currentPredicates = predicatesFor(request, responseConfig.proxy && responseConfig.proxy.predicateGenerators || [], pathes, logger);
+
+        for (let index = this.stubIndexFor(responseConfig) + 1; index < this._stubs.length; index += 1) {
+            if (deepEqual(currentPredicates, this._stubs[index].predicates)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public addNewResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, pathes: string[], logger: ILogger): void {
+        const stubResponse: IResponse = newIsResponse(response, responseConfig.proxy as IProxyConfig);
+
+        const responseIndex = this.indexOfStubToAddResponseTo(responseConfig, request, pathes, logger);
+
+        const iStub = this._stubs[responseIndex];
+        iStub.addResponse!(stubResponse);
+    }
+
+    //#endregion METHODS FOR ResponseResolver
+
 }
