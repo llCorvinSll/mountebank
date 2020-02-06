@@ -533,12 +533,10 @@ Connection: keep-alive
   <p>Use this endpoint to remove the stub by its uniq id without restarting the imposter. The
     response will provide the updated imposter resource.</p>
 
-  <step type='http'>
 <pre><code>DELETE /imposters/4545/stubs/by_uuid/1b671a64-40d5-491e-99b0-da01ff1f3341 HTTP/1.1
 Host: localhost:<%= port %>
 Accept: application/json</code></pre>
 
-    <assertResponse>
 <pre><code>HTTP/1.1 200 OK
 Access-Control-Allow-Origin: *
 Content-Type: application/json; charset=utf-8
@@ -558,9 +556,6 @@ Connection: keep-alive
     "stubs": { "href": "http://localhost:<%= port %>/imposters/4545/stubs" }
   }
 }</code></pre>
-    </assertResponse>
-  </step>
-
 
   <h3 id='delete-imposter'>Delete a single imposter</h3>
 
