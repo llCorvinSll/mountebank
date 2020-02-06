@@ -60,6 +60,11 @@ will happily assist you.</p>
     <td><a href='/docs/api/contracts?type=imposter'>imposter</a></td>
   </tr>
   <tr>
+    <td><a href='#delete-stub-by-uuid'>Remove a stub of an existing imposter by uuid</a></td>
+    <td></td>
+    <td><a href='/docs/api/contracts?type=imposter'>imposter</a></td>
+  </tr>
+  <tr>
     <td><a href='#delete-imposter'>Delete a single imposter</a></td>
     <td></td>
     <td><a href='/docs/api/contracts?type=imposter'>imposter</a></td>
@@ -519,7 +524,45 @@ Connection: keep-alive
         </assertResponse>
     </step>
 
-<h3 id='delete-imposter'>Delete a single imposter</h3>
+  <h3 id='delete-stub'>Remove a single stub from an existing imposter by uuid</h3>
+
+  <pre><code>DELETE /imposters/:port/stubs/by_uuid/:uuid</code></pre>
+
+  <p><b>Response contract</b>: <a href='/docs/api/contracts?type=imposter'>imposter</a></p>
+
+  <p>Use this endpoint to remove the stub by its uniq id without restarting the imposter. The
+    response will provide the updated imposter resource.</p>
+
+  <step type='http'>
+<pre><code>DELETE /imposters/4545/stubs/by_uuid/1b671a64-40d5-491e-99b0-da01ff1f3341 HTTP/1.1
+Host: localhost:<%= port %>
+Accept: application/json</code></pre>
+
+    <assertResponse>
+<pre><code>HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 298
+Date: <volatile>Wed, 19 Jun 2019 01:00:55 GMT</volatile>
+Connection: keep-alive
+
+{
+  "protocol": "http",
+  "port": 4545,
+  "numberOfRequests": 0,
+  "recordRequests": false,
+  "requests": [],
+  "stubs": [],
+  "_links": {
+    "self": { "href": "http://localhost:<%= port %>/imposters/4545" },
+    "stubs": { "href": "http://localhost:<%= port %>/imposters/4545/stubs" }
+  }
+}</code></pre>
+    </assertResponse>
+  </step>
+
+
+  <h3 id='delete-imposter'>Delete a single imposter</h3>
 
 <pre><code>DELETE /imposters/:port</code></pre>
 
