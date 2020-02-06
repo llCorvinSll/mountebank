@@ -7,12 +7,12 @@ import * as predicates from '../predicates/predicates';
 import { IStub } from './IStub';
 import { IStubRepository } from './IStubRepository';
 import { Stub } from './Stub';
+import * as _ from 'lodash';
 import { StubWrapper } from './StubWrapper';
 import * as stringify from 'json-stable-stringify';
 import { predicatesFor, newIsResponse } from '../predicatesFor';
 import { IResponse } from '../IRequest';
 import { IHashMap } from '../../util/types';
-import * as uuidv1 from 'uuid/v1';
 
 /**
  * Maintains all stubs for an imposter
@@ -110,7 +110,7 @@ export class StubRepository implements IStubRepository {
 
 
     private createStub (stub: IStubConfig): IStub {
-        let uuid = uuidv1();
+        let uuid = _.uniqueId('stub_');
 
         if (this.staticUuids) {
             uuid = 'stub';

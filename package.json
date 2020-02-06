@@ -106,6 +106,7 @@
     "https-proxy-agent": "^2.2.1",
     "json-stable-stringify": "1.0.1",
     "jsonpath-plus": "^1.1.0",
+    "lodash": "^4.17.15",
     "lodash.uniqueid": "^4.0.1",
     "mailparser": "^2.7.0",
     "nodemailer": "^6.1.1",
