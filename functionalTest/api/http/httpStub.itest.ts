@@ -1,5 +1,3 @@
-
-
 import { ApiClient } from '../api';
 
 const BaseHttpClient = require('./baseHttpClient');

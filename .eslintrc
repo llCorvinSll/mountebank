@@ -114,7 +114,7 @@
         "space-in-parens": [2, "never"],
         "space-infix-ops": [2, {"int32Hint": false}],
         "space-unary-ops": [1, { "words": true, "nonwords": false }],
-        "spaced-comment": [2, "always"],
+        "spaced-comment": [2, "never"],
         "valid-jsdoc": [2, {"requireReturn": false, "requireReturnDescription": false}],
         "yoda": 2,
 

@@ -40,7 +40,7 @@ export class ImposterController {
 
     }
 
-    // #region GET
+    //#region GET
 
     /**
      * The function responding to GET /imposters/:id
@@ -66,9 +66,9 @@ export class ImposterController {
         });
     }
 
-    // #endregion
+    //#endregion
 
-    // #region del
+    //#region del
 
     /**
      * The function responding to DELETE /imposters/:id
@@ -96,9 +96,9 @@ export class ImposterController {
         }
     }
 
-    // #endregion
+    //#endregion
 
-    // #region resetProxies
+    //#region resetProxies
 
     /**
      * Corresponds to DELETE /imposters/:id/savedProxyResponses
@@ -136,9 +136,9 @@ export class ImposterController {
         }
     }
 
-    // #endregion
+    //#endregion
 
-    // #region postRequest
+    //#region postRequest
 
     /**
      * The function responding to POST /imposters/:id/_requests
@@ -157,9 +157,9 @@ export class ImposterController {
         });
     }
 
-    // #endregion
+    //#endregion
 
-    // #region postProxyResponse
+    //#region postProxyResponse
 
     /**
      * The function responding to POST /imposters/:id/_requests/:proxyResolutionKey
@@ -179,9 +179,9 @@ export class ImposterController {
         });
     }
 
-    // #endregion
+    //#endregion
 
-    // #region putStubs
+    //#region putStubs
 
     /**
      * The function responding to PUT /imposters/:id/stubs
@@ -247,9 +247,9 @@ export class ImposterController {
         return Q();
     }
 
-    // #endregion
+    //#endregion
 
-    // #region putStub
+    //#region putStub
 
     /**
      * The function responding to PUT /imposters/:id/stubs/:stubIndex
@@ -287,9 +287,9 @@ export class ImposterController {
         }
     }
 
-    // #endregion
+    //#endregion
 
-    // #region postStub
+    //#region postStub
 
     /**
      * The function responding to POST /imposters/:port/stubs
@@ -324,14 +324,13 @@ export class ImposterController {
         }
     }
 
-    // #endregion
+    //#endregion
 
-    // #region deleteStub
+    //#region deleteStub
 
     /**
      * The function responding to DELETE /imposters/:port/stubs/:stubIndex
      * Removes a single stub without restarting the imposter
-     * @memberOf module:controllers/imposterController#
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      * @returns {Object} - promise for testing
@@ -352,5 +351,31 @@ export class ImposterController {
         }
     }
 
-    // #endregion
+    /**
+     * Function responding to DELETE /imposters/:port/stubs/by_guid/:uuid
+     * Remove a single stub by guid
+     * @param {Object} request - the HTTP request
+     * @param {Object} response - the HTTP response
+     * @returns {Promise} - promise
+     */
+    public deleteStubByUuid = (request: Request, response: Response) => {
+        const imposter: IImposter = this.imposters[request.params.id];
+        const errors: IMontebankError[] = [];
+        const uuid = request.params.uuid;
+
+        if (!uuid || !imposter.stubRepository.hasUuid(uuid)) {
+            errors.push(exceptions.ValidationError("'uuid' must be non empty string and represens existing stub"));
+        }
+
+        if (errors.length > 0) {
+            return this.respondWithValidationErrors(response, errors, 404);
+        }
+        else {
+            imposter.stubRepository.deleteStubByUuid(uuid);
+            response.send(imposter.toJSON());
+            return Q();
+        }
+    }
+
+    //#endregion
 }

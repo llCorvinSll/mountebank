@@ -16,6 +16,10 @@ export interface IStubRepository {
 
     deleteStubAtIndex(index: string): void;
 
+    deleteStubByUuid(uuid: string): void;
+
+    hasUuid(uuid: string): boolean;
+
     getResponseFor(request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse;
 
     resetProxies(): void;

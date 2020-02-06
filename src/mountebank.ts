@@ -26,7 +26,7 @@ const releases = require('../releases.json');
  */
 
 function initializeLogfile (filename: string) {
-    // Ensure new logfile on startup so the /logs only shows for this process
+    //Ensure new logfile on startup so the /logs only shows for this process
     const extension = path.extname(filename);
     const pattern = new RegExp(`${extension}$`);
     const newFilename = filename.replace(pattern, `1${extension}`);
@@ -72,7 +72,7 @@ function getLocalIPs () {
             if (ip.internal) {
                 result.push(ip.address);
                 if (ip.family === 'IPv4') {
-                    // Prefix for IPv4 address mapped to a compliant IPv6 scheme
+                    //Prefix for IPv4 address mapped to a compliant IPv6 scheme
                     result.push(`::ffff:${ip.address}`);
                 }
             }
@@ -207,15 +207,16 @@ export function create (options: IMountebankOptions) {
     app.get('/imposters/:id', validateImposterExists, imposterController.get);
     app.delete('/imposters/:id', imposterController.del);
     app.delete('/imposters/:id/savedProxyResponses', validateImposterExists, imposterController.resetProxies);
-    app.delete('/imposters/:id/requests', validateImposterExists, imposterController.resetProxies); // deprecated but saved for backwards compatibility
+    app.delete('/imposters/:id/requests', validateImposterExists, imposterController.resetProxies); //deprecated but saved for backwards compatibility
 
-    // Changing stubs without restarting imposter
+    //Changing stubs without restarting imposter
     app.put('/imposters/:id/stubs', validateImposterExists, imposterController.putStubs);
     app.put('/imposters/:id/stubs/:stubIndex', validateImposterExists, imposterController.putStub);
     app.post('/imposters/:id/stubs', validateImposterExists, imposterController.postStub);
     app.delete('/imposters/:id/stubs/:stubIndex', validateImposterExists, imposterController.deleteStub);
+    app.delete('/imposters/:id/stubs/by_uuid/:uuid', validateImposterExists, imposterController.deleteStubByUuid);
 
-    // Protocol implementation APIs
+    //Protocol implementation APIs
     app.post('/imposters/:id/_requests', validateImposterExists, imposterController.postRequest);
     app.post('/imposters/:id/_requests/:proxyResolutionKey', validateImposterExists, imposterController.postProxyResponse);
 
@@ -304,7 +305,7 @@ export function create (options: IMountebankOptions) {
                     callback();
                 });
 
-                // Force kill any open connections to prevent process hanging
+                //Force kill any open connections to prevent process hanging
                 Object.keys(connections).forEach(socket => {
                     connections[socket].destroy();
                 });

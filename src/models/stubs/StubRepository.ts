@@ -12,6 +12,7 @@ import { StubWrapper } from './StubWrapper';
 import * as stringify from 'json-stable-stringify';
 import { predicatesFor, newIsResponse } from '../predicatesFor';
 import { IResponse } from '../IRequest';
+import { IHashMap } from '../../util/types';
 
 /**
  * Maintains all stubs for an imposter
@@ -33,6 +34,7 @@ export class StubRepository implements IStubRepository {
     }
 
     protected _stubs: IStub[] = [];
+    private stubsMap: IHashMap<IStub> = {};
 
     /**
      * Returns the outside representation of the stubs
@@ -43,7 +45,7 @@ export class StubRepository implements IStubRepository {
         return this._stubs.map(stub => new StubWrapper(stub));
     }
 
-    // #region addStub
+    //#region addStub
 
     /**
      * Adds a stub to the repository
@@ -53,10 +55,10 @@ export class StubRepository implements IStubRepository {
      */
     public addStub (stub: IStubConfig, beforeResponse?: IMountebankResponse): void {
         if (beforeResponse) {
-            this._stubs.splice(this.stubIndexFor(beforeResponse), 0, this.decorate(stub));
+            this._stubs.splice(this.stubIndexFor(beforeResponse), 0, this.createStub(stub));
         }
         else {
-            this._stubs.push(this.decorate(stub));
+            this._stubs.push(this.createStub(stub));
         }
     }
 
@@ -67,7 +69,7 @@ export class StubRepository implements IStubRepository {
      * @param {Object} newStub - the new stub
      */
     public addStubAtIndex (index: string, newStub: IStubConfig): void {
-        this._stubs.splice(parseInt(index), 0, this.decorate(newStub));
+        this._stubs.splice(parseInt(index), 0, this.createStub(newStub));
     }
 
     /**
@@ -77,6 +79,21 @@ export class StubRepository implements IStubRepository {
      */
     public deleteStubAtIndex (index: string): void {
         this._stubs.splice(parseInt(index), 1);
+    }
+
+    public deleteStubByUuid (uuid: string): void {
+        const stubToDelete = this.stubsMap[uuid];
+
+        if (stubToDelete) {
+            delete this.stubsMap[uuid];
+
+            const start = this._stubs.map(e => e.uuid).indexOf(uuid);
+            this._stubs.splice(start, 1);
+        }
+    }
+
+    public hasUuid (uuid: string): boolean {
+        return typeof this.stubsMap[uuid] !== 'undefined';
     }
 
     /**
@@ -92,17 +109,21 @@ export class StubRepository implements IStubRepository {
     }
 
 
-    private decorate (stub: IStubConfig): IStub {
+    private createStub (stub: IStubConfig): IStub {
         let uuid = uniqueId('stub');
 
         if (this.staticUuids) {
             uuid = 'stub';
         }
 
-        return new Stub(stub, uuid);
+        const finalStub = new Stub(stub, uuid);
+
+        this.stubsMap[uuid] = finalStub;
+
+        return finalStub;
     }
 
-    // #endregion
+    //#endregion
 
     /**
      * Overwrites the stub at stubIndex without changing the state of any other stubs
@@ -111,10 +132,10 @@ export class StubRepository implements IStubRepository {
      * @param {Object} newStub - the new stub
      */
     public overwriteStubAtIndex (index: string, newStub: IStubConfig): void {
-        this._stubs[parseInt(index)] = this.decorate(newStub);
+        this._stubs[parseInt(index)] = this.createStub(newStub);
     }
 
-    // #region getResponseFor
+    //#region getResponseFor
 
     /**
      * Finds the next response configuration for the given request
@@ -145,7 +166,7 @@ export class StubRepository implements IStubRepository {
             }
             stub.matches = stub.matches || [];
             stub.matches.push(match);
-            cloned.recordMatch = () => {}; // Only record once
+            cloned.recordMatch = () => {}; //Only record once
         };
 
         cloned.setMetadata = (responseType: string, metadata: any) => {
@@ -157,8 +178,8 @@ export class StubRepository implements IStubRepository {
         return cloned;
     }
 
-    // We call map before calling every so we make sure to call every
-    // predicate during dry run validation rather than short-circuiting
+    //We call map before calling every so we make sure to call every
+    //predicate during dry run validation rather than short-circuiting
     private trueForAll (list: IPredicate[], predicate: (p: IPredicate) => boolean) {
         return list.map(predicate).every(result => result);
     }
@@ -186,7 +207,7 @@ export class StubRepository implements IStubRepository {
         }
     }
 
-    // #endregion
+    //#endregion
 
     /**
      * Removes the saved proxy responses
@@ -206,7 +227,7 @@ export class StubRepository implements IStubRepository {
         }
     }
 
-    // #region METHODS FOR ResponseResolver
+    //#region METHODS FOR ResponseResolver
 
     public stubIndexFor (responseConfig: IMountebankResponse) {
         const stubList = this._stubs;
@@ -240,6 +261,6 @@ export class StubRepository implements IStubRepository {
         iStub.addResponse!(stubResponse);
     }
 
-    // #endregion METHODS FOR ResponseResolver
+    //#endregion METHODS FOR ResponseResolver
 
 }
