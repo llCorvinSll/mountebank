@@ -115,7 +115,7 @@ describe('headersHelper', function () {
                 const headersJar = headersHelper.getJar(request.headers);
 
                 headersJar.set('My-Third-Header', 'third-value');
-                // @ts-ignore
+                //@ts-ignore
                 expect(request.headers['My-Third-Header']).toEqual('third-value');
             });
         });

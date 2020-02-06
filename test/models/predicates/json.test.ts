@@ -151,7 +151,7 @@ describe('predicates', function () {
         });
 
         it('#equals should be false if no array elements match the predicate value', function () {
-            // despite namespace aliases matching, urls do not
+            //despite namespace aliases matching, urls do not
             const predicate = { equals: { field: { key: 'Second' } } };
             const request: any = { field: '{"key": ["first", "third"] }' };
             expect(!predicates.evaluate(predicate, request)).toBeTruthy();

@@ -53,7 +53,7 @@ describe('responseResolver', function () {
             const resolver = new ResponseResolver(stubs, proxy);
             const logger = Logger.create();
 
-            // Call through the stubRepository to have it add the setMetadata function
+            //Call through the stubRepository to have it add the setMetadata function
             stubs.addStub({ responses: [{ proxy: { to: 'where' } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
@@ -70,7 +70,7 @@ describe('responseResolver', function () {
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK URL');
             const logger = Logger.create();
 
-            // Call through the stubRepository to have it add the setMetadata function
+            //Call through the stubRepository to have it add the setMetadata function
             stubs.addStub({ responses: [{ proxy: { to: 'where' } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
@@ -88,7 +88,7 @@ describe('responseResolver', function () {
             const resolver = new ResponseResolver(stubs, proxy);
             const logger = Logger.create();
 
-            // Call through the stubRepository to have it add the setMetadata function
+            //Call through the stubRepository to have it add the setMetadata function
             stubs.addStub({ responses: [{ proxy: { to: 'where' } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
@@ -102,7 +102,7 @@ describe('responseResolver', function () {
             const resolver = new ResponseResolver(stubs, proxy);
             const logger = Logger.create();
 
-            // Call through the stubRepository to have it add the setMetadata function
+            //Call through the stubRepository to have it add the setMetadata function
             stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'unrecognized' } }] } as any);
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
@@ -143,7 +143,7 @@ describe('responseResolver', function () {
             return resolver.resolve(responseConfig, request, logger, {}).then(() => {
                 const stubResponses = stubs.stubs().map(stub => stub.responses);
                 const wait = stubResponses[0]![0].is._proxyResponseTime;
-                assert.ok(wait > 90); // allow some variability
+                assert.ok(wait > 90); //allow some variability
                 assert.deepEqual(stubResponses, [
                     [{ is: { data: 'value', _proxyResponseTime: wait }, _behaviors: { wait: wait } }],
                     [{ proxy: { to: 'where', addWaitBehavior: true, mode: 'proxyOnce' } }]
@@ -169,7 +169,7 @@ describe('responseResolver', function () {
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() =>
-                // First call adds the stub, second call adds a response
+                //First call adds the stub, second call adds a response
                 resolver.resolve(responseConfig, request, logger, {})
             ).then(() => {
                 const stubResponses = stubs.stubs().map(stub => stub.responses);
@@ -238,7 +238,7 @@ describe('responseResolver', function () {
             const responseConfig = stubs.getResponseFor({}, logger, {});
 
             return resolver.resolve(responseConfig, request, logger, {}).then(() =>
-                // First call adds the stub, second call adds a response
+                //First call adds the stub, second call adds a response
                 resolver.resolve(responseConfig, request, logger, stubs)
             ).then(() => {
                 const stubResponses = stubs.stubs().map(stub => proxyResponses(stub.responses!));
@@ -535,8 +535,8 @@ describe('responseResolver', function () {
             };
             const request = { key: 'Test' };
 
-            logger.error = function () {
-                const message = util.format.apply(this, Array.prototype.slice.call(arguments));
+            logger.error = function (...args: any[]) {
+                const message = util.format.apply(this, Array.prototype.slice.call(args));
                 errorsLogged.push(message);
             };
 
@@ -960,7 +960,7 @@ describe('responseResolver', function () {
         });
 
         it('should allow injection request state across calls to resolve', function () {
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = (request: any, state: any) => {
@@ -980,7 +980,7 @@ describe('responseResolver', function () {
         });
 
         it('should allow injection imposter state across calls to resolve', function () {
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const mockedLogger = Logger.create();
             const imposterState = { foo: 'bar', counter: 0 };
@@ -1003,7 +1003,7 @@ describe('responseResolver', function () {
         it('should allow wait behavior', function () {
             const start = Date.now();
 
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const responseConfig: any = {
@@ -1016,7 +1016,7 @@ describe('responseResolver', function () {
                 const end = Date.now();
                 const elapsed = end - start;
 
-                // allow some approximation
+                //allow some approximation
                 assert.ok(elapsed >= 45, 'Did not wait longer than 50 ms, only waited for ' + elapsed);
             });
         });
@@ -1024,7 +1024,7 @@ describe('responseResolver', function () {
         it('should allow wait behavior based on a function', function () {
             const start = Date.now();
 
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = () => 50;
@@ -1038,13 +1038,13 @@ describe('responseResolver', function () {
                 const end = Date.now();
                 const elapsed = end - start;
 
-                // allow for some lack of precision
+                //allow for some lack of precision
                 assert.ok(elapsed >= 48, 'Did not wait longer than 50 ms, only waited for ' + elapsed);
             });
         });
 
         it('should reject the promise when the wait function fails', function () {
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = () => {
@@ -1064,7 +1064,7 @@ describe('responseResolver', function () {
         });
 
         it('should allow asynchronous injection', function () {
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const fn = (request: any, state: any, logger: any, callback: any) => {
                 setTimeout(() => {
@@ -1080,7 +1080,7 @@ describe('responseResolver', function () {
         });
 
         it('should not be able to change state through inject', function () {
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = (request: any) => {
@@ -1096,7 +1096,7 @@ describe('responseResolver', function () {
         });
 
         it('should not run injection during dry run validation', function () {
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = () => {
@@ -1111,7 +1111,7 @@ describe('responseResolver', function () {
         });
 
         it('should throw error if multiple response types given', function () {
-            const stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8');
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const responseConfig: any = { is: 'value', proxy: { to: 'http://www.google.com' } };
@@ -1256,7 +1256,7 @@ describe('responseResolver', function () {
             ).then(() => {
                 const stubResponses = stubs.stubs().map(stub => stub.responses);
                 const wait = stubResponses[0]![0].is._proxyResponseTime;
-                assert.ok(wait > 90); // allow some variability
+                assert.ok(wait > 90); //allow some variability
                 assert.deepEqual(stubResponses, [
                     [{ is: { data: 'RESPONSE', _proxyResponseTime: wait }, _behaviors: { wait: wait } }],
                     [proxyResponse]
@@ -1272,7 +1272,7 @@ describe('responseResolver', function () {
 
             stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'proxyOnce' } }] } as any);
 
-            // Call through the stubRepository to have it add the recordMatch function
+            //Call through the stubRepository to have it add the recordMatch function
             const responseConfig = stubs.getResponseFor(request, logger, {});
             return resolver.resolve(responseConfig, request, logger, {}).then(response => {
                 const proxyResolutionKey = parseInt(response.callbackURL!.replace('CALLBACK-URL/', ''));
@@ -1295,12 +1295,12 @@ describe('responseResolver', function () {
 
             stubs.addStub({ responses: [{ proxy: { to: 'where', mode: 'proxyAlways' } }] } as any);
 
-            // Call through the stubRepository to have it add the recordMatch function
+            //Call through the stubRepository to have it add the recordMatch function
             const responseConfig = stubs.getResponseFor({ key: 'REQUEST-1' }, logger, {});
             return resolver.resolve(responseConfig, request, logger, {}).then(response => {
                 const proxyResolutionKey = parseInt(response.callbackURL!.replace('CALLBACK-URL/', ''));
 
-                // Now call with a second request on the same stub before resolving the proxy
+                //Now call with a second request on the same stub before resolving the proxy
                 stubs.getResponseFor({ key: 'REQUEST-2' }, logger, {});
 
                 return resolver.resolveProxy({ data: 'RESPONSE' } as any, proxyResolutionKey, logger);

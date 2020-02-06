@@ -29,7 +29,7 @@ describe('behaviors', function () {
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 const time = Date.now() - start;
-                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); // allows for approximate timing
+                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); //allows for approximate timing
                 expect(actualResponse).toEqual({ key: 'value' });
             });
         });
@@ -44,7 +44,7 @@ describe('behaviors', function () {
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 const time = Date.now() - start;
-                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); // allows for approximate timing
+                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); //allows for approximate timing
                 expect(actualResponse).toEqual({ key: 'value' });
             });
         });
@@ -73,7 +73,7 @@ describe('behaviors', function () {
 
             return behaviors.execute(request, response, config, logger).then(actualResponse => {
                 const time = Date.now() - start;
-                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); // allows for approximate timing
+                assert.ok(time > 90, 'Took ' + time + ' milliseconds'); //allows for approximate timing
                 expect(actualResponse).toEqual({ key: 'value' });
             });
         });

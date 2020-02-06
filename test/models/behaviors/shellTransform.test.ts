@@ -40,7 +40,7 @@ describe('behaviors', function () {
             const response: any = { data: 'UNCHANGED', requestData: '' };
             const logger = Logger.create();
             const shellFn = function exec () {
-                // The replace of quotes only matters on Windows due to shell differences
+                //The replace of quotes only matters on Windows due to shell differences
                 const shellRequest = JSON.parse(process.argv[2].replace("'", ''));
                 const shellResponse = JSON.parse(process.argv[3].replace("'", ''));
 
@@ -67,7 +67,7 @@ describe('behaviors', function () {
             return behaviors.execute(request, response, config, logger).then(() => {
                 assert.fail('Promise resolved, should have been rejected');
             }, (error: any) => {
-                // Error message is OS-dependent
+                //Error message is OS-dependent
                 assert.ok(error.indexOf('fileDoesNotExist') >= 0, error);
             });
         });

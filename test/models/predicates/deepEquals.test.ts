@@ -157,8 +157,8 @@ describe('predicates', function () {
         });
 
         it('should be true if values in a multi-value key are out of order', function () {
-            // In cases where this comes up - querystrings and xpath selectors,
-            // order is irrelevant
+            //In cases where this comes up - querystrings and xpath selectors,
+            //order is irrelevant
             const predicate = { deepEquals: { query: { key: ['first', 'second'] } } };
             const request: any = { query: { key: ['second', 'first'] }, field: 'true' };
             expect(predicates.evaluate(predicate, request)).toBeTruthy();

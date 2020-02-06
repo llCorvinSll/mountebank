@@ -104,7 +104,7 @@ describe('protocols', function () {
                 const protocols = loader.load({}, customProtocols, config);
                 const logger = FakeLogger.create();
 
-                // Sleep to allow the log statements to finish
+                //Sleep to allow the log statements to finish
                 return protocols.test.createServer!({}, logger).then(() => Q.delay(100)).then(() => {
                     logger.debug.assertLogged('testing 1 2 3');
                     logger.info.assertLogged('testing 2 3 4');

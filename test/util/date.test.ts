@@ -41,7 +41,7 @@ describe('date', function () {
         });
 
         it('should be this month for 30 days ago in same month', function () {
-            // Adding time to avoid UTC conversion pushing it back a month
+            //Adding time to avoid UTC conversion pushing it back a month
             expect(date.howLongAgo('2015-01-01T18:00:00.000Z', '2015-01-31')).toEqual('this month');
         });
 

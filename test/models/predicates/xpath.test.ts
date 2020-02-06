@@ -269,7 +269,7 @@ describe('predicates', function () {
         });
 
         it('#equals should be false if no nodes match the selector', function () {
-            // despite namespace aliases matching, urls do not
+            //despite namespace aliases matching, urls do not
             const predicate = {
                 equals: { field: 'Second' },
                 xpath: {

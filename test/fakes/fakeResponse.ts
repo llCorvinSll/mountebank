@@ -6,13 +6,13 @@ export class FakeResponse {
     public body: any;
     public statusCode: number;
 
-    // @ts-ignore
+    //@ts-ignore
     send = (body: any) => {
         this.body = body;
         return this;
     };
 
-    // @ts-ignore
+    //@ts-ignore
     public format = (selectors: any) => {
         selectors.json();
         return this;
