@@ -3,7 +3,7 @@ const BaseHttpClient = require('./baseHttpClient');
 const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
 const headersHelper = require('../../../src/models/http/headersHelper');
 
-['http', 'https'].forEach(protocol => {
+['http'].forEach(protocol => {
     const client = BaseHttpClient.create(protocol);
     let api: ApiClient;
     let port: number;
@@ -16,9 +16,9 @@ const headersHelper = require('../../../src/models/http/headersHelper');
     });
 
     describe(`${protocol} imposter`, function () {
-        // this.timeout(timeout);
-
         describe('POST /imposters/:id', function () {
+            afterEach(() => api.del('/imposters'));
+
             it('should auto-assign port if port not provided', function () {
                 const request = { protocol };
 
@@ -27,7 +27,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     return client.get('/first', response.body.port);
                 }).then((response: any) => {
                     expect(response.statusCode).toEqual(200);
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should not support CORS preflight requests if "allowCORS" option is disabled', function () {
@@ -53,7 +53,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     expect(!headersJar.get('access-control-allow-headers')).toBeTruthy();
                     expect(!headersJar.get('access-control-allow-methods')).toBeTruthy();
                     expect(!headersJar.get('access-control-allow-origin')).toBeTruthy();
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support CORS preflight requests if "allowCORS" option is enabled', function () {
@@ -79,8 +79,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     expect(headersJar.get('access-control-allow-headers')).toEqual('X-Custom-Header');
                     expect(headersJar.get('access-control-allow-methods')).toEqual('PUT');
                     expect(headersJar.get('access-control-allow-origin')).toEqual('localhost:8080');
-                }).finally(() => api.del('/imposters')
-                );
+                });
             });
 
             it('should not handle non-preflight requests when "allowCORS" is enabled', function () {
@@ -91,7 +90,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     return client.responseFor({
                         method: 'OPTIONS',
                         path: '/',
-                        // Missing the necessary headers.
+                        //Missing the necessary headers.
                         port: response.body.port
                     });
                 }).then((response: any) => {
@@ -102,23 +101,26 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     expect(!headersJar.get('access-control-allow-headers')).toBeTruthy();
                     expect(!headersJar.get('access-control-allow-methods')).toBeTruthy();
                     expect(!headersJar.get('access-control-allow-origin')).toBeTruthy();
-                }).finally(() => api.del('/imposters')
-                );
+                });
             });
 
             it('should default content type to json if not provided', function () {
                 const request = { port, protocol };
 
-                return api.post('/imposters', request/* , true */).then((response: any) => {
+                return api.post('/imposters', request/*, true */).then((response: any) => {
                     expect(response.statusCode).toEqual(201);
                     return client.get('/first', port);
                 }).then((response: any) => {
                     expect(response.statusCode).toEqual(200);
-                }).finally(() => api.del('/imposters'));
+                });
             });
         });
 
         describe('GET /imposters/:id', function () {
+            afterEach(() => {
+                return mb.stop();
+            });
+
             it('should provide access to all requests', function () {
                 const imposterRequest = { protocol, port };
 
@@ -237,24 +239,23 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     .finally(() => api.del('/imposters'));
             });
 
-            it('should not record matches against stubs if --debug flag is missing', function () {
+            it('should not record matches against stubs if --debug flag is missing',() => {
                 const stub = { responses: [{ is: { body: '1' } }, { is: { body: '2' } }] };
-                const request = { protocol, port, stubs: [stub] };
+                const request = { protocol, port: mb.port + 1, stubs: [stub] };
 
                 return mb.start()
                     .then(() => mb.post('/imposters', request))
-                    .then(() => client.get('/first?q=1', port))
-                    .then(() => client.get('/second?q=2', port))
-                    .then(() => mb.get(`/imposters/${port}`))
+                    .then(() => client.get('/first?q=1', mb.port + 1))
+                    .then(() => client.get('/second?q=2', mb.port + 1))
+                    .then(() => mb.get(`/imposters/${mb.port + 1}`))
                     .then((response: any) => {
                         const sanitizedBody = sanitizeBody(response);
                         expect(sanitizedBody.stubs).toEqual([{
                             _uuid: '696969696969',
                             responses: [{ is: { body: '1' } }, { is: { body: '2' } }],
-                            _links: { self: { href: `${mb.url}/imposters/${port}/stubs/0` } }
+                            _links: { self: { href: `${mb.url}/imposters/${mb.port + 1}/stubs/0` } }
                         }]);
-                    })
-                    .finally(() => mb.stop());
+                    });
             });
 
             it('should record numberOfRequests even if --mock flag is missing', function () {
@@ -280,6 +281,8 @@ const headersHelper = require('../../../src/models/http/headersHelper');
         });
 
         describe('DELETE /imposters/:id', function () {
+            afterEach(() => api.del('/imposters'));
+
             it('should shutdown server at that port', function () {
                 const request = { protocol, port };
 
@@ -291,8 +294,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     })
                     .then((response: any) => {
                         expect(response.statusCode).toEqual(201);
-                    })
-                    .finally(() => api.del(`/imposters/${port}`));
+                    });
             });
 
             it('should return a 200 even if the server does not exist', function () {

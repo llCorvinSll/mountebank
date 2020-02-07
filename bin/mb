@@ -2,13 +2,13 @@
 
 'use strict';
 
-const mountebank = require('../src/mountebank'),
-    fs = require('fs'),
-    path = require('path'),
-    http = require('http'),
-    Q = require('q'),
-    ejs = require('ejs'),
-    yargs = require('yargs');
+const mountebank = require('../src/mountebank');
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const Q = require('q');
+const ejs = require('ejs');
+const yargs = require('yargs');
 
 function error (message) {
     console.error(`${message}\n`);
@@ -18,8 +18,8 @@ function error (message) {
 
 function processExists (pid) {
     try {
-        // "As a special case, signal 0 can be used to test existence of process"
-        // https://nodejs.org/api/process.html#process_process_kill_pid_signal
+        //"As a special case, signal 0 can be used to test existence of process"
+        //https://nodejs.org/api/process.html#process_process_kill_pid_signal
         process.kill(pid, 0);
         return true;
     }
@@ -33,27 +33,27 @@ function shouldLoadConfigFile (options) {
 }
 
 function putConfig (options, body) {
-    const deferred = Q.defer(),
-        requestOptions = {
-            method: 'PUT',
-            path: '/imposters',
-            port: options.port,
-            hostname: options.host || 'localhost',
-            headers: {
-                'Content-Type': 'application/json',
-                Connection: 'close'
-            }
-        },
+    const deferred = Q.defer();
+    const requestOptions = {
+        method: 'PUT',
+        path: '/imposters',
+        port: options.port,
+        hostname: options.host || 'localhost',
+        headers: {
+            'Content-Type': 'application/json',
+            Connection: 'close'
+        }
+    };
 
-        request = http.request(requestOptions, response => {
-            response.body = '';
-            response.setEncoding('utf8');
-            response.on('data', chunk => { response.body += chunk; });
-            response.on('end', () => {
-                response.body = JSON.parse(response.body);
-                deferred.resolve(response);
-            });
+    const request = http.request(requestOptions, response => {
+        response.body = '';
+        response.setEncoding('utf8');
+        response.on('data', chunk => { response.body += chunk; });
+        response.on('end', () => {
+            response.body = JSON.parse(response.body);
+            deferred.resolve(response);
         });
+    });
 
     request.on('error', deferred.reject);
 
@@ -63,17 +63,17 @@ function putConfig (options, body) {
 }
 
 function getConfig (options) {
-    const deferred = Q.defer(),
-        requestOptions = {
-            method: 'GET',
-            path: '/imposters?replayable=true',
-            port: options.port,
-            hostname: options.host || 'localhost',
-            headers: {
-                'Content-Type': 'application/json',
-                Connection: 'close'
-            }
-        };
+    const deferred = Q.defer();
+    const requestOptions = {
+        method: 'GET',
+        path: '/imposters?replayable=true',
+        port: options.port,
+        hostname: options.host || 'localhost',
+        headers: {
+            'Content-Type': 'application/json',
+            Connection: 'close'
+        }
+    };
 
     if (options.removeProxies) {
         requestOptions.path += '&removeProxies=true';
@@ -94,25 +94,25 @@ function getConfig (options) {
     return deferred.promise;
 }
 
-// usage: stringify(includeFile)
-// note: Trying to make this backwards compatible. However, the intent is to change
-// the signature to just require `includeFile`.
+//usage: stringify(includeFile)
+//note: Trying to make this backwards compatible. However, the intent is to change
+//the signature to just require `includeFile`.
 function stringify (filename, includeFile) {
     const resolvedPath = makePathInABackwardsCompatibleWay(filename, includeFile);
-    const contents = fs.readFileSync(resolvedPath, 'utf8'),
-        rendered = ejs.render(contents, {
-            filename: CONFIG_FILE_PATH,
-            stringify: stringify,
-            inject: stringify // backwards compatibility
-        }),
-        jsonString = JSON.stringify(rendered.trim());
+    const contents = fs.readFileSync(resolvedPath, 'utf8');
+    const rendered = ejs.render(contents, {
+        filename: CONFIG_FILE_PATH,
+        stringify: stringify,
+        inject: stringify //backwards compatibility
+    });
+    const jsonString = JSON.stringify(rendered.trim());
 
-    // get rid of the surrounding quotes because it makes the templates more natural to quote them there
+    //get rid of the surrounding quotes because it makes the templates more natural to quote them there
     return jsonString.substring(1, jsonString.length - 1);
 }
 
 function makePathInABackwardsCompatibleWay (filename, includeFile) {
-    var resolvedPath = null;
+    let resolvedPath = null;
     if (!includeFile) {
         includeFile = filename;
     }
@@ -133,21 +133,21 @@ function getContentsOrExit (file, server) {
     }
 }
 
-var CONFIG_FILE_PATH = null;
+let CONFIG_FILE_PATH = null;
 function loadConfig (options, server) {
     if (!shouldLoadConfigFile(options)) {
         return Q(true);
     }
     CONFIG_FILE_PATH = options.configfile;
-    const configContents = getContentsOrExit(options.configfile, server),
-        parsedContents = options.noParse ? configContents : ejs.render(configContents, {
-            filename: options.configfile,
-            stringify: stringify,
-            inject: stringify // backwards compatibility
-        }),
-        json = JSON.parse(parsedContents),
-        // [json] Assume they left off the outer imposters array
-        imposters = json.imposters || [json];
+    const configContents = getContentsOrExit(options.configfile, server);
+    const parsedContents = options.noParse ? configContents : ejs.render(configContents, {
+        filename: options.configfile,
+        stringify: stringify,
+        inject: stringify //backwards compatibility
+    });
+    const json = JSON.parse(parsedContents);
+    //[json] Assume they left off the outer imposters array
+    const imposters = json.imposters || [json];
 
     return putConfig(options, JSON.stringify({ imposters: imposters }));
 }
@@ -173,8 +173,8 @@ function serverAt (options) {
 
             return loadConfig(options, server);
         }).then(() => {
-            // Useful for build plugins that need to wait for mb to be fully initialized
-            // They can wait for the pidfile to be written
+            //Useful for build plugins that need to wait for mb to be fully initialized
+            //They can wait for the pidfile to be written
             fs.writeFileSync(options.pidfile, process.pid.toString());
         }).done();
     }
@@ -190,28 +190,28 @@ function serverAt (options) {
             return Q(true);
         }
 
-        const deferred = Q.defer(),
-            startTime = new Date(),
-            timeout = 1000,
-            waitForClose = () => {
-                const elapsedTime = new Date() - startTime;
-                if (!fs.existsSync(options.pidfile)) {
+        const deferred = Q.defer();
+        const startTime = new Date();
+        const timeout = 1000;
+        const waitForClose = () => {
+            const elapsedTime = new Date() - startTime;
+            if (!fs.existsSync(options.pidfile)) {
+                deferred.resolve();
+            }
+            else if (elapsedTime > timeout) {
+                try {
+                    //For Windows, which doesn't register signal handlers
+                    fs.unlinkSync(options.pidfile);
+                }
+                catch (err) { /*ignore */ }
+                finally {
                     deferred.resolve();
                 }
-                else if (elapsedTime > timeout) {
-                    try {
-                        // For Windows, which doesn't register signal handlers
-                        fs.unlinkSync(options.pidfile);
-                    }
-                    catch (err) { /* ignore */ }
-                    finally {
-                        deferred.resolve();
-                    }
-                }
-                else {
-                    setTimeout(waitForClose, 100);
-                }
-            };
+            }
+            else {
+                setTimeout(waitForClose, 100);
+            }
+        };
 
         process.kill(pid);
         waitForClose();
@@ -264,150 +264,150 @@ function serverAt (options) {
 }
 
 const aliases = {
-        d: 'debug',
-        h: 'host',
-        i: 'allowInjection',
-        l: 'localOnly',
-        m: 'mock',
-        p: 'port',
-        r: 'removeProxies',
-        w: 'ipWhitelist'
+    d: 'debug',
+    h: 'host',
+    i: 'allowInjection',
+    l: 'localOnly',
+    m: 'mock',
+    p: 'port',
+    r: 'removeProxies',
+    w: 'ipWhitelist'
+};
+const options = {
+    port: {
+        default: 2525,
+        description: 'the port to run the mountebank server on',
+        nargs: 1,
+        type: 'number',
+        alias: aliases.p,
+        global: false
     },
-    options = {
-        port: {
-            default: 2525,
-            description: 'the port to run the mountebank server on',
-            nargs: 1,
-            type: 'number',
-            alias: aliases.p,
-            global: false
-        },
-        host: {
-            description: 'the hostname to bind the mountebank server to',
-            nargs: 1,
-            type: 'string',
-            alias: aliases.h,
-            global: false
-        },
-        configfile: {
-            description: 'file to load imposters from, can be an EJS template',
-            nargs: 1,
-            type: 'string',
-            global: false
-        },
-        noParse: {
-            default: false,
-            description: 'prevent rendering the configfile as an EJS template',
-            type: 'boolean',
-            global: false
-        },
-        pidfile: {
-            default: 'mb.pid',
-            description: 'where the pid is stored for the stop command',
-            nargs: 1,
-            type: 'string',
-            global: false
-        },
-        nologfile: {
-            default: false,
-            description: 'prevent logging to the filesystem',
-            type: 'boolean',
-            global: false
-        },
-        logfile: {
-            default: 'mb.log',
-            description: 'file used for all log',
-            nargs: 1,
-            type: 'string',
-            global: false
-        },
-        loglevel: {
-            default: 'info',
-            description: 'level for terminal logs',
-            nargs: 1,
-            type: 'string',
-            choices: ['debug', 'info', 'warn', 'error'],
-            global: false
-        },
-        allowInjection: {
-            default: false,
-            description: 'set to allow JavaScript injection',
-            type: 'boolean',
-            alias: aliases.i,
-            global: false
-        },
-        localOnly: {
-            default: false,
-            description: 'allow connections only from localhost',
-            type: 'boolean',
-            alias: aliases.l,
-            global: false
-        },
-        ipWhitelist: {
-            default: '*',
-            description: 'pipe-delimited list of allowed IP address patterns to connect to the mountebank admin port',
-            type: 'string',
-            alias: aliases.w,
-            global: false
-        },
-        mock: {
-            default: false,
-            description: 'remember requests for mock verification',
-            type: 'boolean',
-            alias: aliases.m,
-            global: false
-        },
-        debug: {
-            default: false,
-            description: 'include stub match information in imposter retrievals for debugging purposes',
-            type: 'boolean',
-            alias: aliases.d,
-            global: false
-        },
-        savefile: {
-            default: 'mb.json',
-            description: 'file to save imposters to',
-            nargs: 1,
-            type: 'string',
-            global: false
-        },
-        protofile: {
-            default: 'protocols.json',
-            description: 'file to load custom protocol implementations from',
-            nargs: 1,
-            type: 'string',
-            global: false
-        },
-        removeProxies: {
-            default: false,
-            description: 'removes proxies from the configuration when using the save command',
-            type: 'boolean',
-            alias: aliases.r,
-            global: false
-        },
-        heroku: {
-            default: false,
-            type: 'boolean',
-            global: false
-        }
+    host: {
+        description: 'the hostname to bind the mountebank server to',
+        nargs: 1,
+        type: 'string',
+        alias: aliases.h,
+        global: false
     },
-    startOptions = {
-        port: options.port,
-        host: options.host,
-        configfile: options.configfile,
-        noParse: options.noParse,
-        pidfile: options.pidfile,
-        nologfile: options.nologfile,
-        logfile: options.logfile,
-        loglevel: options.loglevel,
-        allowInjection: options.allowInjection,
-        localOnly: options.localOnly,
-        ipWhitelist: options.ipWhitelist,
-        mock: options.mock,
-        debug: options.debug,
-        heroku: options.heroku,
-        protofile: options.protofile
-    };
+    configfile: {
+        description: 'file to load imposters from, can be an EJS template',
+        nargs: 1,
+        type: 'string',
+        global: false
+    },
+    noParse: {
+        default: false,
+        description: 'prevent rendering the configfile as an EJS template',
+        type: 'boolean',
+        global: false
+    },
+    pidfile: {
+        default: 'mb.pid',
+        description: 'where the pid is stored for the stop command',
+        nargs: 1,
+        type: 'string',
+        global: false
+    },
+    nologfile: {
+        default: false,
+        description: 'prevent logging to the filesystem',
+        type: 'boolean',
+        global: false
+    },
+    logfile: {
+        default: 'mb.log',
+        description: 'file used for all log',
+        nargs: 1,
+        type: 'string',
+        global: false
+    },
+    loglevel: {
+        default: 'info',
+        description: 'level for terminal logs',
+        nargs: 1,
+        type: 'string',
+        choices: ['debug', 'info', 'warn', 'error'],
+        global: false
+    },
+    allowInjection: {
+        default: false,
+        description: 'set to allow JavaScript injection',
+        type: 'boolean',
+        alias: aliases.i,
+        global: false
+    },
+    localOnly: {
+        default: false,
+        description: 'allow connections only from localhost',
+        type: 'boolean',
+        alias: aliases.l,
+        global: false
+    },
+    ipWhitelist: {
+        default: '*',
+        description: 'pipe-delimited list of allowed IP address patterns to connect to the mountebank admin port',
+        type: 'string',
+        alias: aliases.w,
+        global: false
+    },
+    mock: {
+        default: false,
+        description: 'remember requests for mock verification',
+        type: 'boolean',
+        alias: aliases.m,
+        global: false
+    },
+    debug: {
+        default: false,
+        description: 'include stub match information in imposter retrievals for debugging purposes',
+        type: 'boolean',
+        alias: aliases.d,
+        global: false
+    },
+    savefile: {
+        default: 'mb.json',
+        description: 'file to save imposters to',
+        nargs: 1,
+        type: 'string',
+        global: false
+    },
+    protofile: {
+        default: 'protocols.json',
+        description: 'file to load custom protocol implementations from',
+        nargs: 1,
+        type: 'string',
+        global: false
+    },
+    removeProxies: {
+        default: false,
+        description: 'removes proxies from the configuration when using the save command',
+        type: 'boolean',
+        alias: aliases.r,
+        global: false
+    },
+    heroku: {
+        default: false,
+        type: 'boolean',
+        global: false
+    }
+};
+const startOptions = {
+    port: options.port,
+    host: options.host,
+    configfile: options.configfile,
+    noParse: options.noParse,
+    pidfile: options.pidfile,
+    nologfile: options.nologfile,
+    logfile: options.logfile,
+    loglevel: options.loglevel,
+    allowInjection: options.allowInjection,
+    localOnly: options.localOnly,
+    ipWhitelist: options.ipWhitelist,
+    mock: options.mock,
+    debug: options.debug,
+    heroku: options.heroku,
+    protofile: options.protofile
+};
 
 const argv = yargs
     .usage('Usage: mb [command=start] [options...]')
@@ -487,10 +487,10 @@ function fixAliases () {
     });
 }
 
-// Unfortunately, while yargs defaults correctly when the command is present, I couldn't
-// figure out how to make it default when the command is absent, which I need to default to start.
-// You can set what yargs considers to be the default command by .command(['start', '*']), but
-// that changes the help docs in ways I don't want.
+//Unfortunately, while yargs defaults correctly when the command is present, I couldn't
+//figure out how to make it default when the command is absent, which I need to default to start.
+//You can set what yargs considers to be the default command by .command(['start', '*']), but
+//that changes the help docs in ways I don't want.
 function fixDefaults () {
     if (argv._.length === 0) {
         Object.keys(startOptions).forEach(key => {
@@ -507,7 +507,7 @@ function fixIPWhitelist (command) {
     }
 }
 
-// Prevent noise from being logged
+//Prevent noise from being logged
 function removeNoise () {
     delete argv._;
     delete argv.$0;
@@ -515,8 +515,8 @@ function removeNoise () {
 }
 
 try {
-    const command = argv._.length === 0 ? 'start' : argv._[0],
-        server = serverAt(argv);
+    const command = argv._.length === 0 ? 'start' : argv._[0];
+    const server = serverAt(argv);
 
     fixAliases();
     fixDefaults();

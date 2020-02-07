@@ -6,8 +6,8 @@ const helpers = require('../../../src/util/helpers');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 function create (protocol) {
-    const driver = require(protocol),
-        agent = new driver.Agent({ keepAlive: true });
+    const driver = require(protocol);
+    const agent = new driver.Agent({ keepAlive: true });
 
     function optionsFor (spec) {
         const defaults = {
@@ -20,8 +20,8 @@ function create (protocol) {
     }
 
     function responseFor (spec) {
-        const deferred = Q.defer(),
-            options = optionsFor(spec);
+        const deferred = Q.defer();
+        const options = optionsFor(spec);
 
         if (!options.port) {
             throw Error('silly rabbit, you forgot to pass the port again');
@@ -38,8 +38,8 @@ function create (protocol) {
             response.on('data', chunk => packets.push(chunk));
 
             response.on('end', () => {
-                const buffer = Buffer.concat(packets),
-                    contentType = response.headers['content-type'] || '';
+                const buffer = Buffer.concat(packets);
+                const contentType = response.headers['content-type'] || '';
 
                 response.body = spec.mode === 'binary' ? buffer : buffer.toString('utf8');
 

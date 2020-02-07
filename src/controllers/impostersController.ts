@@ -41,21 +41,29 @@ export class ImpostersController {
      * @param {Object} response - the HTTP response
      */
     public get = (request: Request, response: Response) => {
-        response.format({
-            json: () => {
-                const query = url.parse(request.url, true).query;
-                const options = {
-                    replayable: queryBoolean(query, 'replayable'),
-                    removeProxies: queryBoolean(query, 'removeProxies'),
-                    list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
-                };
+        const isHtml = request.header('Content-Type') === 'text/html';
 
-                response.send({ imposters: this.getJSON(options) });
-            },
-            html: () => {
-                response.render('imposters', { imposters: this.getJSON() });
-            }
-        });
+        let options: any = null;
+        if (!isHtml) {
+            const query = url.parse(request.url, true).query;
+            options = {
+                replayable: queryBoolean(query, 'replayable'),
+                removeProxies: queryBoolean(query, 'removeProxies'),
+                list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
+            };
+        }
+
+        return this.getJSON(options)
+            .then(json => {
+                response.format({
+                    json: () => {
+                        response.send({ imposters: json });
+                    },
+                    html: () => {
+                        response.render('imposters', { imposters: json });
+                    }
+                });
+            });
     }
 
     /**
@@ -79,7 +87,9 @@ export class ImpostersController {
                         this.imposters[imposter.port] = imposter;
                         response.setHeader('Location', imposter.url);
                         response.statusCode = 201;
-                        response.send(imposter.toJSON());
+                        return imposter.getJSON()
+                            .then(json => response.send(json))
+                            .then(_ => true);
                     }, error => {
                         this.respondWithCreationError(response, error);
                     });
@@ -104,14 +114,18 @@ export class ImpostersController {
     public del = (request: Request, response: Response) => {
         const query = url.parse(request.url, true).query;
         const options = {
-            // default to replayable for backwards compatibility
+            //default to replayable for backwards compatibility
             replayable: queryIsFalse(query, 'replayable'),
             removeProxies: queryBoolean(query, 'removeProxies')
         };
-        const json = this.getJSON(options);
+        const jsonPromise = this.getJSON(options);
 
-        return this.deleteAllImposters().then(() => {
-            response.send({ imposters: json });
+        let actualJson = {};
+        return jsonPromise.then(json => {
+            actualJson = json;
+            return this.deleteAllImposters();
+        }).then(() => {
+            response.send({ imposters: actualJson });
         });
     }
 
@@ -150,11 +164,16 @@ export class ImpostersController {
                     );
                     return Q.all(creationPromises);
                 }).then((allImposters: IImposter[]) => {
-                    const json = allImposters.map(imposter => imposter.toJSON({ list: true }));
-                    allImposters.forEach(imposter => {
-                        this.imposters[imposter.port] = imposter;
-                    });
-                    response.send({ imposters: json });
+                    const jsonPromises = allImposters.map(imposter => imposter.getJSON({ list: true }));
+
+                    return Q.all(jsonPromises)
+                        .then(items => {
+                            allImposters.forEach(imposter => {
+                                this.imposters[imposter.port] = imposter;
+                            });
+                            response.send({ imposters: items });
+                        })
+                        .then(_ => true);
                 }, error => {
                     this.respondWithCreationError(response, error);
                 });
@@ -234,7 +253,10 @@ export class ImpostersController {
     }
 
     private getJSON (options?: any) {
-        return Object.keys(this.imposters).reduce((accumulator, id) => accumulator.concat(this.imposters[id].toJSON(options)), [] as string[]);
+        const promises = Object.keys(this.imposters).map(id => this.imposters[id].getJSON(options));
+
+        return Q.all(promises);
+
     }
 
     private requestDetails (request: Request) {

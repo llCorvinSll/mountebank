@@ -8,7 +8,7 @@ async function startMb () {
 
         childProcess.spawn(
             'bin/mb',
-            ['stop', '--port', port, '--pidfile', 'mb-grunt.pid', '--logfile', 'mb-grunt.log', '--allowInjection', '--mock', '--debug', '--localOnly'],
+            ['stop', '--port', port, '--pidfile', 'mb-grunt.pid', '--logfile', 'mb-jest.log', '--allowInjection', '--mock', '--debug', '--localOnly'],
             {
                 detached: true
             }

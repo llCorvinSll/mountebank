@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { ILogger } from '../util/scopedLogger';
 import { IProtocolFactory, IValidation } from '../models/IProtocol';
-import { IImposter, IImposterConfig } from '../models/imposters/IImposter';
+import { IImposter } from '../models/imposters/IImposter';
 import { ParsedUrlQuery } from 'querystring';
 import * as Q from 'q';
 import { IMontebankError, ValidationError } from '../util/errors';
@@ -18,6 +18,9 @@ function queryBoolean (query: ParsedUrlQuery, key: string) {
     }
     return (query[key] as string).toLowerCase() === 'true';
 }
+
+type AsincMethod = (request: Request, response: Response) => Q.Promise<boolean>
+type SincMethod = (request: Request, response: Response) => void
 
 /**
  * The controller that gets and deletes single imposters
@@ -48,22 +51,35 @@ export class ImposterController {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    public get = (request: Request, response: Response) => {
-        const query = url.parse(request.url, true).query;
-        const options = { replayable: queryBoolean(query, 'replayable'), removeProxies: queryBoolean(query, 'removeProxies') };
-        const imposter = this.imposters[request.params.id].toJSON(options);
+    public get: AsincMethod = (request: Request, response: Response) => {
+        const isHtml = request.header('Content-Type') === 'text/html';
 
-        response.format({
-            json: () => { response.send(imposter); },
-            html: () => {
-                if (request.headers['x-requested-with']) {
-                    response.render('_imposter', { imposter: imposter });
-                }
-                else {
-                    response.render('imposter', { imposter: imposter });
-                }
-            }
-        });
+        let options: any = null;
+        if (!isHtml) {
+            const query = url.parse(request.url, true).query;
+            options = {
+                replayable: queryBoolean(query, 'replayable'),
+                removeProxies: queryBoolean(query, 'removeProxies')
+            };
+        }
+        const imposter = this.imposters[request.params.id];
+
+        return imposter.getJSON(options)
+            .then(json => {
+                response.format({
+                    json: () => response.send(json),
+                    html: () => {
+                        if (request.headers['x-requested-with']) {
+                            response.render('_imposter', { imposter: json });
+                        }
+                        else {
+                            response.render('imposter', { imposter: json });
+                        }
+                    }
+                });
+
+                return Q(true);
+            });
     }
 
     //#endregion
@@ -77,21 +93,21 @@ export class ImposterController {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing
      */
-    public del = (request: Request, response: Response): Q.Promise<boolean|void> => {
+    public del: AsincMethod = (request: Request, response: Response) => {
         const imposter: IImposter = this.imposters[request.params.id];
         const query = url.parse(request.url, true).query;
         const options = { replayable: queryBoolean(query, 'replayable'), removeProxies: queryBoolean(query, 'removeProxies') };
-        let json = {};
 
         if (imposter) {
-            json = imposter.toJSON(options);
-            return imposter.stop().then(() => {
-                delete this.imposters[request.params.id];
-                response.send(json);
-            });
+            return imposter.getJSON(options)
+                .then(imposterJson => imposter.stop().then(() => {
+                    delete this.imposters[request.params.id];
+                    response.send(imposterJson);
+                    return true;
+                }));
         }
         else {
-            response.send(json);
+            response.send({});
             return Q(true);
         }
     }
@@ -108,30 +124,31 @@ export class ImposterController {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing
      */
-    public resetProxies = (request: Request, response: Response) => {
-        const json = {};
+    public resetProxies: AsincMethod = (request: Request, response: Response) => {
         const options = { replayable: false, removeProxies: false };
         const imposter = this.imposters[request.params.id];
 
         if (imposter) {
             imposter.stubRepository.resetProxies();
-            const imposterJson = imposter.toJSON(options);
+            return imposter.getJSON(options)
+                .then(imposterJson => {
+                    response.format({
+                        json: () => { response.send(imposterJson); },
+                        html: () => {
+                            if (request.headers['x-requested-with']) {
+                                response.render('_imposter', { imposter: imposterJson });
+                            }
+                            else {
+                                response.render('imposter', { imposter: imposterJson });
+                            }
+                        }
+                    });
 
-            response.format({
-                json: () => { response.send(imposterJson); },
-                html: () => {
-                    if (request.headers['x-requested-with']) {
-                        response.render('_imposter', { imposter: imposterJson });
-                    }
-                    else {
-                        response.render('imposter', { imposter: imposterJson });
-                    }
-                }
-            });
-            return Q(true);
+                    return Q(true);
+                });
         }
         else {
-            response.send(json);
+            response.send({});
             return Q(true);
         }
     }
@@ -148,12 +165,13 @@ export class ImposterController {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    public postRequest = (request: Request, response: Response) => {
+    public postRequest: SincMethod = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id];
         const protoRequest = request.body.request;
 
-        imposter.getResponseFor(protoRequest).done(protoResponse => {
+        return imposter.getResponseFor(protoRequest).done(protoResponse => {
             response.send(protoResponse);
+            return true;
         });
     }
 
@@ -169,13 +187,14 @@ export class ImposterController {
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    public postProxyResponse = (request: Request, response: Response) => {
+    public postProxyResponse: SincMethod = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id];
         const proxyResolutionKey = request.params.proxyResolutionKey;
         const proxyResponse = request.body.proxyResponse;
 
-        imposter.getProxyResponseFor(proxyResponse, proxyResolutionKey).done(protoResponse => {
+        return imposter.getProxyResponseFor(proxyResponse, proxyResolutionKey).done(protoResponse => {
             response.send(protoResponse);
+            return true;
         });
     }
 
@@ -191,7 +210,7 @@ export class ImposterController {
      * @param {Object} response - the HTTP response
      * @returns {Object} - promise for testing
      */
-    public putStubs = (request: Request, response: Response) => {
+    public putStubs: (request: Request, response: Response) => Q.Promise<boolean> = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id];
         const newStubs: IStubConfig[] = request.body.stubs;
         const errors: IMontebankError[] = [];
@@ -201,33 +220,44 @@ export class ImposterController {
             return this.respondWithValidationErrors(response, errors);
         }
         else {
-            return this.validate(imposter, newStubs).then(result => {
-                if (result.isValid) {
-                    imposter.stubRepository.overwriteStubs(newStubs);
-                    response.send(imposter.toJSON());
-                }
-                else {
-                    this.respondWithValidationErrors(response, result.errors);
-                }
-            });
+            return this.validate(imposter, newStubs)
+                .then(result => {
+                    if (result.isValid) {
+                        imposter.stubRepository.overwriteStubs(newStubs);
+                        return imposter.getJSON()
+                            .then(json => response.send(json))
+                            .then(_ => true);
+                    }
+                    else {
+                        this.respondWithValidationErrors(response, result.errors);
+                        return Q(true);
+                    }
+                });
         }
     }
 
-    private validate (imposter: IImposterConfig, newStubs: IStubConfig[]): Q.Promise<IValidation> {
-        const request = helpers.clone(imposter);
+    private validate (imposter: IImposter, newStubs: IStubConfig[]): Q.Promise<IValidation> {
+        return imposter.getJSON().then(repr => {
+            repr.stubs = newStubs as any;
 
-        request.stubs = newStubs as any;
+            compatibility.upcast(repr as any);
 
-        compatibility.upcast(request as any);
+            const Protocol = this.protocols[repr.protocol!];
 
-        const Protocol = this.protocols[request.protocol!];
-        const validator = require('../models/dryRunValidator').create({
-            testRequest: Protocol.testRequest,
-            testProxyResponse: Protocol.testProxyResponse,
-            additionalValidation: Protocol.validate,
-            allowInjection: this.allowInjection
+            if (!Protocol) {
+                console.log('BLET');
+                console.log(imposter);
+                console.log(repr);
+            }
+
+            const validator = require('../models/dryRunValidator').create({
+                testRequest: Protocol.testRequest,
+                testProxyResponse: Protocol.testProxyResponse,
+                additionalValidation: Protocol.validate,
+                allowInjection: this.allowInjection
+            });
+            return validator.validate(repr, this.logger);
         });
-        return validator.validate(request, this.logger);
     }
 
 
@@ -244,7 +274,7 @@ export class ImposterController {
         this.logger!.error(`error changing stubs: ${JSON.stringify(exceptions.details(validationErrors as any))}`);
         response.statusCode = statusCode;
         response.send({ errors: validationErrors });
-        return Q();
+        return Q(false);
     }
 
     //#endregion
@@ -272,10 +302,13 @@ export class ImposterController {
             return this.validate(imposter, [newStub]).then(result => {
                 if (result.isValid) {
                     imposter.stubRepository.overwriteStubAtIndex(request.params.stubIndex, newStub);
-                    response.send(imposter.toJSON());
+                    return imposter.getJSON()
+                        .then(json => response.send(json))
+                        .then(_ => true);
                 }
                 else {
                     this.respondWithValidationErrors(response, result.errors);
+                    return Q(true);
                 }
             });
         }
@@ -299,7 +332,7 @@ export class ImposterController {
      * @param {Object} response - the HTTP response
      * @returns {Object} - promise for testing
      */
-    public postStub = (request: Request, response: Response) => {
+    public postStub: AsincMethod = (request: Request, response: Response) => {
         const imposter = this.imposters[request.params.id];
         const newStub: IStubConfig = request.body.stub;
         const index = typeof request.body.index === 'undefined' ? imposter.stubRepository.stubs().length : request.body.index;
@@ -312,15 +345,19 @@ export class ImposterController {
             return this.respondWithValidationErrors(response, errors);
         }
         else {
-            return this.validate(imposter, [newStub]).then(result => {
-                if (result.isValid) {
-                    imposter.stubRepository.addStubAtIndex(index, newStub);
-                    response.send(imposter.toJSON());
-                }
-                else {
-                    this.respondWithValidationErrors(response, result.errors);
-                }
-            });
+            return this.validate(imposter, [newStub])
+                .then(result => {
+                    if (result.isValid) {
+                        imposter.stubRepository.addStubAtIndex(index, newStub);
+                        return imposter.getJSON()
+                            .then(json => response.send(json))
+                            .then(_ => true);
+                    }
+                    else {
+                        this.respondWithValidationErrors(response, result.errors);
+                        return Q(true);
+                    }
+                });
         }
     }
 
@@ -346,8 +383,9 @@ export class ImposterController {
         else {
 
             imposter.stubRepository.deleteStubAtIndex(request.params.stubIndex);
-            response.send(imposter.toJSON());
-            return Q();
+            return imposter.getJSON()
+                .then(json => response.send(json))
+                .then(_ => true);
         }
     }
 
@@ -372,8 +410,7 @@ export class ImposterController {
         }
         else {
             imposter.stubRepository.deleteStubByUuid(uuid);
-            response.send(imposter.toJSON());
-            return Q();
+            return imposter.getJSON().then(json => response.send(json)).then();
         }
     }
 

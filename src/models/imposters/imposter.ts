@@ -61,7 +61,7 @@ export class Imposter implements IImposter {
         compatibility.upcast(this.creationRequest);
 
         this.logger = require('../../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port!));
-        // If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
+        //If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
         this.recordRequests = Boolean(config.recordRequests) || Boolean(creationRequest.recordRequests);
     }
 
@@ -126,6 +126,11 @@ export class Imposter implements IImposter {
         return printer.toJSON(this.numberOfRequests, options);
     }
 
+    public getJSON (options?: IImposterPrintOptions): Q.Promise<any> {
+        const printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
+        return Q.resolve(printer.toJSON(this.numberOfRequests, options));
+    }
+
     public stop () {
         const stopDeferred = Q.defer();
         this.server.close(() => {
@@ -139,9 +144,9 @@ export class Imposter implements IImposter {
         return this.server.stubs;
     }
 
-    // requestDetails are not stored with the imposter
-    // It was created to pass the raw URL to maintain the exact querystring during http proxying
-    // without having to change the path / query options on the stored request
+    //requestDetails are not stored with the imposter
+    //It was created to pass the raw URL to maintain the exact querystring during http proxying
+    //without having to change the path / query options on the stored request
     public getResponseFor (request: IServerRequestData, requestDetails?: unknown): Q.Promise<IMountebankResponse> {
         if (!this.isAllowedConnection(request.ip, this.logger)) {
             return Q({ blocked: true, code: 'unauthorized ip address' });
@@ -158,11 +163,11 @@ export class Imposter implements IImposter {
         return this.resolver.resolve(responseConfig, request, this.logger, this.imposterState, requestDetails).then(response => {
             if (this.config.recordMatches && !response.proxy) {
                 if (response.response) {
-                    // Out of process responses wrap the result in an outer response object
+                    //Out of process responses wrap the result in an outer response object
                     responseConfig.recordMatch && responseConfig.recordMatch(response.response);
                 }
                 else {
-                    // In process resolution
+                    //In process resolution
                     responseConfig.recordMatch && responseConfig.recordMatch(response);
                 }
             }

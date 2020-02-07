@@ -1,5 +1,3 @@
-
-
 import * as Q from 'q';
 import { IStubConfig } from '../stubs/IStubConfig';
 import { ILogger } from '../../util/scopedLogger';
@@ -12,7 +10,8 @@ export interface IImposter {
     protocol: string;
 
     stubRepository: IStubRepository;
-    toJSON(options?: IImposterPrintOptions): string;
+    toJSON(options?: IImposterPrintOptions): any;
+    getJSON(options?: IImposterPrintOptions): Q.Promise<any>;
     stop(): Q.Promise<unknown>;
 
     getResponseFor(request: IServerRequestData, requestDetails?: unknown): Q.Promise<IMountebankResponse>;

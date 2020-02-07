@@ -48,36 +48,42 @@ describe('imposter', function () {
         it('should return trimmed down JSON for lists', function () {
             server.port = 3535;
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow).init().then(imposter => {
-                expect(imposter.toJSON({ list: true })).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    numberOfRequests: 0,
-                    _links: {
-                        self: { href: '/imposters/3535' },
-                        stubs: { href: '/imposters/3535/stubs' }
-                    }
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON({ list: true }))
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        numberOfRequests: 0,
+                        _links: {
+                            self: { href: '/imposters/3535' },
+                            stubs: { href: '/imposters/3535/stubs' }
+                        }
+                    });
                 });
-            });
         });
 
         it('should not display imposter level recordRequests from the global parameter', function () {
             server.port = 3535;
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, { recordRequests: true }, allow).init().then(imposter => {
-                expect(imposter.toJSON()).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    numberOfRequests: 0,
-                    recordRequests: false,
-                    requests: [],
-                    stubs: [],
-                    _links: {
-                        self: { href: '/imposters/3535' },
-                        stubs: { href: '/imposters/3535/stubs' }
-                    }
+            return new Imposter(Protocol, { protocol: 'test' }, logger, { recordRequests: true }, allow)
+                .init()
+                .then(imposter => imposter.getJSON())
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        numberOfRequests: 0,
+                        recordRequests: false,
+                        requests: [],
+                        stubs: [],
+                        _links: {
+                            self: { href: '/imposters/3535' },
+                            stubs: { href: '/imposters/3535/stubs' }
+                        }
+                    });
                 });
-            });
         });
 
         it('imposter-specific recordRequests should override global parameter', function () {
@@ -87,75 +93,87 @@ describe('imposter', function () {
                 recordRequests: true
             };
 
-            return new Imposter(Protocol, request, logger, { recordRequests: false }, allow).init().then(imposter => {
-                expect(imposter.toJSON()).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    numberOfRequests: 0,
-                    recordRequests: true,
-                    requests: [],
-                    stubs: [],
-                    _links: {
-                        self: { href: '/imposters/3535' },
-                        stubs: { href: '/imposters/3535/stubs' }
-                    }
+            return new Imposter(Protocol, request, logger, { recordRequests: false }, allow)
+                .init()
+                .then(imposter => imposter.getJSON())
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        numberOfRequests: 0,
+                        recordRequests: true,
+                        requests: [],
+                        stubs: [],
+                        _links: {
+                            self: { href: '/imposters/3535' },
+                            stubs: { href: '/imposters/3535/stubs' }
+                        }
+                    });
                 });
-            });
         });
 
         it('should return full JSON representation by default', function () {
             server.port = 3535;
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow).init().then(imposter => {
-                expect(imposter.toJSON()).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    numberOfRequests: 0,
-                    recordRequests: false,
-                    requests: [],
-                    stubs: [],
-                    _links: {
-                        self: { href: '/imposters/3535' },
-                        stubs: { href: '/imposters/3535/stubs' }
-                    }
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON())
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        numberOfRequests: 0,
+                        recordRequests: false,
+                        requests: [],
+                        stubs: [],
+                        _links: {
+                            self: { href: '/imposters/3535' },
+                            stubs: { href: '/imposters/3535/stubs' }
+                        }
+                    });
                 });
-            });
         });
 
         it('should add protocol metadata to JSON representation', function () {
             server.port = 3535;
             metadata.key = 'value';
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow).init().then(imposter => {
-                expect(imposter.toJSON()).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    numberOfRequests: 0,
-                    recordRequests: false,
-                    requests: [],
-                    stubs: [],
-                    key: 'value',
-                    _links: {
-                        self: { href: '/imposters/3535' },
-                        stubs: { href: '/imposters/3535/stubs' }
-                    }
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON())
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        numberOfRequests: 0,
+                        recordRequests: false,
+                        requests: [],
+                        stubs: [],
+                        key: 'value',
+                        _links: {
+                            self: { href: '/imposters/3535' },
+                            stubs: { href: '/imposters/3535/stubs' }
+                        }
+                    });
                 });
-            });
         });
 
         it('should provide replayable JSON representation', function () {
             server.port = 3535;
             metadata.key = 'value';
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow).init().then(imposter => {
-                expect(imposter.toJSON({ replayable: true })).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    recordRequests: false,
-                    stubs: [],
-                    key: 'value'
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON({ replayable: true }))
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        recordRequests: false,
+                        stubs: [],
+                        key: 'value'
+                    });
                 });
-            });
         });
 
         it('should create protocol server on provided port with options', function () {
@@ -168,19 +186,21 @@ describe('imposter', function () {
             const request: any = {
                 stubs: [{ responses: ['FIRST'] }, { responses: ['SECOND'] }]
             };
-            return new Imposter(Protocol, request, logger, {}, allow).init().then(imposter => {
-                const result: any = imposter.toJSON();
-                expect(result.stubs).toEqual([
-                    {
-                        responses: ['FIRST'],
-                        _links: { self: { href: '/imposters/3535/stubs/0' } }
-                    },
-                    {
-                        responses: ['SECOND'],
-                        _links: { self: { href: '/imposters/3535/stubs/1' } }
-                    }
-                ]);
-            });
+            return new Imposter(Protocol, request, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON())
+                .then(imposter => {
+                    expect(imposter.stubs).toEqual([
+                        {
+                            responses: ['FIRST'],
+                            _links: { self: { href: '/imposters/3535/stubs/0' } }
+                        },
+                        {
+                            responses: ['SECOND'],
+                            _links: { self: { href: '/imposters/3535/stubs/1' } }
+                        }
+                    ]);
+                });
         });
 
         it('replayable JSON should remove stub matches and links', function () {
@@ -199,15 +219,18 @@ describe('imposter', function () {
                 ]
             };
 
-            return new Imposter(Protocol, request, logger, {}, allow).init().then(imposter => {
-                expect(imposter.toJSON({ replayable: true })).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    recordRequests: false,
-                    stubs: [{ responses: ['FIRST'] },
-                        { responses: ['SECOND'] }]
+            return new Imposter(Protocol, request, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON({ replayable: true }))
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        recordRequests: false,
+                        stubs: [{ responses: ['FIRST'] },
+                            { responses: ['SECOND'] }]
+                    });
                 });
-            });
         });
 
         it('replayable JSON should remove _proxyResponseTime fields', function () {
@@ -217,14 +240,17 @@ describe('imposter', function () {
                 stubs: [{ responses: [{ is: { body: 'body', _proxyResponseTime: 3 } }] }]
             };
 
-            return new Imposter(Protocol, request, logger, {}, allow).init().then(imposter => {
-                expect(imposter.toJSON({ replayable: true })).toEqual({
-                    protocol: 'test',
-                    port: 3535,
-                    recordRequests: false,
-                    stubs: [{ responses: [{ is: { body: 'body' } }] }]
+            return new Imposter(Protocol, request, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON({ replayable: true }))
+                .then(imposter => {
+                    expect(imposter).toEqual({
+                        protocol: 'test',
+                        port: 3535,
+                        recordRequests: false,
+                        stubs: [{ responses: [{ is: { body: 'body' } }] }]
+                    });
                 });
-            });
         });
 
         it('should remove proxies from responses if asked', function () {
@@ -244,23 +270,25 @@ describe('imposter', function () {
                     }
                 ]
             };
-            return new Imposter(Protocol, request, logger, {}, allow).init().then(imposter => {
-                expect((imposter.toJSON({ removeProxies: true }) as any).stubs).toEqual([
-                    {
-                        responses: [
-                            { is: { body: 'first' } },
-                            { inject: 'inject' }
-                        ],
-                        _links: { self: { href: '/imposters/3535/stubs/0' } }
-                    },
-                    {
-                        responses: [
-                            { is: { body: 'second' } }
-                        ],
-                        _links: { self: { href: '/imposters/3535/stubs/1' } }
-                    }
-                ]);
-            });
+            return new Imposter(Protocol, request, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON({ removeProxies: true }))
+                .then(imposter => {
+                    expect(imposter.stubs).toEqual([
+                        {
+                            responses: [
+                                { is: { body: 'first' } },
+                                { inject: 'inject' }
+                            ],
+                            _links: { self: { href: '/imposters/3535/stubs/0' } }
+                        },
+                        {
+                            responses: [
+                                { is: { body: 'second' } }
+                            ],
+                            _links: { self: { href: '/imposters/3535/stubs/1' } }
+                        }]);
+                });
         });
 
         it('should remove empty stubs after proxy removal', function () {
@@ -281,17 +309,20 @@ describe('imposter', function () {
                 ]
             };
 
-            return new Imposter(Protocol, request, logger, {}, allow).init().then(imposter => {
-                expect((imposter.toJSON({ removeProxies: true }) as any).stubs).toEqual([
-                    {
-                        responses: [
-                            { is: { body: 'first' } },
-                            { inject: 'inject' }
-                        ],
-                        _links: { self: { href: '/imposters/3535/stubs/0' } }
-                    }
-                ]);
-            });
+            return new Imposter(Protocol, request, logger, {}, allow)
+                .init()
+                .then(imposter => imposter.getJSON({ removeProxies: true }))
+                .then(imposter => {
+                    expect(imposter.stubs).toEqual([
+                        {
+                            responses: [
+                                { is: { body: 'first' } },
+                                { inject: 'inject' }
+                            ],
+                            _links: { self: { href: '/imposters/3535/stubs/0' } }
+                        }
+                    ]);
+                });
         });
 
         it('responseFor should resolve using stubs and resolver', function () {
@@ -310,14 +341,16 @@ describe('imposter', function () {
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
-            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: false }, allow).init().then(imp => {
-                imposter = imp;
-                return imposter.getResponseFor({});
-            }).then(() => {
-                const json: any = imposter.toJSON();
-                expect(json.numberOfRequests).toEqual(1);
-                expect(json.requests).toEqual([]);
-            });
+            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: false }, allow)
+                .init()
+                .then(imp => {
+                    imposter = imp;
+                    return imposter.getResponseFor({});
+                }).then(() => imposter.getJSON())
+                .then(json => {
+                    expect(json.numberOfRequests).toEqual(1);
+                    expect(json.requests).toEqual([]);
+                });
         });
 
         it('responseFor should increment numberOfRequests and record requests if imposter recordRequests = true', function () {
@@ -325,15 +358,17 @@ describe('imposter', function () {
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
-            return new Imposter(Protocol, { recordRequests: true }, logger, { recordRequests: false }, allow).init().then(imp => {
-                imposter = imp;
-                return imposter.getResponseFor({ request: 1 });
-            }).then(() => {
-                const json: any = imposter.toJSON();
-
-                expect(json.numberOfRequests).toEqual(1);
-                expect(json.requests.length).toEqual(1);
-            });
+            return new Imposter(Protocol, { recordRequests: true }, logger, { recordRequests: false }, allow)
+                .init()
+                .then(imp => {
+                    imposter = imp;
+                    return imposter.getResponseFor({ request: 1 });
+                })
+                .then(() => imposter.getJSON())
+                .then(json => {
+                    expect(json.numberOfRequests).toEqual(1);
+                    expect(json.requests.length).toEqual(1);
+                });
         });
 
         it('responseFor should increment numberOfRequests and record requests if global recordRequests = true', function () {
@@ -341,15 +376,17 @@ describe('imposter', function () {
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
-            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: true }, allow).init().then(imp => {
-                imposter = imp;
-                return imposter.getResponseFor({ request: 1 });
-            }).then(() => {
-                const json: any = imposter.toJSON();
-
-                expect(json.numberOfRequests).toEqual(1);
-                expect(json.requests.length).toEqual(1);
-            });
+            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: true }, allow)
+                .init()
+                .then(imp => {
+                    imposter = imp;
+                    return imposter.getResponseFor({ request: 1 });
+                })
+                .then(() => imposter.getJSON())
+                .then(json => {
+                    expect(json.numberOfRequests).toEqual(1);
+                    expect(json.requests.length).toEqual(1);
+                });
         });
 
         it('responseFor should add timestamp to recorded request', function () {
@@ -360,12 +397,12 @@ describe('imposter', function () {
             return new Imposter(Protocol, {}, logger, { recordRequests: true }, allow).init().then(imp => {
                 imposter = imp;
                 return imposter.getResponseFor({ request: 1 });
-            }).then(() => {
-                const json: any = imposter.toJSON();
-
-                expect(Object.keys(json.requests[0]).sort()).toEqual(['request', 'timestamp']);
-                expect(json.requests[0].request).toEqual(1);
-            });
+            })
+                .then(() => imposter.getJSON())
+                .then(json => {
+                    expect(Object.keys(json.requests[0]).sort()).toEqual(['request', 'timestamp']);
+                    expect(json.requests[0].request).toEqual(1);
+                });
         });
 
         it('responseFor should return error if ip check denied', function () {

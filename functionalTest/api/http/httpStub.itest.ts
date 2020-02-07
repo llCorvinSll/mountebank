@@ -16,6 +16,8 @@ const helpers = require('../../../src/util/helpers');
     describe(`${protocol} imposter`, function () {
 
         describe('POST /imposters with stubs', function () {
+            afterEach(() => api.del('/imposters'));
+
             it('should return stubbed response', function () {
                 const stub = {
                     responses: [{
@@ -39,7 +41,7 @@ const helpers = require('../../../src/util/helpers');
                     expect(response.statusCode).toEqual(400);
                     expect(response.body).toEqual('test body');
                     expect(response.headers['x-test']).toEqual('test header');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should allow a sequence of stubs as a circular buffer', function () {
@@ -62,8 +64,7 @@ const helpers = require('../../../src/util/helpers');
                     })
                     .then((response: any) => {
                         expect(response.statusCode).toEqual(405);
-                    })
-                    .finally(() => api.del('/imposters'));
+                    });
             });
 
             it('should only return stubbed response if matches complex predicate', function () {
@@ -131,7 +132,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.responseFor(helpers.merge(spec, { body: 'TEST' }));
                 }).then((response: any) => {
                     expect(response.statusCode).toEqual(400);
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should correctly handle deepEquals object predicates', function () {
@@ -167,7 +168,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.get('/?contains=false&equals=true&matches=yes', port);
                 }).then((response: any) => {
                     expect(response.body).toEqual('');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support sending binary response', function () {
@@ -180,7 +181,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.responseFor({ method: 'GET', port, path: '/', mode: 'binary' });
                 }).then((response: any) => {
                     expect(response.body.toJSON().data).toEqual([0, 1, 2, 3]);
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support JSON bodies', function () {
@@ -223,7 +224,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.get('/', port);
                 }).then((response: any) => {
                     expect(JSON.parse(response.body)).toEqual({ key: 'second request' });
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support treating the body as a JSON object for predicate matching', function () {
@@ -243,7 +244,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.post('/', '{"key": "value", "arr": [3,2,1]}', port);
                 }).then((response: any) => {
                     expect(response.body).toEqual('SUCCESS');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support changing default response for stub', function () {
@@ -271,12 +272,12 @@ const helpers = require('../../../src/util/helpers');
                 }).then((response: any) => {
                     expect(404).toEqual(response.statusCode);
                     expect('Not found').toEqual(response.body);
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support keepalive connections', function () {
                 const stub = { responses: [{ is: { body: 'Success' } }] };
-                const defaultResponse = { headers: { CONNECTION: 'Keep-Alive' } }; // tests case-sensitivity of header match
+                const defaultResponse = { headers: { CONNECTION: 'Keep-Alive' } }; //tests case-sensitivity of header match
                 const request = { protocol, port, defaultResponse: defaultResponse, stubs: [stub] };
 
                 return api.post('/imposters', request).then((response: any) => {
@@ -285,7 +286,7 @@ const helpers = require('../../../src/util/helpers');
                 }).then((response: any) => {
                     expect(response.body).toEqual('Success');
                     expect(response.headers.connection).toEqual('Keep-Alive');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support sending multiple values back for same header', function () {
@@ -297,7 +298,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.get('/', port);
                 }).then((response: any) => {
                     expect(response.headers['set-cookie']).toEqual(['first', 'second']);
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support sending JSON bodies with _links field for canned responses', function () {
@@ -312,11 +313,11 @@ const helpers = require('../../../src/util/helpers');
                     return client.get('/', port);
                 }).then((response: any) => {
                     expect(response.body).toEqual({ _links: { self: { href: '/products/123' } } });
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should correctly set content-length for binary data', function () {
-                // https://github.com/bbyars/mountebank/issues/204
+                //https://github.com/bbyars/mountebank/issues/204
                 const stub = {
                     responses: [{
                         is: {
@@ -333,7 +334,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.get('/', port);
                 }).then((response: any) => {
                     expect(response.headers['content-length']).toEqual('639');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should correctly set content-length for binary data when using multiline base64', function () {
@@ -353,11 +354,11 @@ const helpers = require('../../../src/util/helpers');
                     return client.get('/', port);
                 }).then((response: any) => {
                     expect(response.headers['content-length']).toEqual('274');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should handle JSON null values', function () {
-                // https://github.com/bbyars/mountebank/issues/209
+                //https://github.com/bbyars/mountebank/issues/209
                 const stub = { responses: [{ is: { body: { name: 'test', type: null } } }] };
                 const request = { protocol, port, stubs: [stub] };
 
@@ -366,7 +367,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.get('/', port);
                 }).then((response: any) => {
                     expect(JSON.parse(response.body)).toEqual({ name: 'test', type: null });
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should handle null values in deepEquals predicate (issue #229)', function () {
@@ -381,7 +382,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.post('/', { field: null }, port);
                 }).then((response: any) => {
                     expect(response.body).toEqual('SUCCESS');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support array predicates with xpath', function () {
@@ -400,7 +401,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.post('/', xml, port);
                 }).then((response: any) => {
                     expect(response.body).toEqual('SUCCESS');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support matches predicate on uppercase JSON key (issue #228)', function () {
@@ -415,7 +416,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.post('/', { Key: 'Value' }, port);
                 }).then((response: any) => {
                     expect(response.body).toEqual('SUCCESS');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support predicate matching with null value (issue #262)', function () {
@@ -430,7 +431,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.post('/', { version: null }, port);
                 }).then((response: any) => {
                     expect(response.body).toEqual('SUCCESS');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support predicate form matching', function () {
@@ -455,7 +456,7 @@ const helpers = require('../../../src/util/helpers');
                     return client.responseFor(spec);
                 }).then((response: any) => {
                     expect(response.body).toEqual('SUCCESS');
-                }).finally(() => api.del('/imposters'));
+                });
             });
 
             it('should support overwriting the stubs without restarting the imposter', function () {
@@ -495,7 +496,7 @@ const helpers = require('../../../src/util/helpers');
                     .then((response: any) => {
                         expect(response.body).toEqual('FIRST');
                     })
-                    .finally(() => api.del('/imposters'));
+                ;
             });
 
             it('should support overwriting a single stub without restarting the imposter', function () {
@@ -540,8 +541,7 @@ const helpers = require('../../../src/util/helpers');
                     })
                     .then((response: any) => {
                         expect(response.body).toEqual('CHANGED');
-                    })
-                    .finally(() => api.del('/imposters'));
+                    });
             });
 
             it('should support deleting single stub without restarting the imposter', function () {
@@ -580,7 +580,7 @@ const helpers = require('../../../src/util/helpers');
                     .then((response: any) => {
                         expect(response.body).toEqual('third');
                     })
-                    .finally(() => api.del('/imposters'));
+                ;
             });
 
             it('should support adding single stub without restarting the imposter', function () {
@@ -624,7 +624,7 @@ const helpers = require('../../../src/util/helpers');
                     .then((response: any) => {
                         expect(response.body).toEqual('SECOND');
                     })
-                    .finally(() => api.del('/imposters'));
+                ;
             });
 
             it('should support adding single stub at end without index ', function () {
@@ -667,8 +667,7 @@ const helpers = require('../../../src/util/helpers');
                     })
                     .then((response: any) => {
                         expect(response.body).toEqual('third');
-                    })
-                    .finally(() => api.del('/imposters'));
+                    });
             });
         });
     });

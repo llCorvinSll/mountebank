@@ -6,19 +6,17 @@ export class FakeResponse {
     public body: any;
     public statusCode: number;
 
-    //@ts-ignore
-    send = (body: any) => {
+    public send = (body: any) => {
         this.body = body;
         return this;
     };
 
-    //@ts-ignore
     public format = (selectors: any) => {
-        selectors.json();
+        this.body = selectors.json();
         return this;
     }
 
-    setHeader (key: string, value: string) {
+    public setHeader (key: string, value: string) {
         this.headers[key] = value;
     }
 }
