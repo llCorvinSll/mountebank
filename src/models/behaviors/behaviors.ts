@@ -25,7 +25,7 @@ import { IMatch } from '../IRequest';
  * @module
  */
 
-// The following schemas are used by both the lookup and copy behaviors and should be kept consistent
+//The following schemas are used by both the lookup and copy behaviors and should be kept consistent
 const fromSchema = {
     _required: true,
     _allowedTypes: {
@@ -162,8 +162,8 @@ function quoteForShell (obj: unknown) {
     const isWindows = require('os').platform().indexOf('win') === 0;
 
     if (isWindows) {
-        // Confused? Me too. All other approaches I tried were spectacular failures
-        // in both 1) keeping the JSON as a single CLI arg, and 2) maintaining the inner quotes
+        //Confused? Me too. All other approaches I tried were spectacular failures
+        //in both 1) keeping the JSON as a single CLI arg, and 2) maintaining the inner quotes
         return util.format('"%s"', json.replace(/"/g, '\\"'));
     }
     else {
@@ -178,8 +178,8 @@ function execShell (command: string, request: IServerRequestData, response: IMou
     logger.debug('Shelling out to %s', command);
     logger.debug(fullCommand);
 
-    // Switched to environment variables because of inconsistencies in Windows shell quoting
-    // Leaving the CLI args for backwards compatibility
+    //Switched to environment variables because of inconsistencies in Windows shell quoting
+    //Leaving the CLI args for backwards compatibility
     env.MB_REQUEST = JSON.stringify(request);
     env.MB_RESPONSE = JSON.stringify(response);
 
@@ -219,7 +219,7 @@ function shellTransform (request: IServerRequestData, responsePromise: ResponseP
         return responsePromise;
     }
 
-    // Run them all in sequence
+    //Run them all in sequence
     let result = responsePromise;
     commandArray.forEach(function (command) {
         result = result.then(response => execShell(command, request, response, logger));
@@ -252,8 +252,8 @@ function decorate (originalRequest: IServerRequestData, responsePromise: Respons
         compatibility.downcastInjectionConfig(config);
 
         try {
-            // Support functions that mutate response in place and those
-            // that return a new response
+            //Support functions that mutate response in place and those
+            //that return a new response
             let result = eval(injected);
             if (!result) {
                 result = response;
@@ -293,7 +293,7 @@ function getFrom (obj: IHashMap<IHashMap | any>, from: IHashMap<IHashMap | any> 
     else {
         const result = obj[getKeyIgnoringCase(obj, from as string)];
 
-        // Some request fields, like query parameters, can be multi-valued
+        //Some request fields, like query parameters, can be multi-valued
         if (Array.isArray(result)) {
             return result[0];
         }
@@ -366,12 +366,12 @@ function globalObjectReplace (obj: IHashMap|any, replacer: (v: any) => any) {
 function replaceArrayValuesIn (response: IMountebankResponse, token: string, values: any[], logger: ILogger) {
     const replacer = (field: string) => {
         values.forEach(function (replacement, index) {
-            // replace ${TOKEN}[1] with indexed element
+            //replace ${TOKEN}[1] with indexed element
             const indexedToken = util.format('%s[%s]', token, index);
             field = globalStringReplace(field, indexedToken, replacement, logger);
         });
         if (values.length > 0) {
-            // replace ${TOKEN} with first element
+            //replace ${TOKEN} with first element
             field = globalStringReplace(field, token, values[0], logger);
         }
         return field;
@@ -473,7 +473,7 @@ function lookupRow (lookupConfig: ILookupDescriptor, originalRequest: any, logge
 function replaceObjectValuesIn (response: any, token: string, values: IHashMap<string>, logger: ILogger) {
     const replacer = (field: string) => {
         Object.keys(values).forEach(key => {
-            // replace ${TOKEN}["key"] and ${TOKEN}['key'] and ${TOKEN}[key]
+            //replace ${TOKEN}["key"] and ${TOKEN}['key'] and ${TOKEN}[key]
             ['"', "'", ''].forEach(function (quoteChar) {
                 const quoted = util.format('%s[%s%s%s]', token, quoteChar, key, quoteChar);
                 field = globalStringReplace(field, quoted, values[key], logger);

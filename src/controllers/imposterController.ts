@@ -237,27 +237,29 @@ export class ImposterController {
     }
 
     private validate (imposter: IImposter, newStubs: IStubConfig[]): Q.Promise<IValidation> {
-        return imposter.getJSON().then(repr => {
-            repr.stubs = newStubs as any;
+        return imposter
+            .getJSON()
+            .then(repr => {
+                repr.stubs = newStubs as any;
 
-            compatibility.upcast(repr as any);
+                compatibility.upcast(repr as any);
 
-            const Protocol = this.protocols[repr.protocol!];
+                const Protocol = this.protocols[repr.protocol!];
 
-            if (!Protocol) {
-                console.log('BLET');
-                console.log(imposter);
-                console.log(repr);
-            }
+                if (!Protocol) {
+                    console.log('BLET');
+                    console.log(imposter);
+                    console.log(repr);
+                }
 
-            const validator = require('../models/dryRunValidator').create({
-                testRequest: Protocol.testRequest,
-                testProxyResponse: Protocol.testProxyResponse,
-                additionalValidation: Protocol.validate,
-                allowInjection: this.allowInjection
+                const validator = require('../models/dryRunValidator').create({
+                    testRequest: Protocol.testRequest,
+                    testProxyResponse: Protocol.testProxyResponse,
+                    additionalValidation: Protocol.validate,
+                    allowInjection: this.allowInjection
+                });
+                return validator.validate(repr, this.logger);
             });
-            return validator.validate(repr, this.logger);
-        });
     }
 
 

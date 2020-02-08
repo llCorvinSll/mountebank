@@ -3,7 +3,7 @@ const BaseHttpClient = require('./baseHttpClient');
 const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
 const headersHelper = require('../../../src/models/http/headersHelper');
 
-['http'].forEach(protocol => {
+['http', 'https'].forEach(protocol => {
     const client = BaseHttpClient.create(protocol);
     let api: ApiClient;
     let port: number;
@@ -117,9 +117,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
         });
 
         describe('GET /imposters/:id', function () {
-            afterEach(() => {
-                return mb.stop();
-            });
+            afterEach(() => mb.stop());
 
             it('should provide access to all requests', function () {
                 const imposterRequest = { protocol, port };
@@ -239,7 +237,7 @@ const headersHelper = require('../../../src/models/http/headersHelper');
                     .finally(() => api.del('/imposters'));
             });
 
-            it('should not record matches against stubs if --debug flag is missing',() => {
+            it('should not record matches against stubs if --debug flag is missing', () => {
                 const stub = { responses: [{ is: { body: '1' } }, { is: { body: '2' } }] };
                 const request = { protocol, port: mb.port + 1, stubs: [stub] };
 

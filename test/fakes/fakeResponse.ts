@@ -12,7 +12,7 @@ export class FakeResponse {
     };
 
     public format = (selectors: any) => {
-        this.body = selectors.json();
+        selectors.json();
         return this;
     }
 

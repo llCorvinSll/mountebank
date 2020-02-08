@@ -1,5 +1,3 @@
-
-
 import { FakeResponse } from '../fakes/fakeResponse';
 import { ImpostersController } from '../../src/controllers/impostersController';
 const FakeLogger = require('../fakes/fakeLogger');
@@ -14,54 +12,56 @@ describe('ImpostersController', function () {
     });
 
     describe('#get', function () {
-        it('should send an empty array if no imposters', function () {
+        it('should send an empty array if no imposters', () => {
             const controller = new ImpostersController({}, {}, undefined, false);
 
-            controller.get({ url: '/imposters' } as any, response as any);
-
-            expect(response.body).toEqual({ imposters: [] });
+            return controller.get({ url: '/imposters', header: jest.fn().mockReturnValue('') } as any, response as any)
+                .then(() => {
+                    expect(response.body).toEqual({ imposters: [] });
+                });
         });
 
         it('should send list JSON for all imposters by default', function () {
-            const firstImposter = { toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { toJSON: jest.fn().mockReturnValue('secondJSON') };
+            const firstImposter = { getJSON: jest.fn().mockReturnValue('firstJSON') };
+            const secondImposter = { getJSON: jest.fn().mockReturnValue('secondJSON') };
             const controller = new ImpostersController({}, {
                 1: firstImposter,
                 2: secondImposter
             } as any, undefined, false);
 
-            controller.get({ url: '/imposters' } as any, response as any);
-
-            expect(response.body).toEqual({ imposters: ['firstJSON', 'secondJSON'] });
-            expect(firstImposter.toJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false, list: true });
-            expect(secondImposter.toJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false, list: true });
+            return controller.get({ url: '/imposters', header: jest.fn().mockReturnValue('') } as any, response as any)
+                .then(() => {
+                    expect(response.body).toEqual({ imposters: ['firstJSON', 'secondJSON'] });
+                    expect(firstImposter.getJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false, list: true });
+                    expect(secondImposter.getJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false, list: true });
+                });
         });
 
-        it('should send replayable JSON for all imposters if querystring present', function () {
-            const firstImposter = { toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { toJSON: jest.fn().mockReturnValue('secondJSON') };
+        it('should send replayable JSON for all imposters if querystring present', () => {
+            const firstImposter = { getJSON: jest.fn().mockReturnValue('firstJSON') };
+            const secondImposter = { getJSON: jest.fn().mockReturnValue('secondJSON') };
             const controller = new ImpostersController({}, { 1: firstImposter, 2: secondImposter } as any, undefined, false);
 
-            controller.get({ url: '/imposters?replayable=true' } as any, response as any);
-
-            expect(response.body).toEqual({ imposters: ['firstJSON', 'secondJSON'] });
-            expect(firstImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false, list: false });
-            expect(secondImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false, list: false });
+            return controller.get({ url: '/imposters?replayable=true', header: jest.fn().mockReturnValue('') } as any, response as any).then(() => {
+                expect(response.body).toEqual({ imposters: ['firstJSON', 'secondJSON'] });
+                expect(firstImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false, list: false });
+                expect(secondImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false, list: false });
+            });
         });
 
-        it('should send replayable and removeProxies JSON for all imposters if querystring present', function () {
-            const firstImposter = { toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { toJSON: jest.fn().mockReturnValue('secondJSON') };
+        it('should send replayable and removeProxies JSON for all imposters if querystring present', () => {
+            const firstImposter = { getJSON: jest.fn().mockResolvedValue('firstJSON') };
+            const secondImposter = { getJSON: jest.fn().mockResolvedValue('secondJSON') };
             const controller = new ImpostersController({}, {
                 1: firstImposter,
                 2: secondImposter
             } as any, undefined, false);
 
-            controller.get({ url: '/imposters?replayable=true&removeProxies=true' } as any, response as any);
-
-            expect(response.body).toEqual({ imposters: ['firstJSON', 'secondJSON'] });
-            expect(firstImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true, list: false });
-            expect(secondImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true, list: false });
+            return controller.get({ url: '/imposters?replayable=true&removeProxies=true', header: jest.fn().mockReturnValue('') } as any, response as any).then(() => {
+                expect(response.body).toEqual({ imposters: ['firstJSON', 'secondJSON'] });
+                expect(firstImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true, list: false });
+                expect(secondImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true, list: false });
+            });
         });
     });
 
@@ -77,7 +77,7 @@ describe('ImpostersController', function () {
             request = { body: {}, socket: { remoteAddress: 'host', remotePort: 'port' } };
             imposter = {
                 url: 'imposter-url',
-                toJSON: jest.fn().mockReturnValue('JSON')
+                getJSON: jest.fn().mockResolvedValue('JSON')
             };
             imposters = {};
             Protocol = {
@@ -215,8 +215,8 @@ describe('ImpostersController', function () {
         const stopMock = () => jest.fn().mockReturnValue(Q(true));
 
         it('should delete all imposters', function () {
-            const firstImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('secondJSON') };
+            const firstImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('firstJSON') };
+            const secondImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('secondJSON') };
             const imposters = { 1: firstImposter, 2: secondImposter };
             const controller = new ImpostersController({}, imposters as any, undefined, false);
 
@@ -226,8 +226,8 @@ describe('ImpostersController', function () {
         });
 
         it('should call stop on all imposters', function () {
-            const firstImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('secondJSON') };
+            const firstImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('firstJSON') };
+            const secondImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('secondJSON') };
             const imposters = { 1: firstImposter, 2: secondImposter };
             const controller = new ImpostersController({}, imposters as any, undefined, false);
 
@@ -238,37 +238,37 @@ describe('ImpostersController', function () {
         });
 
         it('should send replayable JSON for all imposters by default', function () {
-            const firstImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('secondJSON') };
+            const firstImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('firstJSON') };
+            const secondImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('secondJSON') };
             const imposters = { 1: firstImposter, 2: secondImposter };
             const controller = new ImpostersController({}, imposters as any, undefined, false);
 
             return controller.del({ url: '/imposters' } as any, response as any).then(() => {
                 expect(response.body).toEqual({ imposters: ['firstJSON', 'secondJSON'] });
-                expect(firstImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false });
-                expect(secondImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false });
+                expect(firstImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false });
+                expect(secondImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: false });
             });
         });
 
         it('should send default JSON for all imposters if replayable is false on querystring', function () {
-            const firstImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('secondJSON') };
+            const firstImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('firstJSON') };
+            const secondImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('secondJSON') };
             const controller = new ImpostersController({}, { 1: firstImposter, 2: secondImposter } as any, undefined, false);
 
             return controller.del({ url: '/imposters?replayable=false' } as any, response as any).then(() => {
-                expect(firstImposter.toJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false });
-                expect(secondImposter.toJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false });
+                expect(firstImposter.getJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false });
+                expect(secondImposter.getJSON).toHaveBeenCalledWith({ replayable: false, removeProxies: false });
             });
         });
 
         it('should send removeProxies JSON for all imposters if querystring present', function () {
-            const firstImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('firstJSON') };
-            const secondImposter = { stop: stopMock(), toJSON: jest.fn().mockReturnValue('secondJSON') };
+            const firstImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('firstJSON') };
+            const secondImposter = { stop: stopMock(), getJSON: jest.fn().mockReturnValue('secondJSON') };
             const controller = new ImpostersController({}, { 1: firstImposter, 2: secondImposter } as any, undefined, false);
 
             return controller.del({ url: '/imposters?removeProxies=true' } as any, response as any).then(() => {
-                expect(firstImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true });
-                expect(secondImposter.toJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true });
+                expect(firstImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true });
+                expect(secondImposter.getJSON).toHaveBeenCalledWith({ replayable: true, removeProxies: true });
             });
         });
     });
@@ -323,8 +323,8 @@ describe('ImpostersController', function () {
 
         it('should return imposter list JSON for all imposters', function () {
             let creates = 0;
-            const firstImposter = { toJSON: jest.fn().mockReturnValue({ first: true }) };
-            const secondImposter = { toJSON: jest.fn().mockReturnValue({ second: true }) };
+            const firstImposter = { getJSON: jest.fn().mockReturnValue({ first: true }) };
+            const secondImposter = { getJSON: jest.fn().mockReturnValue({ second: true }) };
             const imposters = [firstImposter, secondImposter];
             const controller = new ImpostersController({ http: Protocol }, {}, logger, false);
 
@@ -338,8 +338,8 @@ describe('ImpostersController', function () {
 
             return controller.put(request, response as any).then(() => {
                 expect(response.body).toEqual({ imposters: [{ first: true }, { second: true }] });
-                expect(firstImposter.toJSON).toHaveBeenCalledWith({ list: true });
-                expect(secondImposter.toJSON).toHaveBeenCalledWith({ list: true });
+                expect(firstImposter.getJSON).toHaveBeenCalledWith({ list: true });
+                expect(secondImposter.getJSON).toHaveBeenCalledWith({ list: true });
             });
         });
 
@@ -347,8 +347,8 @@ describe('ImpostersController', function () {
             let creates = 0;
             const oldImposter = { stop: jest.fn() };
             const imposters = { 0: oldImposter };
-            const firstImposter = { toJSON: jest.fn().mockReturnValue({ first: true }), port: 1 };
-            const secondImposter = { toJSON: jest.fn().mockReturnValue({ second: true }), port: 2 };
+            const firstImposter = { getJSON: jest.fn().mockReturnValue({ first: true }), port: 1 };
+            const secondImposter = { getJSON: jest.fn().mockReturnValue({ second: true }), port: 2 };
             const impostersToCreate = [firstImposter, secondImposter];
             const controller = new ImpostersController({ http: Protocol }, imposters as any, logger, false);
 
@@ -362,8 +362,8 @@ describe('ImpostersController', function () {
 
             return controller.put(request, response as any).then(() => {
                 expect(imposters).toEqual({ 1: firstImposter, 2: secondImposter });
-                expect(firstImposter.toJSON).toHaveBeenCalledWith({ list: true });
-                expect(secondImposter.toJSON).toHaveBeenCalledWith({ list: true });
+                expect(firstImposter.getJSON).toHaveBeenCalledWith({ list: true });
+                expect(secondImposter.getJSON).toHaveBeenCalledWith({ list: true });
             });
         });
 
