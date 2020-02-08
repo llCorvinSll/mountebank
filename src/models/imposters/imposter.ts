@@ -16,6 +16,7 @@ import * as helpers from '../../util/helpers';
 import * as compatibility from '../compatibility';
 import { ImposterPrinter } from './imposterPrinter';
 import { IStubRepository } from '../stubs/IStubRepository';
+import * as _ from 'lodash';
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -60,18 +61,24 @@ export class Imposter implements IImposter {
         protected isAllowedConnection: IpValidator) {
         compatibility.upcast(this.creationRequest);
 
+        const numericId = _.uniqueId(`imposter_${creationRequest.protocol}_${creationRequest.port}`);
+        this.uuid = numericId;
+
         this.logger = require('../../util/scopedLogger').create(baseLogger, this.scopeFor(creationRequest.port!));
         //If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
-        this.recordRequests = Boolean(config.recordRequests) || Boolean(creationRequest.recordRequests);
+        const recordRequests = Boolean(config.recordRequests) || Boolean(creationRequest.recordRequests);
+
+        this.requestsStorage = new RequestsStorage(this.uuid, recordRequests);
     }
+
+    private readonly uuid: string;
 
     private readonly logger: ILogger;
     private resolver: IResolver;
     private domain: Domain;
     private server: IServer;
-    private numberOfRequests = 0;
-    private requests: IServerRequestData[] = [];
-    private readonly recordRequests: boolean = false;
+    private requestsStorage: RequestsStorage;
+
     private imposterState = {};
     public protocol: string;
 
@@ -121,14 +128,12 @@ export class Imposter implements IImposter {
         return '/imposters/' + this.server.port;
     }
 
-    public toJSON (options?: IImposterPrintOptions): string {
-        const printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
-        return printer.toJSON(this.numberOfRequests, options);
-    }
-
     public getJSON (options?: IImposterPrintOptions): Q.Promise<any> {
-        const printer = new ImposterPrinter(this.creationRequest, this.server, this.requests);
-        return Q.resolve(printer.toJSON(this.numberOfRequests, options));
+        return this.requestsStorage.getRequests()
+            .then(requests => {
+                const printer = new ImposterPrinter(this.creationRequest, this.server, requests);
+                return printer.toJSON(this.requestsStorage.getCount(), options);
+            });
     }
 
     public stop () {
@@ -152,15 +157,11 @@ export class Imposter implements IImposter {
             return Q({ blocked: true, code: 'unauthorized ip address' });
         }
 
-        this.numberOfRequests += 1;
-        if (this.recordRequests) {
-            const recordedRequest = helpers.clone(request);
-            recordedRequest.timestamp = new Date().toJSON();
-            this.requests.push(recordedRequest);
-        }
+        const saveRequest = this.requestsStorage.saveRequest(request);
 
         const responseConfig = this.server.stubs.getResponseFor(request, this.logger, this.imposterState);
-        return this.resolver.resolve(responseConfig, request, this.logger, this.imposterState, requestDetails).then(response => {
+
+        return saveRequest.then(() => this.resolver.resolve(responseConfig, request, this.logger, this.imposterState, requestDetails).then(response => {
             if (this.config.recordMatches && !response.proxy) {
                 if (response.response) {
                     //Out of process responses wrap the result in an outer response object
@@ -172,7 +173,7 @@ export class Imposter implements IImposter {
                 }
             }
             return Q(response);
-        });
+        }));
     }
 
     public getProxyResponseFor (proxyResponse: IProxyResponse, proxyResolutionKey: number) {
@@ -192,5 +193,37 @@ export class Imposter implements IImposter {
         }
         return scope;
     }
+}
 
+class RequestsStorage {
+    constructor (private uuid: string, private recordRequests: boolean) {
+    }
+
+    private reqestsCount = 0;
+    private requests: IServerRequestData[] = [];
+
+    public getCount (): number {
+        return this.reqestsCount;
+    }
+
+    public saveRequest (request: IServerRequestData): Q.Promise<void> {
+        this.reqestsCount += 1;
+
+        if (!this.recordRequests) {
+            return Q.resolve();
+        }
+
+        return Q.Promise(done => {
+            const recordedRequest = helpers.clone(request);
+            recordedRequest.timestamp = new Date().toJSON();
+            this.requests.push(recordedRequest);
+            done();
+        });
+
+
+    }
+
+    public getRequests (): Q.Promise<IServerRequestData[]> {
+        return Q.resolve(this.requests);
+    }
 }

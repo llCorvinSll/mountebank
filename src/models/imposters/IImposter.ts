@@ -10,7 +10,6 @@ export interface IImposter {
     protocol: string;
 
     stubRepository: IStubRepository;
-    toJSON(options?: IImposterPrintOptions): any;
     getJSON(options?: IImposterPrintOptions): Q.Promise<any>;
     stop(): Q.Promise<unknown>;
 
