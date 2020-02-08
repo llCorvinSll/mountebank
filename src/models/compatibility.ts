@@ -75,7 +75,7 @@ interface IConfig {
  * @param {Object} config - the injection parameter
  */
 export function downcastInjectionConfig (config: IConfig) {
-    // Only possible to use older format for http/s and tcp protocols
+    //Only possible to use older format for http/s and tcp protocols
     if (config.request.method || config.request.data) {
         Object.keys(config.request).forEach(key => {
             config[key] = config.request[key] as any;

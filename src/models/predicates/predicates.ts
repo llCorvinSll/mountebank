@@ -18,8 +18,8 @@ import { IHashMap } from '../../util/types';
 
 function sortObjects (a: any, b: any): number {
     if (helpers.isObject(a) && helpers.isObject(b)) {
-        // Make best effort at sorting arrays of objects to make
-        // deepEquals order-independent
+        //Make best effort at sorting arrays of objects to make
+        //deepEquals order-independent
         return sortObjects(stringify(a), stringify(b));
     }
     else if (a < b) {
@@ -58,11 +58,11 @@ function select (type: any, selectFn: Function, encoding: string) {
 
     const nodeValues = selectFn();
 
-    // Return either a string if one match or array if multiple
-    // This matches the behavior of node's handling of query parameters,
-    // which allows us to maintain the same semantics between deepEquals
-    // (all have to match, passing in an array if necessary) and the other
-    // PREDICATES (any can match)
+    //Return either a string if one match or array if multiple
+    //This matches the behavior of node's handling of query parameters,
+    //which allows us to maintain the same semantics between deepEquals
+    //(all have to match, passing in an array if necessary) and the other
+    //PREDICATES (any can match)
     if (nodeValues && nodeValues.length === 1) {
         return nodeValues[0];
     }
@@ -99,8 +99,8 @@ function selectTransform (config: IPredicate, options: INormalizeOptions) {
     if (config.jsonpath) {
         const stringTransform = options.shouldForceStrings ? forceStrings : combinators.identity;
 
-        // use keyCaseSensitive instead of caseSensitive to help "matches" PREDICATES too
-        // see https://github.com/bbyars/mountebank/issues/361
+        //use keyCaseSensitive instead of caseSensitive to help "matches" PREDICATES too
+        //see https://github.com/bbyars/mountebank/issues/361
         if (!cloned.keyCaseSensitive) {
             cloned.jsonpath!.selector = cloned.jsonpath!.selector.toLowerCase();
         }
@@ -152,8 +152,8 @@ function tryJSON (value: string, predicateConfig: IPredicate) {
         const keyCaseTransform = predicateConfig.keyCaseSensitive === false ? lowercase : caseTransform(predicateConfig);
         const valueTransforms = [exceptTransform(predicateConfig), caseTransform(predicateConfig)];
 
-        // We can't call normalize because we want to avoid the array sort transform,
-        // which will mess up indexed selectors like $..title[1]
+        //We can't call normalize because we want to avoid the array sort transform,
+        //which will mess up indexed selectors like $..title[1]
         return transformAll(JSON.parse(value), [keyCaseTransform], valueTransforms, []);
     }
     catch (e) {
@@ -197,7 +197,7 @@ interface INormalizeOptions {
 
 
 function normalize (obj: any, config: IPredicate, options: INormalizeOptions) {
-    // Needed to solve a tricky case conversion for "matches" PREDICATES with jsonpath/xpath parameters
+    //Needed to solve a tricky case conversion for "matches" PREDICATES with jsonpath/xpath parameters
     if (typeof config.keyCaseSensitive === 'undefined') {
         config.keyCaseSensitive = config.caseSensitive;
     }
@@ -214,9 +214,9 @@ function normalize (obj: any, config: IPredicate, options: INormalizeOptions) {
     transforms.push(caseTransform(config));
     transforms.push(encodingTransform(options.encoding as string));
 
-    // sort to provide deterministic comparison for deepEquals,
-    // where the order in the array for multi-valued querystring keys
-    // and xpath selections isn't important
+    //sort to provide deterministic comparison for deepEquals,
+    //where the order in the array for multi-valued querystring keys
+    //and xpath selections isn't important
     return transformAll(obj, [keyCaseTransform], transforms, [sortTransform]);
 }
 
@@ -258,7 +258,7 @@ function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredi
         return false;
     }
 
-    // Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
+    //Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
     if (typeof actual === 'string') {
         actual = tryJSON(actual, predicateConfig);
     }
@@ -278,14 +278,14 @@ function predicateSatisfied (expected: any, actual: any, predicateConfig: IPredi
             }
         }
         else if (expectedLeftOffArraySyntaxButActualIsArrayOfObjects(expected, actual, fieldName)) {
-            // This is a little confusing, but predated the ability for users to specify an
-            // array for the expected values and is left for backwards compatibility.
-            // The predicate might be:
-            //     { equals: { examples: { key: 'third' } } }
-            // and the request might be
-            //     { examples: '[{ "key": "first" }, { "different": true }, { "key": "third" }]' }
-            // We expect that the "key" field in the predicate definition matches any object key
-            // in the actual array
+            //This is a little confusing, but predated the ability for users to specify an
+            //array for the expected values and is left for backwards compatibility.
+            //The predicate might be:
+            //{ equals: { examples: { key: 'third' } } }
+            //and the request might be
+            //{ examples: '[{ "key": "first" }, { "different": true }, { "key": "third" }]' }
+            //We expect that the "key" field in the predicate definition matches any object key
+            //in the actual array
             return expectedMatchesAtLeastOneValueInActualArray(expected, actual, predicateConfig, predicateFn);
         }
         else if (helpers.isObject(expected[fieldName])) {
@@ -311,7 +311,7 @@ function deepEquals (predicate: IPredicate, request: IServerRequestData, encodin
     const actual = normalize(forceStrings(request), predicate, { encoding: encoding, withSelectors: true, shouldForceStrings: true });
 
     return Object.keys(expected).every(fieldName => {
-        // Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
+        //Support PREDICATES that reach into fields encoded in JSON strings (e.g. HTTP bodies)
         if (helpers.isObject(expected[fieldName]) && typeof actual[fieldName] === 'string') {
             const possibleJSON = tryJSON(actual[fieldName], predicate);
             actual[fieldName] = normalize(forceStrings(possibleJSON), predicate, { encoding: encoding });
@@ -321,11 +321,11 @@ function deepEquals (predicate: IPredicate, request: IServerRequestData, encodin
 }
 
 function matches (predicate: IPredicate, request: IServerRequestData, encoding: string) {
-    // We want to avoid the lowerCase transform on values so we don't accidentally butcher
-    // a regular expression with upper case metacharacters like \W and \S
-    // However, we need to maintain the case transform for keys like http header names (issue #169)
-    // eslint-disable-next-line no-unneeded-ternary
-    const caseSensitive = Boolean(predicate.caseSensitive); // convert to boolean even if undefined
+    //We want to avoid the lowerCase transform on values so we don't accidentally butcher
+    //a regular expression with upper case metacharacters like \W and \S
+    //However, we need to maintain the case transform for keys like http header names (issue #169)
+    //eslint-disable-next-line no-unneeded-ternary
+    const caseSensitive = Boolean(predicate.caseSensitive); //convert to boolean even if undefined
     const clone = helpers.merge(predicate, { caseSensitive: true, keyCaseSensitive: caseSensitive });
     const noexcept = helpers.merge(clone, { except: '' });
     const expected = normalize(predicate.matches, noexcept, { encoding: encoding });

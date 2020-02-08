@@ -27,7 +27,7 @@ function selectionValue (nodes: any) {
         return '';
     }
     else if (!Array.isArray(nodes)) {
-        return nodes; // booleans and counts
+        return nodes; //booleans and counts
     }
     else {
         return (nodes.length === 1) ? nodes[0] : nodes;
@@ -87,8 +87,8 @@ export function predicatesFor (this: void, request: IServerRequestData, matchers
 
     matchers.forEach((matcher: Readonly<IPredicateGenerator>) => {
         if (matcher.inject) {
-            // eslint-disable-next-line no-unused-vars,@typescript-eslint/ban-ts-ignore
-            // @ts-ignore
+            //eslint-disable-next-line no-unused-vars,@typescript-eslint/ban-ts-ignore
+            //@ts-ignore
             const config = { request, logger };
             const injected = `(${matcher.inject})(config);`;
             try {
@@ -105,12 +105,12 @@ export function predicatesFor (this: void, request: IServerRequestData, matchers
 
         const basePredicate: IPredicate = {} as any;
         let hasPredicateOperator = false;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
-        let predicateOperator; // eslint-disable-line no-unused-vars
+        //eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        //@ts-ignore
+        let predicateOperator; //eslint-disable-line no-unused-vars
         let valueOf = (field: any) => field;
 
-        // Add parameters
+        //Add parameters
         Object.keys(matcher).forEach(key => {
             if (key !== 'matches' && key !== 'predicateOperator') {
                 basePredicate[key] = matcher[key];

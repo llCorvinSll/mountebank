@@ -45,8 +45,8 @@ export function useAbsoluteUrls (port: string|number): (request: Request, respon
             };
             const traverse = function (obj: any, fn: (obj: unknown) => void, parent?: string) {
                 if (parent === 'stubs' || parent === 'response') {
-                    // Don't change _links within stubs or within the response
-                    // sent back to protocol implementations
+                    //Don't change _links within stubs or within the response
+                    //sent back to protocol implementations
                     return;
                 }
                 fn(obj);
@@ -60,8 +60,8 @@ export function useAbsoluteUrls (port: string|number): (request: Request, respon
             if (isObject(body)) {
                 traverse(body, changeLinks);
 
-                // Special case stubs _links. Hard to manage in the traverse function because stubs is an array
-                // and we want to change stubs[]._links but not stubs[]._responses.is.body._links
+                //Special case stubs _links. Hard to manage in the traverse function because stubs is an array
+                //and we want to change stubs[]._links but not stubs[]._responses.is.body._links
                 if (Array.isArray(body.stubs)) {
                     body.stubs.forEach(changeLinks);
                 }
@@ -123,7 +123,7 @@ export function logger (log: ILogger, format: string) {
         if (shouldLog(request)) {
             const message = format.replace(':method', request.method).replace(':url', request.url);
             if (request.url.indexOf('_requests') > 0) {
-                // Protocol implementations communicating with mountebank
+                //Protocol implementations communicating with mountebank
                 log.debug(message);
             }
             else {
@@ -144,7 +144,7 @@ export function globals (vars: {[key: string]: unknown}) {
     return function (request: Request, response: Response, next: () => void) {
         const originalRender = response.render;
         response.render = function () {
-            // eslint-disable-next-line prefer-rest-params
+            //eslint-disable-next-line prefer-rest-params
             const args = Array.prototype.slice.call(arguments);
             const variables = args[1] || {};
 
@@ -169,8 +169,8 @@ export function globals (vars: {[key: string]: unknown}) {
  * @param {Function} next - The next middleware function to call
  */
 export function defaultIEtoHTML (request: Request, response: Response, next: () => void) {
-    // IE has inconsistent Accept headers, often defaulting to */*
-    // Our default is JSON, which fails to render in the browser on content-negotiated pages
+    //IE has inconsistent Accept headers, often defaulting to */*
+    //Our default is JSON, which fails to render in the browser on content-negotiated pages
     if (request.headers['user-agent'] && request.headers['user-agent'].indexOf('MSIE') >= 0) {
         if (!(request.headers.accept && request.headers.accept.match(/application\/json/))) {
             request.headers.accept = 'text/html';

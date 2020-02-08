@@ -4,8 +4,8 @@ import { ApiClient } from '../api/api';
 
 const assert = require('assert');
 const hostname = require('os').hostname();
-const BaseHttpClient = require('../api/http/baseHttpClient');
-const http = BaseHttpClient.create('http');
+import { BaseHttpClient } from '../api/http/baseHttpClient';
+const http = new BaseHttpClient('http');
 const fs = require('fs');
 const Q = require('q');
 const path = require('path');
@@ -36,7 +36,7 @@ describe('--host', function () {
     });
 
     it('should disallow localhost calls when bound to specific host', function () {
-        // Travis adds hostname into /etc/hosts file
+        //Travis adds hostname into /etc/hosts file
         if (process.env.TRAVIS === 'true') {
             return Q(true);
         }
@@ -105,7 +105,7 @@ describe('--host', function () {
     });
 
     it('should bind http imposter to provided host', function () {
-        // Travis adds hostname into /etc/hosts file
+        //Travis adds hostname into /etc/hosts file
         if (process.env.TRAVIS === 'true') {
             return Q(true);
         }
@@ -141,7 +141,7 @@ describe('--host', function () {
     });
 
     it('should bind tcp imposter to provided host', function () {
-        // Travis adds hostname into /etc/hosts file
+        //Travis adds hostname into /etc/hosts file
         if (process.env.TRAVIS === 'true') {
             return Q(true);
         }
@@ -171,7 +171,7 @@ describe('--host', function () {
     });
 
     it('should bind smtp imposter to provided host', function () {
-        // Travis adds hostname into /etc/hosts file
+        //Travis adds hostname into /etc/hosts file
         if (process.env.TRAVIS === 'true') {
             return Q(true);
         }

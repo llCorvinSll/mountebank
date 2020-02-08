@@ -16,7 +16,7 @@ function validateDocs (page: string) {
 }
 
 describe('docs', function () {
-    // TODO: Hack - getting ECONNRESET errors on windows / appveyor
+    //TODO: Hack - getting ECONNRESET errors on windows / appveyor
     if (!isWindows) {
         [
             '/docs/api/mocks',
@@ -32,14 +32,14 @@ describe('docs', function () {
         });
     }
 
-    // The logs change for out of process imposters
+    //The logs change for out of process imposters
     if (tcpIsInProcess) {
         validateDocs('/docs/api/overview');
     }
 
-    // For tcp out of process imposters, I can't get the netcat tests working,
-    // even with a -q1 replacement. The nc client ends the socket connection
-    // before the server has a chance to respond.
+    //For tcp out of process imposters, I can't get the netcat tests working,
+    //even with a -q1 replacement. The nc client ends the socket connection
+    //before the server has a chance to respond.
     if (tcpIsInProcess && !isWindows) {
         [
             '/docs/gettingStarted',

@@ -1,15 +1,46 @@
-'use strict';
-
-const Q = require('q');
+import * as Q from 'q';
 const helpers = require('../../../src/util/helpers');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-function create (protocol) {
-    const driver = require(protocol);
-    const agent = new driver.Agent({ keepAlive: true });
+interface IRequestSpec {
+    method?: string;
+    path?: string;
+    port?: number;
+    body?: any;
+    headers?: any;
+    mode?: string;
+    agent?: boolean;
+    key?: string;
+    cert?: string;
+    hostname?: string;
+    localAddress?: string;
+    family?: string;
+}
 
-    function optionsFor (spec) {
+export class BaseHttpClient {
+    constructor (protocol: string) {
+        this.driver = require(protocol);
+        this.agent = new this.driver.Agent({ keepAlive: true });
+    }
+
+    private agent: any;
+    private driver: any;
+
+    public get (path: string, port: number) {
+        return this.responseFor({ method: 'GET', path, port });
+    }
+    public post (path: string, body: any, port: number) {
+        return this.responseFor({ method: 'POST', path, port, body });
+    }
+    public del (path: string, port: number) {
+        return this.responseFor({ method: 'DELETE', path, port });
+    }
+    public put (path: string, body: any, port: number) {
+        return this.responseFor({ method: 'PUT', path, port, body });
+    }
+
+    private optionsFor (spec: IRequestSpec): any {
         const defaults = {
             hostname: 'localhost',
             headers: { accept: 'application/json' },
@@ -19,9 +50,9 @@ function create (protocol) {
         return helpers.merge(defaults, spec);
     }
 
-    function responseFor (spec) {
+    public responseFor (spec: IRequestSpec): Q.Promise<any> {
         const deferred = Q.defer();
-        const options = optionsFor(spec);
+        const options: any = this.optionsFor(spec);
 
         if (!options.port) {
             throw Error('silly rabbit, you forgot to pass the port again');
@@ -31,11 +62,11 @@ function create (protocol) {
             options.headers['Content-Type'] = 'application/json';
         }
 
-        options.agent = agent;
-        const request = driver.request(options, response => {
-            const packets = [];
+        options.agent = this.agent;
+        const request = this.driver.request(options, (response: any) => {
+            const packets: any[] = [];
 
-            response.on('data', chunk => packets.push(chunk));
+            response.on('data', (chunk: any) => packets.push(chunk));
 
             response.on('end', () => {
                 const buffer = Buffer.concat(packets);
@@ -63,13 +94,4 @@ function create (protocol) {
         request.end();
         return deferred.promise;
     }
-
-    function get (path, port) { return responseFor({ method: 'GET', path, port }); }
-    function post (path, body, port) { return responseFor({ method: 'POST', path, port, body }); }
-    function del (path, port) { return responseFor({ method: 'DELETE', path, port }); }
-    function put (path, body, port) { return responseFor({ method: 'PUT', path, port, body }); }
-
-    return { get, post, del, put, responseFor };
 }
-
-module.exports = { create };

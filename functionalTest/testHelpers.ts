@@ -3,10 +3,10 @@
 import * as fs from 'fs';
 
 
-// Like mocha-as-promised, but more explicit.
-// Many times I'd forget to add the errback, making
-// tests harder to fix when they failed because I'd
-// miss the assertion message.
+//Like mocha-as-promised, but more explicit.
+//Many times I'd forget to add the errback, making
+//tests harder to fix when they failed because I'd
+//miss the assertion message.
 function wrap (test: any, that: { name: string }): any {
     return (done: any) => test.apply(that, []).done(() => { done(); }, done);
 }

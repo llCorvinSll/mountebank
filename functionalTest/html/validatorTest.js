@@ -2,9 +2,9 @@
 
 const assert = require('assert'),
     w3cjs = require('w3cjs'),
-    api = require('../api/api').create(),
+    api = new require('../api/api').ApiClient(),
     Q = require('q'),
-    httpClient = require('../api/http/baseHttpClient').create('http'),
+    httpClient = new require('../api/http/baseHttpClient').BaseHttpClient('http'),
     currentVersion = require('../../package.json').version,
     promiseIt = require('../testHelpers').promiseIt,
     util = require('util');

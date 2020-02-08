@@ -22,7 +22,7 @@ export function create (releases: IRelease[], options: IMountebankOptions) {
     const helpers = require('../util/helpers');
     const feedReleases: IReleaseView[] = helpers.clone(releases);
 
-    // Init once since we hope many consumers poll the heroku feed and we don't have monitoring
+    //Init once since we hope many consumers poll the heroku feed and we don't have monitoring
     feedReleases.reverse();
 
     const releaseViewFor = (version: string) => `releases/${version}.ejs`;
@@ -52,7 +52,7 @@ export function create (releases: IRelease[], options: IMountebankOptions) {
             nextLink: `/feed?page=${nextPage}`
         };
 
-        // I'd prefer putting this as an include in the view, but EJS doesn't support dynamic includes
+        //I'd prefer putting this as an include in the view, but EJS doesn't support dynamic includes
         if (!feedReleases[0].view) {
             feedReleases.forEach(release => {
                 const contents = fs.readFileSync(releaseFilenameFor(release.version), { encoding: 'utf8' });

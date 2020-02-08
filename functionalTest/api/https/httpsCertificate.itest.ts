@@ -1,7 +1,7 @@
 import { ApiClient } from '../api';
 import * as fs from 'fs';
 import * as path from 'path';
-const client = require('../http/baseHttpClient').create('https');
+import { BaseHttpClient } from '../http/baseHttpClient';
 const key = fs.readFileSync(path.join(__dirname, '/cert/key.pem'), 'utf8');
 const cert = fs.readFileSync(path.join(__dirname, '/cert/cert.pem'), 'utf8');
 const defaultKey = fs.readFileSync(path.join(__dirname, '../../../src/models/https/cert/mb-key.pem'), 'utf8');
@@ -10,8 +10,10 @@ const defaultCert = fs.readFileSync(path.join(__dirname, '../../../src/models/ht
 describe('https imposter', function () {
     let api: any;
     let port: number;
+    let client: BaseHttpClient;
 
     beforeEach(() => {
+        client = new BaseHttpClient('https');
         api = new ApiClient();
         port = api.port + 1;
     });

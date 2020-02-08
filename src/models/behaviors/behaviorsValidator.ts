@@ -63,7 +63,7 @@ export class BehaviorsValidator {
     }
 
     private static addMissingFieldError (fieldSpec: IValidationSpec, path: string, addErrorFn: AddErrorFn) {
-        // eslint-disable-next-line no-underscore-dangle
+        //eslint-disable-next-line no-underscore-dangle
         if (fieldSpec._required) {
             addErrorFn(path, 'required');
         }
@@ -75,7 +75,7 @@ export class BehaviorsValidator {
         }
         else {
             field.forEach(function (subConfig) {
-                // Scope error message to array element instead of entire array
+                //Scope error message to array element instead of entire array
                 const newAddErrorFn = function (fieldName: string, message: string) {
                     return addErrorFn(fieldName, message, subConfig);
                 };
@@ -90,7 +90,7 @@ export class BehaviorsValidator {
     }
 
     private static enumFieldFor (field: object): string {
-        // Can be the string value or the object key
+        //Can be the string value or the object key
         if (helpers.isObject(field) && Object.keys(field).length > 0) {
             return Object.keys(field)[0];
         }
@@ -100,7 +100,7 @@ export class BehaviorsValidator {
     }
 
     private static addTypeErrors (fieldSpec: IValidationSpec, path: string, field: object, config: IBehaviorsConfig, addErrorFn: AddErrorFn) {
-        /* eslint complexity: 0 */
+        /*eslint complexity: 0 */
         const fieldType = typeof field;
         const allowedTypes = Object.keys(fieldSpec._allowedTypes!);
         const typeSpec = fieldSpec._allowedTypes![fieldType];

@@ -239,7 +239,7 @@ describe('ImposterController', function () {
                 1: {
                     protocol: 'test',
                     getJSON: jest.fn().mockResolvedValue({
-                        protocol: 'test',
+                        protocol: 'test'
                     })
                 }
             };

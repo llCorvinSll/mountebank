@@ -1,8 +1,8 @@
 import { ApiClient } from '../api/api';
 
 import * as path from 'path';
-const BaseHttpClient = require('../api/http/baseHttpClient');
-const http = BaseHttpClient.create('http');
+import { BaseHttpClient } from '../api/http/baseHttpClient';
+const http = new BaseHttpClient('http');
 import * as fs from 'fs';
 
 describe('mb save', function () {

@@ -1,14 +1,14 @@
-
-
 import { ApiClient } from '../api/api';
-const client = require('../api/http/baseHttpClient').create('http');
+import { BaseHttpClient } from '../api/http/baseHttpClient';
 
 describe('mb replay', function () {
     let api: any;
     let port: number;
     let mb: any;
+    let client: BaseHttpClient;
 
     beforeAll(() => {
+        client = new BaseHttpClient('http');
         api = new ApiClient();
         port = api.port + 1;
         mb = require('../mb').create(port);

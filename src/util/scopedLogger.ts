@@ -1,6 +1,6 @@
 
 
-/** @module */
+/**@module */
 
 export interface ILogger {
     baseLogger: ILogger;
@@ -13,8 +13,8 @@ function wrap (wrappedLogger: ILogger, logger: ILogger) {
         wrappedLogger[level] = function (...args: unknown[]) {
             args[0] = wrappedLogger.scopePrefix + (args[0] as any);
 
-            // Format here rather than use winston's splat formatter
-            // to get rid of inconsistent "meta" log elements
+            //Format here rather than use winston's splat formatter
+            //to get rid of inconsistent "meta" log elements
             const message = require('util').format.apply(null, args);
             logger[level](message);
         };

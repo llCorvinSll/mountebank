@@ -1,13 +1,11 @@
 import { ApiClient } from '../api';
-
 const assert = require('assert');
-const BaseHttpClient = require('./baseHttpClient');
+import { BaseHttpClient } from './baseHttpClient';
 const fs = require('fs');
 const util = require('util');
 
 ['http', 'https'].forEach(protocol => {
-    // const timeout = parseInt((process as any).env.MB_SLOW_TEST_TIMEOUT || 2000);
-    const client = BaseHttpClient.create(protocol);
+    const client = new BaseHttpClient(protocol);
     let api: ApiClient;
     let port: number;
 
@@ -37,7 +35,7 @@ const util = require('util');
                     expect(response.body).toEqual('stub');
                     const time = Date.now() - timer;
 
-                    // Occasionally there's some small inaccuracies
+                    //Occasionally there's some small inaccuracies
                     assert.ok(time >= 990, `actual time: ${time}`);
                 }).finally(() => api.del('/imposters'));
             });
@@ -62,7 +60,7 @@ const util = require('util');
                     expect(response.body).toEqual('stub');
                     const time = Date.now() - timer;
 
-                    // Occasionally there's some small inaccuracies
+                    //Occasionally there's some small inaccuracies
                     assert.ok(time >= 990, `actual time: ${time}`);
                 }).finally(() => api.del('/imposters'));
             });
@@ -378,8 +376,8 @@ const util = require('util');
             });
 
             it('should support shell transform without array for backwards compatibility', function () {
-                // The string version of the shellTransform behavior is left for backwards
-                // compatibility. It changed in v1.13.0 to accept an array.
+                //The string version of the shellTransform behavior is left for backwards
+                //compatibility. It changed in v1.13.0 to accept an array.
                 const stub = {
                     responses: [{
                         is: { body: 'Hello, {YOU}!' },

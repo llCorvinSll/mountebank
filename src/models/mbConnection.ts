@@ -23,7 +23,7 @@ function createLogger (loglevel: string): ILogger {
         }
         else {
             result[level] = function () {
-                // eslint-disable-next-line prefer-rest-params
+                //eslint-disable-next-line prefer-rest-params
                 const args = Array.prototype.slice.call(arguments);
                 const message = require('util').format.apply(this, args);
 
@@ -38,7 +38,7 @@ function postJSON (what: object, where: string): Q.Promise<any> {
     const deferred = Q.defer();
     const url = require('url');
     const parts = url.parse(where);
-    const driver = require(parts.protocol.replace(':', '')); // http or https
+    const driver = require(parts.protocol.replace(':', '')); //http or https
     const options: RequestOptions = {
         hostname: parts.hostname,
         port: parts.port,
@@ -104,8 +104,8 @@ export function create (config: IMbConnectionConfig): IMbConnection {
 
     function getProxyResponse (proxyConfig: IProxyConfig, request: IRequest, proxyCallbackURL: string): Q.Promise<IResponse> {
         return proxy.to(proxyConfig.to, request, proxyConfig)
-            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-            // @ts-ignore
+            //eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            //@ts-ignore
             .then((response: IResponse) => postJSON({ proxyResponse: response }, proxyCallbackURL));
     }
 

@@ -1,9 +1,9 @@
 
 
-/** @module */
+/**@module */
 
 function toEpochWithoutTime (text: string): number {
-    // be sure to exclude time so we get accurate text
+    //be sure to exclude time so we get accurate text
     const dateTextWithoutTime = new Date(Date.parse(text)).toDateString();
     return Date.parse(dateTextWithoutTime);
 }
@@ -22,7 +22,7 @@ function sameMonth (firstEpoch: number, secondEpoch: number): boolean {
  * @returns {string}
  */
 export function howLongAgo (thenText: string, testNowText: string): string {
-    const nowText = testNowText ? testNowText : new Date(Date.now()).toISOString(); // testNow is just for testing purposes
+    const nowText = testNowText ? testNowText : new Date(Date.now()).toISOString(); //testNow is just for testing purposes
     const then = toEpochWithoutTime(thenText);
     const now = toEpochWithoutTime(nowText);
     const millisecondsInDay = 24 * 60 * 60 * 1000;

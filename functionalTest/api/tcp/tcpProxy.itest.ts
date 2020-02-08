@@ -48,7 +48,7 @@ describe('tcp proxy', function () {
         });
 
         it('should obey endOfRequestResolver', function () {
-            // We'll simulate a protocol that has a 4 byte message length at byte 0 indicating how many bytes follow
+            //We'll simulate a protocol that has a 4 byte message length at byte 0 indicating how many bytes follow
             const getRequest = (length: any) => {
                 const buffer = Buffer.alloc(length + 4);
                 buffer.writeUInt32LE(length, 0);
@@ -65,7 +65,7 @@ describe('tcp proxy', function () {
             };
             const originServer = net.createServer((client: any) => {
                 client.on('data', () => {
-                    // force multiple data packets
+                    //force multiple data packets
                     client.write(largeRequest, () => {
                         originServer.close();
                     });

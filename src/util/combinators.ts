@@ -24,7 +24,7 @@ export function curry (fn: Function, ...args: unknown[]): Function {
     return function (...carryArgs: unknown[]) {
         const allArgs = args.concat(carryArgs);
 
-        // eslint-disable-next-line prefer-spread
+        //eslint-disable-next-line prefer-spread
         return fn.apply(null, allArgs);
     };
 }

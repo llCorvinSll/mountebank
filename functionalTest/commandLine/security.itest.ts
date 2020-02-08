@@ -1,9 +1,6 @@
-
-
 import { ApiClient } from '../api/api';
-
 const assert = require('assert');
-const httpClient = require('../api/http/baseHttpClient').create('http');
+import { BaseHttpClient } from '../api/http/baseHttpClient';
 const Q = require('q');
 import * as os from 'os';
 
@@ -12,8 +9,10 @@ describe('security', function () {
     let api: any;
     let port: number;
     let mb: any;
+    let httpClient: BaseHttpClient;
 
     beforeEach(() => {
+        httpClient = new BaseHttpClient('http');
         api = new ApiClient();
         port = api.port + 1;
         mb = require('../mb').create(port + 1);
@@ -166,9 +165,9 @@ describe('security', function () {
 
     xdescribe('IP blocking', function () {
         function useInterface (name: string) {
-            return name.indexOf('utun') < 0 // This causes problems on my Mac
-                && name.indexOf('awdl') < 0 // This causes problems on my Mac
-                && name.indexOf(' ') < 0; // This causes problems on Appveyor / Windows
+            return name.indexOf('utun') < 0 //This causes problems on my Mac
+                && name.indexOf('awdl') < 0 //This causes problems on my Mac
+                && name.indexOf(' ') < 0; //This causes problems on Appveyor / Windows
         }
 
         function ips (local: boolean): os.NetworkInterfaceInfo[] {
@@ -199,7 +198,7 @@ describe('security', function () {
             return ips(false);
         }
 
-        function connectToHTTPServerUsing (ip: any, destinationPort = mb.port) {
+        function connectToHTTPServerUsing (ip: any, destinationPort = mb.port): Q.Promise<any> {
             return httpClient.responseFor({
                 method: 'GET',
                 path: '/',
@@ -211,9 +210,9 @@ describe('security', function () {
                 () => Q({ ip: ip.address, canConnect: true }),
                 (error: any) => {
                     if (error.errno === 'EADDRNOTAVAIL' && ip.address.indexOf('%') < 0) {
-                        // If you run ifconfig, some of the addresses have the interface name
-                        // appended (I'm not sure why). Node doesn't return them that way,
-                        // but apparently needs it sometimes to bind to that address.
+                        //If you run ifconfig, some of the addresses have the interface name
+                        //appended (I'm not sure why). Node doesn't return them that way,
+                        //but apparently needs it sometimes to bind to that address.
                         return connectToHTTPServerUsing({
                             address: `${ip.address}%${ip.iface}`,
                             family: ip.family,

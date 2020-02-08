@@ -110,7 +110,7 @@ export function load (
                 try {
                     metadata = JSON.parse(possibleJSON);
                 }
-                catch (error) { /* do nothing */ }
+                catch (error) { /*do nothing */ }
 
                 let serverPort: number = creationRequest.port!;
                 if (metadata.port) {

@@ -21,8 +21,8 @@ export function create (version: string, options: IMountebankOptions) {
     delete publicOptions.heroku;
     delete publicOptions.version;
 
-    // On some OS's, it duplicates camelCase as hypen-case (e.g. noParse and no-parse)
-    // I assume this was a change in yargs at some point
+    //On some OS's, it duplicates camelCase as hypen-case (e.g. noParse and no-parse)
+    //I assume this was a change in yargs at some point
     for (const prop in publicOptions) {
         if (prop.indexOf('-') > 0) {
             delete publicOptions[prop];

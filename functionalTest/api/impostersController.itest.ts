@@ -1,7 +1,7 @@
 import { ApiClient } from './api';
 
 const sanitizeBody = require('../testUtils/sanitize').sanitizeBody;
-const client = require('./http/baseHttpClient').create('http');
+import { BaseHttpClient } from './http/baseHttpClient';
 
 describe('POST /imposters', function () {
     let api: ApiClient;
@@ -67,8 +67,10 @@ describe('POST /imposters', function () {
 describe('DELETE /imposters', function () {
     let api: ApiClient;
     let port: number;
+    let client: BaseHttpClient;
 
     beforeEach(() => {
+        client = new BaseHttpClient('http');
         api = new ApiClient();
         port = api.port + 1;
     });
@@ -185,8 +187,10 @@ describe('DELETE /imposters', function () {
 describe('PUT /imposters', function () {
     let api: ApiClient;
     let port: number;
+    let client: BaseHttpClient;
 
     beforeEach(() => {
+        client = new BaseHttpClient('http');
         api = new ApiClient();
         port = api.port + 1;
     });

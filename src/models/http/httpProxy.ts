@@ -28,7 +28,7 @@ export function create (logger: ILogger): IProxyImplementation {
 
     function toUrl (path: string | undefined, query: any, requestDetails: any) {
         if (requestDetails) {
-            // Not passed in outOfProcess mode
+            //Not passed in outOfProcess mode
             return requestDetails.rawUrl;
         }
 
@@ -62,7 +62,7 @@ export function create (logger: ILogger): IProxyImplementation {
     }
 
     function getProxyRequest (baseUrl: string, originalRequest: IRequest, proxyOptions: IProxyConfig, requestDetails?: unknown): ClientRequest {
-        /* eslint complexity: 0 */
+        /*eslint complexity: 0 */
         const helpers = require('../../util/helpers');
         const headersHelper = require('./headersHelper');
         const url = require('url');
@@ -84,13 +84,13 @@ export function create (logger: ILogger): IProxyImplementation {
             rejectUnauthorized: false
         };
 
-        // Only set host header if not overridden via injectHeaders (issue #388)
+        //Only set host header if not overridden via injectHeaders (issue #388)
         if (!proxyOptions.injectHeaders || !headersHelper.hasHeader('host', proxyOptions.injectHeaders)) {
             options.headers.host = hostnameFor(parts.protocol, parts.hostname, options.port);
         }
         setProxyAgent(parts, options);
 
-        // Avoid implicit chunked encoding (issue #132)
+        //Avoid implicit chunked encoding (issue #132)
         if (originalRequest.body &&
             !headersHelper.hasHeader('Transfer-Encoding', originalRequest.headers) &&
             !headersHelper.hasHeader('Content-Length', originalRequest.headers)) {
@@ -197,8 +197,8 @@ export function create (logger: ILogger): IProxyImplementation {
     }
 
     return {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
+        //eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        //@ts-ignore
         to
     };
 }

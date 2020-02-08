@@ -38,15 +38,15 @@ import * as behaviors from './behaviors/behaviors';
  */
 export function create (options: IDryRunValidatorOptions) {
     function stubForResponse (originalStub: IStubConfig, response: IResponse, withPredicates: boolean) {
-        // Each dry run only validates the first response, so we
-        // explode the number of stubs to dry run each response separately
+        //Each dry run only validates the first response, so we
+        //explode the number of stubs to dry run each response separately
         const clonedStub = helpers.clone(originalStub);
         const clonedResponse = helpers.clone(response);
         clonedStub.responses = [clonedResponse];
 
-        // If the predicates don't match the test request, we won't dry run
-        // the response (although the predicates will be dry run).  We remove
-        // the predicates to account for this scenario.
+        //If the predicates don't match the test request, we won't dry run
+        //the response (although the predicates will be dry run).  We remove
+        //the predicates to account for this scenario.
         if (!withPredicates) {
             delete clonedStub.predicates;
         }
@@ -55,8 +55,8 @@ export function create (options: IDryRunValidatorOptions) {
     }
 
     function reposToTestFor (stub: IStubConfig, encoding: string) {
-        // Test with predicates (likely won't match) to make sure predicates don't blow up
-        // Test without predicates (always matches) to make sure response doesn't blow up
+        //Test with predicates (likely won't match) to make sure predicates don't blow up
+        //Test without predicates (always matches) to make sure response doesn't blow up
         const stubsToValidateWithPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, true)) : [];
         const stubsToValidateWithoutPredicates = stub.responses ? stub.responses.map(response => stubForResponse(stub, response, false)) : [];
         const stubsToValidate = stubsToValidateWithPredicates.concat(stubsToValidateWithoutPredicates);
@@ -70,8 +70,8 @@ export function create (options: IDryRunValidatorOptions) {
 
     function resolverFor (stubRepository: IStubRepository) {
 
-        // We can get a better test (running behaviors on proxied result) if the protocol gives
-        // us a testProxyResult
+        //We can get a better test (running behaviors on proxied result) if the protocol gives
+        //us a testProxyResult
         if (options.testProxyResponse) {
             const dryRunProxy = { to: () => Q(options.testProxyResponse) };
             return new ResponseResolver(stubRepository, dryRunProxy);
@@ -184,8 +184,8 @@ export function create (options: IDryRunValidatorOptions) {
         }
 
         if (errors.length > 0) {
-            // no sense in dry-running if there are already problems;
-            // it will just add noise to the errors
+            //no sense in dry-running if there are already problems;
+            //it will just add noise to the errors
             deferred.resolve(errors);
         }
         else {

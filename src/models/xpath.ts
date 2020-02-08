@@ -32,8 +32,8 @@ function nodeValue (node: any) {
         return node.value;
     }
     else if (node.firstChild) {
-        // Converting to a string allows exists to return true if the node exists,
-        // even if there's no data
+        //Converting to a string allows exists to return true if the node exists,
+        //even if there's no data
         return String(node.firstChild.data);
     }
     else {

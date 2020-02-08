@@ -10,9 +10,9 @@ export class ImposterPrinter {
     }
 
     public toJSON (numberOfRequests: number, options?: IImposterPrintOptions): any {
-        // I consider the order of fields represented important.  They won't matter for parsing,
-        // but it makes a nicer user experience for developers viewing the JSON to keep the most
-        // relevant information at the top
+        //I consider the order of fields represented important.  They won't matter for parsing,
+        //but it makes a nicer user experience for developers viewing the JSON to keep the most
+        //relevant information at the top
         const result: any = {
             protocol: this.creationRequest.protocol,
             port: this.server.port,
@@ -63,7 +63,7 @@ export class ImposterPrinter {
 
     private removeNonEssentialInformationFrom (result: any) {
         result.stubs.forEach((stub: IStub) => {
-            /* eslint-disable no-underscore-dangle */
+            /*eslint-disable no-underscore-dangle */
             if (stub.matches) {
                 delete stub.matches;
             }
@@ -85,7 +85,7 @@ export class ImposterPrinter {
 
     private removeProxiesFrom (result: any) {
         result.stubs.forEach((stub: IStub) => {
-            // eslint-disable-next-line no-prototype-builtins
+            //eslint-disable-next-line no-prototype-builtins
             stub.responses = (stub.responses || []).filter(response => !response.hasOwnProperty('proxy'));
         });
         result.stubs = result.stubs.filter((stub: IStub) => (stub.responses || []).length > 0);

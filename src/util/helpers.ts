@@ -6,7 +6,7 @@ interface IIndexed {
     [key: string]: any;
 }
 
-/** @module */
+/**@module */
 
 /**
  * Returns true if obj is a defined value

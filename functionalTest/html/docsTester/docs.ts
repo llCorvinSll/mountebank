@@ -1,13 +1,12 @@
-
-
 import * as Q from 'q';
 import * as assert from 'assert';
 import { DOMWindow, JSDOM } from 'jsdom';
 import { DocsTestScenario, ISubElement } from './docsTestScenario';
 import { IHashMap } from '../../../src/util/types';
 import stringify = require('json-stable-stringify');
+import { ApiClient } from '../../api/api';
 
-const api = require('../../api/api').create();
+const api = new ApiClient();
 
 
 /**
@@ -83,7 +82,7 @@ function normalizeJSON (possibleJSON: string) {
  * This function ensures whitespace normalization
  */
 function normalizeJSONSubstrings (text: string) {
-    // [\S\s] because . doesn't match newlines
+    //[\S\s] because . doesn't match newlines
     const jsonPattern = /\{[\S\s]*\}/;
     if (jsonPattern.test(text)) {
         const prettyPrintedJSON = normalizeJSON(jsonPattern.exec(text)![0]);
@@ -104,8 +103,8 @@ function collectVolatileLines (responseElement: ISubElement) {
         const startOfPattern = `^${responseLines[index].replace(/^\s+/, '\\s+')}`;
         const pattern = `${startOfPattern.replace(volatileElement.text!(), '(.+)')}$`;
 
-        // Another volatile pattern may have the exact same data as this // one
-        // (esp. with timestamps). Without removing, we'll miss the second line
+        //Another volatile pattern may have the exact same data as this // one
+        //(esp. with timestamps). Without removing, we'll miss the second line
         responseLines.splice(index, 1);
 
         return new RegExp(pattern);
@@ -121,7 +120,7 @@ function collectVolatileLines (responseElement: ISubElement) {
 function replaceVolatileData (text: string, volatileLines: RegExp[]) {
     return volatileLines.reduce((accumulator, volatileLinePattern) => {
         const textLines = linesOf(accumulator);
-        // Skip ones that have already been replaced
+        //Skip ones that have already been replaced
         const lineIndex = textLines.findIndex(line => !/696969696969696969/.test(line) && volatileLinePattern.test(line));
         if (lineIndex >= 0) {
             const matches = volatileLinePattern.exec(textLines[lineIndex]);
@@ -142,7 +141,7 @@ function stabilizeJSON (possibleJSON: string) {
 }
 
 function stabilizeJSONSubstrings (text: string) {
-    // [\S\s] because . doesn't match newlines
+    //[\S\s] because . doesn't match newlines
     const jsonPattern = /\{[\S\s]*\}/;
     if (jsonPattern.test(text)) {
         const prettyPrintedJSON = stabilizeJSON(jsonPattern.exec(text)![0]);
@@ -176,11 +175,11 @@ function setDifference (partialExpectedLines: string[], actualLines: string[]) {
     const difference: IDifference[] = [];
     let lastIndex = -1;
 
-    // Track index in closure to ensure two equivalent lines in partialExpected don't match
-    // the same line in actual. The lines have to match in order.
+    //Track index in closure to ensure two equivalent lines in partialExpected don't match
+    //the same line in actual. The lines have to match in order.
     partialExpectedLines.forEach((expectedLine, index) => {
         const matchedIndex = actualLines.findIndex((actualLine, matchIndex) =>
-            // Allow comma at end because the actual JSON could include additional elements we don't care about
+            //Allow comma at end because the actual JSON could include additional elements we don't care about
             matchIndex > lastIndex &&
                 (expectedLine.trim() === actualLine.trim() || `${expectedLine.trim()},` === actualLine.trim()));
         if (matchedIndex < 0) {

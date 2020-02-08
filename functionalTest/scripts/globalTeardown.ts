@@ -4,7 +4,7 @@ const port = process.env.MB_PORT || '2525';
 
 async function startMb () {
 
-    return new Promise((done, fail) => {
+    return new Promise(done => {
 
         childProcess.spawn(
             'bin/mb',
@@ -13,6 +13,8 @@ async function startMb () {
                 detached: true
             }
         );
+
+        done();
     });
 }
 

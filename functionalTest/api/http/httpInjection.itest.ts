@@ -1,13 +1,8 @@
-
-
 import { ApiClient } from '../api';
-
-// const api = require('../api').create();
-const BaseHttpClient = require('./baseHttpClient');
-// const timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 4000);
+import { BaseHttpClient } from './baseHttpClient';
 
 ['http', 'https'].forEach(protocol => {
-    const client = BaseHttpClient.create(protocol);
+    const client = new BaseHttpClient(protocol);
 
     let api: any;
     let port: number;
@@ -19,11 +14,9 @@ const BaseHttpClient = require('./baseHttpClient');
     });
 
     describe(`${protocol} imposter`, function () {
-        // this.timeout(timeout);
-
         describe('POST /imposters with injections', function () {
             it('should allow javascript predicate for matching (old interface)', function () {
-                // note the lower-case keys for headers!!!
+                //note the lower-case keys for headers!!!
                 const fn = (request: any) => request.path === '/test';
                 const stub = {
                     predicates: [{ inject: fn.toString() }],
@@ -51,7 +44,7 @@ const BaseHttpClient = require('./baseHttpClient');
             });
 
             it('should allow javascript predicate for matching', function () {
-                // note the lower-case keys for headers!!!
+                //note the lower-case keys for headers!!!
                 const fn = (config: any) => config.request.path === '/test';
                 const stub = {
                     predicates: [{ inject: fn.toString() }],
@@ -186,7 +179,7 @@ const BaseHttpClient = require('./baseHttpClient');
                 };
                 const stubs = [
                     {
-                        predicates: [{ // Compound predicate because previous bug didn't pass state in and/or
+                        predicates: [{ //Compound predicate because previous bug didn't pass state in and/or
                             and: [
                                 { inject: predicateFn.toString() },
                                 { equals: { path: '/' } }
@@ -226,7 +219,7 @@ const BaseHttpClient = require('./baseHttpClient');
                 };
                 const stubs = [
                     {
-                        predicates: [{ // Compound predicate because previous bug didn't pass state in and/or
+                        predicates: [{ //Compound predicate because previous bug didn't pass state in and/or
                             and: [
                                 { inject: predicateFn.toString() },
                                 { equals: { path: '/' } }
@@ -255,7 +248,7 @@ const BaseHttpClient = require('./baseHttpClient');
             });
 
             it('should allow access to the global process object', function () {
-                // https://github.com/bbyars/mountebank/issues/134
+                //https://github.com/bbyars/mountebank/issues/134
                 const fn = () => ({ body: process.env.USER || 'test' });
                 const stub = { responses: [{ inject: fn.toString() }] };
                 const request = { protocol, port, stubs: [stub] };
@@ -296,7 +289,7 @@ const BaseHttpClient = require('./baseHttpClient');
                             });
                         });
                         httpRequest.end();
-                        // No return value!!!
+                        //No return value!!!
                     };
                     const stub = { responses: [{ inject: fn.toString() }] };
                     const request = { protocol, port, stubs: [stub] };
@@ -306,14 +299,14 @@ const BaseHttpClient = require('./baseHttpClient');
 
                         return client.get('/', port);
                     }).then((response: any) => {
-                        // sometimes 301, sometimes 302
-                        // 200 on new Mac with El Capitan?
+                        //sometimes 301, sometimes 302
+                        //200 on new Mac with El Capitan?
                         expect(response.statusCode <= 302).toBeTruthy();
                         if (response.statusCode === 200) {
                             expect(response.body.indexOf('google') >= 0).toBeTruthy();
                         }
                         else {
-                            // google.com.br in Brasil, google.ca in Canada, etc
+                            //google.com.br in Brasil, google.ca in Canada, etc
                             expect(response.headers.location.indexOf('google.') >= 0).toBeTruthy();
                         }
                     }).finally(() => api.del('/imposters'));

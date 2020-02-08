@@ -2,8 +2,9 @@ import * as Q from 'q';
 import * as util from 'util';
 import { IHashMap } from '../../../../src/util/types';
 import { ISubElement } from '../docsTestScenario';
+import { BaseHttpClient } from '../../../api/http/baseHttpClient';
 
-const httpClient = require('../../../api/http/baseHttpClient').create('http');
+const httpClient = new BaseHttpClient('http');
 
 function parseHeader (line: string): {
     key: string;

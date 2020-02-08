@@ -1,12 +1,12 @@
 'use strict';
 
-const JSDOM = require('jsdom').JSDOM,
-    api = require('../api/api').create(),
-    Q = require('q'),
-    url = require('url'),
-    httpClient = require('../api/http/baseHttpClient').create('http'),
-    httpsClient = require('../api/http/baseHttpClient').create('https'),
-    whitelistPatterns = ['https://s3.amazonaws.com', '^#'];
+const JSDOM = require('jsdom').JSDOM;
+const api = new require('../api/api').ApiClient();
+const Q = require('q');
+const url = require('url');
+const httpClient = new require('../api/http/baseHttpClient').BaseHttpClient('http');
+const httpsClient = new require('../api/http/baseHttpClient').BaseHttpClient('https');
+const whitelistPatterns = ['https://s3.amazonaws.com', '^#'];
 
 function isProtocolAgnostic (href) {
     return href.indexOf('//') === 0;
@@ -17,8 +17,8 @@ function isLocal (href) {
 }
 
 function parseLinksFrom (window) {
-    const links = [],
-        anchorTags = window.document.getElementsByTagName('a');
+    const links = [];
+    const anchorTags = window.document.getElementsByTagName('a');
     for (let i = 0; i < anchorTags.length; i += 1) {
         let href = anchorTags[i].attributes.href ? anchorTags[i].attributes.href.value : null;
         if (href) {
@@ -42,7 +42,7 @@ function getLinksFrom (baseUrl, html) {
     const deferred = Q.defer();
 
     if (isExternalPage(baseUrl)) {
-        // Don't crawl the internet
+        //Don't crawl the internet
         return Q([]);
     }
 
@@ -62,16 +62,16 @@ function isWhitelisted (href) {
 }
 
 function getResponseFor (href) {
-    const parts = url.parse(href),
-        client = parts.protocol === 'https:' ? httpsClient : httpClient,
-        defaultPort = parts.protocol === 'https:' ? 443 : 80,
-        spec = {
-            hostname: parts.hostname,
-            port: parts.port || defaultPort,
-            method: 'GET',
-            path: parts.path,
-            headers: { accept: 'text/html' }
-        };
+    const parts = url.parse(href);
+    const client = parts.protocol === 'https:' ? httpsClient : httpClient;
+    const defaultPort = parts.protocol === 'https:' ? 443 : 80;
+    const spec = {
+        hostname: parts.hostname,
+        port: parts.port || defaultPort,
+        method: 'GET',
+        path: parts.path,
+        headers: { accept: 'text/html' }
+    };
 
     return client.responseFor(spec);
 }

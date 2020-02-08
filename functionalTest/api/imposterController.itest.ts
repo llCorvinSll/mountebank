@@ -40,20 +40,18 @@ describe('imposter', () => {
 
             afterEach(() => api.del('/imposters'));
 
-            it('should delete stub by uuid', () => {
-                return api.del(`/imposters/${port}/stubs/by_uuid/${stubs[1]._uuid}`).then((response: any) => {
+            it('should delete stub by uuid', () => api.del(`/imposters/${port}/stubs/by_uuid/${stubs[1]._uuid}`)
+                .then((response: any) => {
                     const uuidsAfterDelete = response.body.stubs.map((e: any) => e._uuid);
 
                     expect(uuidsAfterDelete).not.toContain(stubs[1]._uuid);
                     expect(response.body.stubs.length).toEqual(2);
-                });
-            });
+                }));
 
-            it('should return error if uuid not valid', () => {
-                return api.del(`/imposters/${port}/stubs/by_uuid/dddddddd`).then((response: any) => {
+            it('should return error if uuid not valid', () => api.del(`/imposters/${port}/stubs/by_uuid/dddddddd`)
+                .then((response: any) => {
                     expect(response.statusCode).toEqual(404);
-                });
-            });
+                }));
         });
     });
 });

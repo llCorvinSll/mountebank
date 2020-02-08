@@ -1,10 +1,10 @@
 import { ApiClient } from '../api';
-const BaseHttpClient = require('./baseHttpClient');
+import { BaseHttpClient } from './baseHttpClient';
 const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
 const headersHelper = require('../../../src/models/http/headersHelper');
 
 ['http', 'https'].forEach(protocol => {
-    const client = BaseHttpClient.create(protocol);
+    const client = new BaseHttpClient(protocol);
     let api: ApiClient;
     let port: number;
     let mb: any;

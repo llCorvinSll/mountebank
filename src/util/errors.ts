@@ -33,8 +33,8 @@ function createWithMessage (code: string, message: string) {
     return (options: IErrorOptions) => createError(code, message, options);
 }
 
-// Produces a JSON.stringify-able Error object
-// (because message is on the prototype, it doesn't show by default)
+//Produces a JSON.stringify-able Error object
+//(because message is on the prototype, it doesn't show by default)
 export function details (error: IMontebankError): IMontebankError {
     const helpers = require('./helpers');
     const prototypeProperties: {[key: string]: unknown} = {};

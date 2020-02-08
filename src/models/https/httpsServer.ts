@@ -17,9 +17,9 @@ function createBaseServer (options: IServerCreationOptions) {
         mutualAuth: Boolean(options.mutualAuth)
     };
     const createNodeServer = () =>
-    // client certs will not reject the request.  It does set the request.client.authorized variable
-    // to false for all self-signed certs; use rejectUnauthorized: true and a ca: field set to an array
-    // containing the client cert to see request.client.authorized = true
+    //client certs will not reject the request.  It does set the request.client.authorized variable
+    //to false for all self-signed certs; use rejectUnauthorized: true and a ca: field set to an array
+    //containing the client cert to see request.client.authorized = true
         require('https').createServer({
             key: metadata.key,
             cert: metadata.cert,

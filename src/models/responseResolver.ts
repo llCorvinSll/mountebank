@@ -44,7 +44,7 @@ export class ResponseResolver implements IResolver {
     private nextProxyResolutionKey = 0;
     private pendingProxyResolutions: {[key: number]: IPendingProxyResolution } = {};
     private readonly inProcessProxy: boolean = false;
-    private injectState: any = {}; // eslint-disable-line no-unused-vars
+    private injectState: any = {}; //eslint-disable-line no-unused-vars
 
 
     /**
@@ -64,8 +64,8 @@ export class ResponseResolver implements IResolver {
         }
 
         return this.processResponse(responseConfig, helpers.clone(request), logger, imposterState, options).then((response: IMountebankResponse) => {
-            // We may have already run the behaviors in the proxy call to persist the decorated response
-            // in the new stub. If so, we need to ensure we don't re-run it
+            //We may have already run the behaviors in the proxy call to persist the decorated response
+            //in the new stub. If so, we need to ensure we don't re-run it
             if (responseConfig.proxy) {
                 return Q(response);
             }
@@ -97,7 +97,7 @@ export class ResponseResolver implements IResolver {
         const pendingProxyConfig = this.pendingProxyResolutions[proxyResolutionKey];
 
         if (pendingProxyConfig) {
-            // eslint-disable-next-line no-underscore-dangle
+            //eslint-disable-next-line no-underscore-dangle
             proxyResponse._proxyResponseTime = new Date().getTime() - pendingProxyConfig.startTime.getTime();
 
             return behaviors.execute(pendingProxyConfig.request, proxyResponse, pendingProxyConfig.responseConfig._behaviors, logger)
@@ -128,10 +128,10 @@ export class ResponseResolver implements IResolver {
 
         if (this.inProcessProxy) {
             return this.proxy!.to(responseConfig.proxy.to, request, responseConfig.proxy, requestDetails).then(response => {
-                // eslint-disable-next-line no-underscore-dangle
+                //eslint-disable-next-line no-underscore-dangle
                 response._proxyResponseTime = new Date().getTime() - startTime;
 
-                // Run behaviors here to persist decorated response
+                //Run behaviors here to persist decorated response
                 return Q(behaviors.execute(request, response, responseConfig._behaviors, logger));
             }).then((response: IMountebankResponse) => {
                 this.recordProxyResponse(responseConfig, request, response, logger);
@@ -157,7 +157,7 @@ export class ResponseResolver implements IResolver {
 
     private processResponse (responseConfig: IMountebankResponse, request: IServerRequestData, logger: ILogger, imposterState: unknown, requestDetails: unknown): Q.Promise<IMountebankResponse> {
         if (responseConfig.is) {
-            // Clone to prevent accidental state changes downstream
+            //Clone to prevent accidental state changes downstream
             return Q(helpers.clone(responseConfig.is));
         }
         else if (responseConfig.proxy) {
@@ -173,7 +173,7 @@ export class ResponseResolver implements IResolver {
     }
 
     private recordProxyResponse (responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, logger: ILogger) {
-        // proxyTransparent prevents the request from being recorded, and always transparently issues the request.
+        //proxyTransparent prevents the request from being recorded, and always transparently issues the request.
         if (responseConfig.proxy && responseConfig.proxy.mode === 'proxyTransparent') {
             return;
         }
@@ -208,8 +208,8 @@ export class ResponseResolver implements IResolver {
     }
 
     private inject (request: IServerRequestData, fn: string, logger: ILogger, imposterState: unknown) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
+        //eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        //@ts-ignore
         const injectState: any = this.injectState;
         const deferred = Q.defer();
         const config: any = {
@@ -221,7 +221,7 @@ export class ResponseResolver implements IResolver {
 
         compatibility.downcastInjectionConfig(config);
 
-        // Leave parameters for older interface
+        //Leave parameters for older interface
         const injected = `(${fn})(config, injectState, logger, deferred.resolve, imposterState);`;
 
         if (request.isDryRun === true) {

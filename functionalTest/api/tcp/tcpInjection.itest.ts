@@ -136,7 +136,7 @@ describe('tcp imposter', function () {
                 socket.once('data', (data: any) => {
                     callback({ data: data });
                 });
-                // No return value!!!
+                //No return value!!!
             };
             const stub = { responses: [{ inject: fn.toString().replace("'$PORT'", `${originServerPort}`) }] };
 
@@ -172,7 +172,7 @@ describe('tcp imposter', function () {
                 socket.once('data', (data: any) => {
                     config.callback({ data: data });
                 });
-                // No return value!!!
+                //No return value!!!
             };
             const stub = { responses: [{ inject: fn.toString().replace("'$PORT'", `${originServerPort}`) }] };
 
@@ -188,7 +188,7 @@ describe('tcp imposter', function () {
         });
 
         it('should allow binary requests extending beyond a single packet using endOfRequestResolver', function () {
-            // We'll simulate a protocol that has a 4 byte message length at byte 0 indicating how many bytes follow
+            //We'll simulate a protocol that has a 4 byte message length at byte 0 indicating how many bytes follow
             const getRequest = (length: any) => {
                 const buffer = Buffer.alloc(length + 4);
                 buffer.writeUInt32LE(length, 0);
@@ -227,8 +227,8 @@ describe('tcp imposter', function () {
         });
 
         it('should allow text requests extending beyond a single packet using endOfRequestResolver', function () {
-            // We'll simulate HTTP
-            // The last 'x' is added because new Array(5).join('x') creates 'xxxx' in JavaScript...
+            //We'll simulate HTTP
+            //The last 'x' is added because new Array(5).join('x') creates 'xxxx' in JavaScript...
             const largeRequest = `Content-Length: 100000\n\n${new Array(100000).join('x')}x`;
             const stub = { responses: [{ is: { data: 'success' } }] };
             const resolver = (requestData: any) => {

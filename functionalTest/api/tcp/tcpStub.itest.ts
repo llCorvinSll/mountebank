@@ -155,7 +155,7 @@ describe('tcp imposter', function () {
         }
 
         it('should split each packet into a separate request by default', function () {
-            // max 64k packet size, likely to hit max on the loopback interface
+            //max 64k packet size, likely to hit max on the loopback interface
             const largeRequest = `${new Array(65537).join('1')}2`;
             const stub = { responses: [{ is: { data: 'success' } }] };
             const request = {

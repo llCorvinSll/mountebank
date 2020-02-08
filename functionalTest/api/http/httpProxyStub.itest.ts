@@ -3,21 +3,18 @@ import { ApiClient } from '../api';
 const assert = require('assert');
 const fs = require('fs');
 const util = require('util');
-// const api = require('../api').create();
-const client = require('./baseHttpClient').create('http');
+import { BaseHttpClient } from './baseHttpClient';
 const isInProcessImposter = require('../../testHelpers').isInProcessImposter;
-// const port = api.port + 1;
-// const isWindows = require('os').platform().indexOf('win') === 0;
 const sanitizeBody = require('../../testUtils/sanitize').sanitizeBody;
-// const timeout = isWindows ? 10000 : parseInt((process as any).env.MB_SLOW_TEST_TIMEOUT || 2000);
 const airplaneMode = process.env.MB_AIRPLANE_MODE === 'true';
 
 describe('http proxy stubs', function () {
-    // this.timeout(timeout);
     let api: any;
     let port: number;
+    let client: BaseHttpClient;
 
     beforeEach(() => {
+        client = new BaseHttpClient('http');
         api = new ApiClient();
         port = api.port + 1;
     });
@@ -131,9 +128,9 @@ describe('http proxy stubs', function () {
             name: 'origin server'
         };
         const fn = function (config: any) {
-            // Ignore first element; will be empty string in front of root /
+            //Ignore first element; will be empty string in front of root /
             const pathParts = config.request.path.split('/').splice(1);
-            // eslint-disable-next-line arrow-body-style
+            //eslint-disable-next-line arrow-body-style
             return pathParts.map((part: any) => { return { contains: { path: part } }; });
         };
         const proxyDefinition = {
@@ -417,7 +414,7 @@ describe('http proxy stubs', function () {
                 return api.get(`/imposters/${port}`);
             }).then((response: any) => {
                 const stubResponse = response.body.stubs[0].responses[0];
-                // eslint-disable-next-line no-underscore-dangle
+                //eslint-disable-next-line no-underscore-dangle
                 expect(stubResponse._behaviors.wait).toEqual(stubResponse.is._proxyResponseTime);
             }).finally(() => api.del('/imposters'));
     });
@@ -601,10 +598,10 @@ describe('http proxy stubs', function () {
                 expect(response.statusCode).toEqual(201);
                 return client.get('/', port);
             }).then((response: any) => {
-                // Sometimes 301, sometimes 302
+                //Sometimes 301, sometimes 302
                 expect(response.statusCode.toString().substring(0, 2)).toEqual('30');
 
-                // https://www.google.com.br in Brasil, google.ca in Canada, etc
+                //https://www.google.com.br in Brasil, google.ca in Canada, etc
                 assert.ok(response.headers.location.indexOf('google.') >= 0, response.headers.location);
             }).finally(() => api.del('/imposters'));
         });
@@ -701,7 +698,7 @@ describe('http proxy stubs', function () {
                 path: '/',
                 port,
                 body: 'TEST',
-                headers: { 'Content-Length': 4 } // needed to bypass node's implicit chunked encoding
+                headers: { 'Content-Length': 4 } //needed to bypass node's implicit chunked encoding
             });
         }).then((response: any) => {
             expect(response.body).toEqual('Encoding: content-length');
@@ -781,7 +778,7 @@ describe('http proxy stubs', function () {
                 response.body.stubs.forEach((stub: any) => {
                     delete stub.matches;
                     delete stub._links;
-                    // eslint-disable-next-line no-underscore-dangle
+                    //eslint-disable-next-line no-underscore-dangle
                     delete stub._uuid;
                 });
 
@@ -797,7 +794,7 @@ describe('http proxy stubs', function () {
             const Q = require('q');
             const originServerPort = port + 1;
             const originServer = http.createServer((request: any, response: any) => {
-                // Uxe base http library rather than imposter to get raw url
+                //Uxe base http library rather than imposter to get raw url
                 response.end(request.url);
             });
 

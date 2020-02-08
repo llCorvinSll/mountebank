@@ -1,9 +1,9 @@
 
 
-/** @module */
+/**@module */
 
 interface ICtor {
-    // eslint-disable-next-line @typescript-eslint/no-misused-new
+    //eslint-disable-next-line @typescript-eslint/no-misused-new
     new (): ICtor;
 }
 
@@ -15,7 +15,7 @@ interface ICtor {
  * @returns {Object}
  */
 export function from (proto: ICtor, obj?: ICtor|object|{[key: string]: unknown}) {
-    // allow either inherit.from(EventEmitter) or inherit.from({key: 'value'})
+    //allow either inherit.from(EventEmitter) or inherit.from({key: 'value'})
     if (typeof proto === 'function') {
         proto = new proto();
     }

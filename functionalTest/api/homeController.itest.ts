@@ -1,6 +1,12 @@
-const api = require('./api').create();
+import { ApiClient } from './api';
 
 describe('GET /', function () {
+    let api: ApiClient;
+
+    beforeEach(() => {
+        api = new ApiClient();
+    });
+
     it('should return correct hypermedia', function () {
         let links: any;
 

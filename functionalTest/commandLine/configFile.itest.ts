@@ -1,9 +1,9 @@
 import { ApiClient } from '../api/api';
 import * as path from 'path';
-const BaseHttpClient = require('../api/http/baseHttpClient');
+import { BaseHttpClient } from '../api/http/baseHttpClient';
 const smtp = require('../api/smtp/smtpClient');
-const http = BaseHttpClient.create('http');
-const https = BaseHttpClient.create('https');
+const http = new BaseHttpClient('http');
+const https = new BaseHttpClient('https');
 
 describe('config file', function () {
     let api: any;
@@ -15,8 +15,8 @@ describe('config file', function () {
         port = api.port + 1;
         mb = require('../mb').create(port);
     });
-    // I don't normally advocate separating the data needed for the assertions from the test setup,
-    // but I wanted this to be a reasonably complex regression test
+    //I don't normally advocate separating the data needed for the assertions from the test setup,
+    //but I wanted this to be a reasonably complex regression test
     it('should support complex configuration with --configfile in multiple files', function () {
         const args = ['--configfile', path.join(__dirname, 'imposters/imposters.ejs')];
 
@@ -77,7 +77,7 @@ describe('config file', function () {
             .finally(() => mb.stop());
     });
 
-    // This is the response resolver injection example on /docs/api/injection
+    //This is the response resolver injection example on /docs/api/injection
     it('should evaluate stringify function in templates when loading configuration files', function () {
         const args = ['--configfile', path.join(__dirname, 'templates/imposters.ejs'), '--allowInjection', '--localOnly'];
 

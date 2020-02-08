@@ -18,14 +18,14 @@ import {
 
 export function create (createBaseServer: (options: IServerCreationOptions) => { createNodeServer(): Server; metadata: unknown }): IProtocolFactory {
 
-    // eslint-disable-next-line no-shadow
+    //eslint-disable-next-line no-shadow
     function create (options: IServerCreationOptions, logger: ILogger, responseFn: RequestCallback): Q.Promise<IServerImplementation> {
         const deferred = Q.defer<IServerImplementation>();
         const connections: {[key: string]: Socket} = {};
         const defaultResponse = options.defaultResponse || {};
 
         function postProcess (stubResponse: IServerResponseData, request: IServerRequestData): IServerResponseData {
-            /* eslint complexity: 0 */
+            /*eslint complexity: 0 */
             const headersHelper = require('./headersHelper');
             const defaultHeaders = defaultResponse.headers || {};
             const response = {
@@ -39,7 +39,7 @@ export function create (createBaseServer: (options: IServerCreationOptions) => {
             const isObject = require('../../util/helpers').isObject;
 
             if (isObject(response.body)) {
-                // Support JSON response bodies
+                //Support JSON response bodies
                 response.body = JSON.stringify(response.body, null, 4);
             }
 
@@ -58,18 +58,18 @@ export function create (createBaseServer: (options: IServerCreationOptions) => {
             }
 
             if (encoding === 'base64') {
-                // ensure the base64 has no newlines or other non
-                // base64 chars that will cause the body to be garbled.
+                //ensure the base64 has no newlines or other non
+                //base64 chars that will cause the body to be garbled.
                 response.body = response.body.replace(/[^A-Za-z0-9=+/]+/g, '');
             }
 
             if (!headersHelper.hasHeader('Connection', response.headers)) {
-                // Default to close connections, because a test case
-                // may shutdown the stub, which prevents new connections for
-                // the port, but that won't prevent the system under test
-                // from reusing an existing TCP connection after the stub
-                // has shutdown, causing difficult to track down bugs when
-                // multiple tests are run.
+                //Default to close connections, because a test case
+                //may shutdown the stub, which prevents new connections for
+                //the port, but that won't prevent the system under test
+                //from reusing an existing TCP connection after the stub
+                //has shutdown, causing difficult to track down bugs when
+                //multiple tests are run.
                 response.headers[headersHelper.headerNameFor('Connection', response.headers)] = 'close';
             }
 
@@ -84,7 +84,7 @@ export function create (createBaseServer: (options: IServerCreationOptions) => {
         const baseServer = createBaseServer(options);
         const server = baseServer.createNodeServer();
 
-        // Allow long wait behaviors
+        //Allow long wait behaviors
         server.timeout = 0;
 
         server.on('connection', socket => {
@@ -150,7 +150,7 @@ export function create (createBaseServer: (options: IServerCreationOptions) => {
             });
         });
 
-        // Bind the socket to a port (the || 0 bit auto-selects a port if one isn't provided)
+        //Bind the socket to a port (the || 0 bit auto-selects a port if one isn't provided)
         server.listen(options.port || 0, options.host, () => {
             const address: AddressInfo = server.address() as AddressInfo;
             deferred.resolve({

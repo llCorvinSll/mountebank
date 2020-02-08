@@ -24,7 +24,7 @@ export interface IPredicate {
     [key: string]: IPredicateConfig| boolean | undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+//eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IPredicateConfig {
 
 }

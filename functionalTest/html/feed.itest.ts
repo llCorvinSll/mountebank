@@ -1,8 +1,12 @@
 import { ApiClient } from '../api/api';
-const httpClient = require('../api/http/baseHttpClient').create('http');
+import { BaseHttpClient } from '../api/http/baseHttpClient';
 import * as xpath from 'xpath';
 import { DOMParser } from 'xmldom';
+
+
 const isWindows = require('os').platform().indexOf('win') === 0;
+
+const httpClient = new BaseHttpClient('http');
 
 function entryCount (body: string): any {
     const doc = new DOMParser().parseFromString(body);
@@ -16,7 +20,7 @@ function getNextLink (body: string) {
     return (select('//atom:link[@rel="next"]/@href', doc)[0] as any).value;
 }
 
-// TODO: Total hack. Started failing on Appveyor with ECONNRESET and timeouts; don't know why
+//TODO: Total hack. Started failing on Appveyor with ECONNRESET and timeouts; don't know why
 if (!isWindows) {
     describe('the feed', function () {
         let api: any;

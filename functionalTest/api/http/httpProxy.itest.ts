@@ -1,16 +1,9 @@
-
-
 import { ApiClient } from '../api';
-
 const assert = require('assert');
 const HttpProxy = require('../../../src/models/http/httpProxy');
-// const api = require('../api').create();
-// const port = api.port + 1;
-// const timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 3000);
 const airplaneMode = process.env.MB_AIRPLANE_MODE === 'true';
 
 describe('http proxy', function () {
-    // this.timeout(timeout);
     let api: any;
     let port: number;
 
@@ -143,10 +136,10 @@ describe('http proxy', function () {
         if (!airplaneMode) {
             it('should proxy to different host', function () {
                 return proxy.to('https://google.com', { path: '/', method: 'GET', headers: {} }, {}).then((response: any) => {
-                    // sometimes 301, sometimes 302
+                    //sometimes 301, sometimes 302
                     expect(response.statusCode.toString().substring(0, 2)).toEqual('30');
 
-                    // https://www.google.com.br in Brasil, google.ca in Canada, etc
+                    //https://www.google.com.br in Brasil, google.ca in Canada, etc
                     expect(response.headers.Location.indexOf('google.') >= 0).toBeTruthy();
                 });
             });
