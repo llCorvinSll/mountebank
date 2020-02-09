@@ -3,10 +3,15 @@ import { IResponse } from '../IRequest';
 import { IPredicate } from '../predicates/IPredicate';
 import { IMountebankResponse } from '../IProtocol';
 import { IStubConfig } from './IStubConfig';
+import { IStorage } from '../storage/IStorage';
+import { IImposterPrintOptions } from '../imposters/IImposter';
+import * as Q from 'q';
+import { StubWrapper } from './StubWrapper';
+import * as helpers from '../../util/helpers';
 
 
 export class Stub implements IStub {
-    constructor (config: IStubConfig, private _uuid: string) {
+    constructor (config: IStubConfig, private _uuid: string, public matchesStorage: IStorage<unknown>) {
         this.responses = config.responses || [];
         this.statefulResponses = this.repeatTransform(config.responses as IMountebankResponse[]);
 
@@ -26,11 +31,19 @@ export class Stub implements IStub {
 
     matches: unknown[];
     predicates: IPredicate[];
-    recordMatch: (responce?: any) => void;
+    //recordMatch: (responce?: any) => void;
     responses: IResponse[];
     statefulResponses: IMountebankResponse[];
 
+    public recordMatch (response?: any) {
+        this.matchesStorage.saveRequest(response);
+    }
+
     private repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
+        if (!responses) {
+            return [];
+        }
+
         const result = [];
         let response;
         let repeats;
@@ -52,5 +65,26 @@ export class Stub implements IStub {
         else {
             return 1;
         }
+    }
+
+    public getJSON (options?: IImposterPrintOptions): Q.Promise<IStub> {
+        let asyncDataPromise = Q.resolve<unknown[]>();
+
+        if (!options?.replayable) {
+            asyncDataPromise = this.matchesStorage.getRequests();
+        }
+
+        return asyncDataPromise.then(matches => {
+            const stub = new StubWrapper(this);
+            const stubJson: IStub = helpers.clone(stub);
+
+            if (!options?.replayable) {
+                if (matches && matches.length) {
+                    (stubJson as any).matches = matches;
+                }
+            }
+
+            return stubJson;
+        });
     }
 }

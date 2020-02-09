@@ -5,9 +5,12 @@ import { IMountebankResponse, IServerRequestData } from '../IProtocol';
 import { IStubRepository } from '../stubs/IStubRepository';
 
 export interface IImposter {
-    port: number;
     url: string;
-    protocol: string;
+
+    readonly port: number;
+    readonly protocol: string;
+    readonly name: string;
+    readonly recordRequests: boolean;
 
     stubRepository: IStubRepository;
     getJSON(options?: IImposterPrintOptions): Q.Promise<any>;

@@ -2,6 +2,8 @@ import { IStub } from './IStub';
 import { IStubConfig } from './IStubConfig';
 import { IMountebankResponse, IServerRequestData } from '../IProtocol';
 import { ILogger } from '../../util/scopedLogger';
+import { IImposterPrintOptions } from '../imposters/IImposter';
+import * as Q from 'q';
 
 export interface IStubRepository {
     stubs: () => IStub[];
@@ -29,4 +31,6 @@ export interface IStubRepository {
     indexOfStubToAddResponseTo(responseConfig: IMountebankResponse, request: IServerRequestData, pathes: string[], logger: ILogger): number;
 
     addNewResponse(responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, pathes: string[], logger: ILogger): void;
+
+    getJSON(options?: IImposterPrintOptions): Q.Promise<IStub[]>;
 }

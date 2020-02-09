@@ -83,7 +83,17 @@ export class Imposter implements IImposter {
     private requestsStorage: IStorage<IServerRequestData>;
 
     private imposterState = {};
-    public protocol: string;
+    public get protocol (): string {
+        return this.creationRequest.protocol || '';
+    }
+
+    public get name (): string {
+        return this.creationRequest.name || '';
+    }
+
+    public get recordRequests (): boolean {
+        return Boolean(this.creationRequest.recordRequests);
+    }
 
     public init (): Q.Promise<IImposter> {
         this.domain = domainNsp.create();
@@ -134,7 +144,7 @@ export class Imposter implements IImposter {
     public getJSON (options?: IImposterPrintOptions): Q.Promise<any> {
         return this.requestsStorage.getRequests()
             .then(requests => {
-                const printer = new ImposterPrinter(this.creationRequest, this.server, requests);
+                const printer = new ImposterPrinter(this, this.server, requests);
                 return printer.toJSON(this.requestsStorage.getCount(), options);
             });
     }
@@ -169,11 +179,11 @@ export class Imposter implements IImposter {
             if (this.config.recordMatches && !response.proxy) {
                 if (response.response) {
                     //Out of process responses wrap the result in an outer response object
-                    responseConfig.recordMatch && responseConfig.recordMatch(response.response);
+                    responseConfig.recordMatch!(response.response);
                 }
                 else {
                     //In process resolution
-                    responseConfig.recordMatch && responseConfig.recordMatch(response);
+                    responseConfig.recordMatch!(response);
                 }
             }
             return Q(response);

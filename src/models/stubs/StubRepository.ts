@@ -13,6 +13,11 @@ import * as stringify from 'json-stable-stringify';
 import { predicatesFor, newIsResponse } from '../predicatesFor';
 import { IResponse } from '../IRequest';
 import { IHashMap } from '../../util/types';
+import { RedisStorage } from '../storage/RedisStorage';
+import * as uuidv4 from 'uuid/v4';
+import { InMemoryStorage } from '../storage/InMemoryStorage';
+import { IImposterPrintOptions } from '../imposters/IImposter';
+import * as Q from 'q';
 
 /**
  * Maintains all stubs for an imposter
@@ -33,7 +38,7 @@ export class StubRepository implements IStubRepository {
 
     }
 
-    protected _stubs: IStub[] = [];
+    protected _stubs: Stub[] = [];
     private stubsMap: IHashMap<IStub> = {};
 
     /**
@@ -109,14 +114,19 @@ export class StubRepository implements IStubRepository {
     }
 
 
-    private createStub (stub: IStubConfig): IStub {
+    private createStub (stub: IStubConfig): Stub {
         let uuid = _.uniqueId('stub_');
 
         if (this.staticUuids) {
             uuid = 'stub';
         }
+        else {
+            uuid = `${uuid}_${uuidv4()}`;
+        }
 
-        const finalStub = new Stub(stub, uuid);
+        const storage = new RedisStorage<unknown>(uuid, true);
+
+        const finalStub = new Stub(stub, uuid, storage);
 
         this.stubsMap[uuid] = finalStub;
 
@@ -146,7 +156,14 @@ export class StubRepository implements IStubRepository {
      * @returns {Object} - Promise resolving to the response
      */
     public getResponseFor (request: IServerRequestData, logger: ILogger, imposterState: unknown): IMountebankResponse {
-        const stub: IStub = this.findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] };
+        let stub = this.findFirstMatch(request, logger, imposterState);
+
+        if (!stub) {
+            const tempUuid = uuidv4();
+            stub = new Stub({}, tempUuid, new InMemoryStorage<unknown>(false));
+            stub.statefulResponses = [{ is: {} }];
+        }
+
         const responseConfig: IMountebankResponse = stub.statefulResponses.shift() as IMountebankResponse;
         const cloned = helpers.clone(responseConfig);
 
@@ -164,8 +181,8 @@ export class StubRepository implements IStubRepository {
             if (helpers.defined(clonedResponse._proxyResponseTime)) {
                 delete clonedResponse._proxyResponseTime;
             }
-            stub.matches = stub.matches || [];
-            stub.matches.push(match);
+
+            stub?.matchesStorage?.saveRequest(match);
             cloned.recordMatch = () => {}; //Only record once
         };
 
@@ -263,4 +280,7 @@ export class StubRepository implements IStubRepository {
 
     //#endregion METHODS FOR ResponseResolver
 
+    public getJSON (options?: IImposterPrintOptions): Q.Promise<IStub[]> {
+        return Q.all(this._stubs.map(s => s.getJSON(options)));
+    }
 }

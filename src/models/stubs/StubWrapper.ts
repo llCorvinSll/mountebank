@@ -9,7 +9,7 @@ export class StubWrapper implements IStub {
     constructor (stub: IStub) {
         this.responses = helpers.clone(stub.responses);
         this.predicates = helpers.clone(stub.predicates);
-        this.matches = helpers.clone(stub.matches);
+        // this.matches = helpers.clone(stub.matches);
         this._uuid = stub.uuid;
         this.addResponse = (resp: IResponse) => {
             stub.addResponse!(resp);
