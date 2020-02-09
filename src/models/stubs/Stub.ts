@@ -25,15 +25,13 @@ export class Stub implements IStub {
     }
 
     _links: string;
+    predicates: IPredicate[];
+    responses: IResponse[];
+    statefulResponses: IMountebankResponse[];
+
     public addResponse (response: IResponse): void {
         this.responses.push(response);
     }
-
-    matches: unknown[];
-    predicates: IPredicate[];
-    //recordMatch: (responce?: any) => void;
-    responses: IResponse[];
-    statefulResponses: IMountebankResponse[];
 
     public recordMatch (response?: any) {
         this.matchesStorage.saveRequest(response);

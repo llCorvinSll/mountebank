@@ -125,7 +125,7 @@ export function create (logger: ILogger): IProxyImplementation {
         proxiedRequest.end();
 
         proxiedRequest.once('response', response => {
-            const packets: any[] = [];
+            let packets: any[] = [];
 
             response.on('data', chunk => {
                 packets.push(chunk);
@@ -142,6 +142,8 @@ export function create (logger: ILogger): IProxyImplementation {
                     body: body.toString(encoding),
                     _mode: mode
                 };
+
+                packets = null as any;
                 deferred.resolve(stubResponse);
             });
         });
