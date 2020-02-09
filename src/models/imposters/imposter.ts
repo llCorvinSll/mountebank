@@ -141,6 +141,7 @@ export class Imposter implements IImposter {
 
     public stop () {
         const stopDeferred = Q.defer();
+        this.requestsStorage.clean();
         this.server.close(() => {
             this.logger.info('Ciao for now');
             return stopDeferred.resolve({});

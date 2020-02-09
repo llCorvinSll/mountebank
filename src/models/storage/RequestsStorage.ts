@@ -35,4 +35,8 @@ export class RequestsStorage implements IRequestsStorage {
     getRequests (): Q.Promise<IServerRequestData[]> {
         return Q.resolve(this.requests);
     }
+
+    clean (): void {
+        this.requests = [];
+    }
 }

@@ -70,4 +70,8 @@ export class RedisRequestsStorage implements IRequestsStorage {
             });
         });
     }
+
+    clean (): void {
+        client.del(this.uuid);
+    }
 }

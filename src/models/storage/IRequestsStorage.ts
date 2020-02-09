@@ -8,4 +8,6 @@ export interface IRequestsStorage {
     saveRequest(request: IServerRequestData): Q.Promise<void>;
 
     getRequests(): Q.Promise<IServerRequestData[]>;
+
+    clean(): void;
 }
