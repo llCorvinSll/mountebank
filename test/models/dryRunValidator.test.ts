@@ -1,19 +1,20 @@
-
-
 import * as Validator from '../../src/models/dryRunValidator';
+import { StorageCreator } from '../../src/models/storage/StorageCreator';
 const Logger = require('../fakes/fakeLogger');
 
 describe('dryRunValidator', function () {
     let testRequest: any;
+    let storageCreator: StorageCreator;
 
     beforeEach(() => {
         testRequest = { requestFrom: '', path: '/', query: {}, method: 'GET', headers: {}, body: '' };
+        storageCreator = new StorageCreator(false);
     });
 
     describe('#validate', function () {
         it('should be valid for an empty request', function () {
             const request = {};
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -25,7 +26,7 @@ describe('dryRunValidator', function () {
 
         it('should not be valid for a missing responses field', function () {
             const request = { stubs: [{}] };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -41,7 +42,7 @@ describe('dryRunValidator', function () {
 
         it('should be valid for an empty stubs list', function () {
             const request = { stubs: [] };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -53,7 +54,7 @@ describe('dryRunValidator', function () {
 
         it('should be valid for valid stub', function () {
             const request = { stubs: [{ responses: [{ is: { statusCode: 400 } }] }] };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -75,7 +76,7 @@ describe('dryRunValidator', function () {
                     ]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -92,7 +93,7 @@ describe('dryRunValidator', function () {
                     responses: [{ is: { body: 'Matched' } }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: true });
+            const validator = Validator.create({ testRequest, allowInjection: true }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -108,7 +109,7 @@ describe('dryRunValidator', function () {
                     responses: [{ inject: '() => { return {}; }' }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: true });
+            const validator = Validator.create({ testRequest, allowInjection: true }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -127,7 +128,7 @@ describe('dryRunValidator', function () {
                     responses: [{ is: { statusCode: 400 }, _behaviors: { decorate: decorator.toString() } }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: true });
+            const validator = Validator.create({ testRequest, allowInjection: true }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -143,7 +144,7 @@ describe('dryRunValidator', function () {
                     responses: [{ inject: '() => { return {}; }' }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: false });
+            const validator = Validator.create({ testRequest, allowInjection: false }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -164,7 +165,7 @@ describe('dryRunValidator', function () {
                     responses: [{ is: { body: 'Matched' } }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: false });
+            const validator = Validator.create({ testRequest, allowInjection: false }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -187,7 +188,7 @@ describe('dryRunValidator', function () {
                     responses: [{ is: { statusCode: 400 }, _behaviors: { decorate: decorator.toString() } }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: false });
+            const validator = Validator.create({ testRequest, allowInjection: false }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -207,7 +208,7 @@ describe('dryRunValidator', function () {
                     responses: [{ proxy: { to: 'http://google.com' } }]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -224,7 +225,7 @@ describe('dryRunValidator', function () {
                     {}
                 ]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -245,7 +246,7 @@ describe('dryRunValidator', function () {
                     predicates: [{ invalidPredicate: { path: '/test' } }]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -270,7 +271,7 @@ describe('dryRunValidator', function () {
                     ]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -292,7 +293,7 @@ describe('dryRunValidator', function () {
                     predicates: [{ headers: [{ exists: 'Test' }] }]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -313,7 +314,7 @@ describe('dryRunValidator', function () {
                     responses: [{ invalid: 'INVALID' }]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -336,7 +337,7 @@ describe('dryRunValidator', function () {
                     ]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -357,7 +358,7 @@ describe('dryRunValidator', function () {
                     predicates: [{ equals: { path: '/does-not-match' } }]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -383,7 +384,7 @@ describe('dryRunValidator', function () {
                     }]
                 }]
             };
-            const validator = Validator.create({ testRequest });
+            const validator = Validator.create({ testRequest }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -409,7 +410,7 @@ describe('dryRunValidator', function () {
                 is: { statusCode: 400 },
                 _behaviors: { wait: '() => { return 1000; }' }
             }] }] };
-            const validator = Validator.create({ testRequest, allowInjection: true });
+            const validator = Validator.create({ testRequest, allowInjection: true }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -425,7 +426,7 @@ describe('dryRunValidator', function () {
                 _behaviors: { wait: '() => { return 1000; }' }
             };
             const request = { stubs: [{ responses: [response] }] };
-            const validator = Validator.create({ testRequest, allowInjection: false });
+            const validator = Validator.create({ testRequest, allowInjection: false }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -446,7 +447,7 @@ describe('dryRunValidator', function () {
                 stubs: [{ responses: [{ is: { data: 'test' } }] }],
                 endOfRequestResolver: { inject: endOfRequestResolver.toString() as any }
             };
-            const validator = Validator.create({ testRequest, allowInjection: false });
+            const validator = Validator.create({ testRequest, allowInjection: false }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -467,7 +468,7 @@ describe('dryRunValidator', function () {
                 stubs: [{ responses: [{ is: { data: 'test' } }] }],
                 endOfRequestResolver: { inject: endOfRequestResolver.toString() }
             };
-            const validator = Validator.create({ testRequest, allowInjection: true });
+            const validator = Validator.create({ testRequest, allowInjection: true }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result.isValid).toBeTruthy();
@@ -480,7 +481,7 @@ describe('dryRunValidator', function () {
                     responses: [{ is: {}, _behaviors: { shellTransform: ['command'] } }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: false });
+            const validator = Validator.create({ testRequest, allowInjection: false }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({
@@ -504,7 +505,7 @@ describe('dryRunValidator', function () {
                     responses: [{ proxy: proxy }]
                 }]
             };
-            const validator = Validator.create({ testRequest, allowInjection: false });
+            const validator = Validator.create({ testRequest, allowInjection: false }, storageCreator);
 
             return validator.validate(request, Logger.create()).then(result => {
                 expect(result).toEqual({

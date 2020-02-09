@@ -13,11 +13,11 @@ import * as stringify from 'json-stable-stringify';
 import { predicatesFor, newIsResponse } from '../predicatesFor';
 import { IResponse } from '../IRequest';
 import { IHashMap } from '../../util/types';
-import { RedisStorage } from '../storage/RedisStorage';
 import * as uuidv4 from 'uuid/v4';
 import { InMemoryStorage } from '../storage/InMemoryStorage';
 import { IImposterPrintOptions } from '../imposters/IImposter';
 import * as Q from 'q';
+import { StorageCreator } from '../storage/StorageCreator';
 
 /**
  * Maintains all stubs for an imposter
@@ -34,7 +34,7 @@ function deepEqual (obj1: unknown, obj2: unknown) {
  * @returns {Object}
  */
 export class StubRepository implements IStubRepository {
-    public constructor (private encoding: string, private staticUuids: boolean = false) {
+    public constructor (private encoding: string, private storageCreator: StorageCreator, private staticUuids: boolean = false) {
 
     }
 
@@ -124,7 +124,7 @@ export class StubRepository implements IStubRepository {
             uuid = `${uuid}_${uuidv4()}`;
         }
 
-        const storage = new RedisStorage<unknown>(uuid, true);
+        const storage = this.storageCreator.createStorage<unknown>(uuid, true);
 
         const finalStub = new Stub(stub, uuid, storage);
 

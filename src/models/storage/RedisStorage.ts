@@ -1,13 +1,12 @@
 import { IStorage } from './IStorage';
 import * as Q from 'q';
 import * as helpers from '../../util/helpers';
-import { RedisClient, createClient } from 'redis';
 import { IHashMap } from '../../util/types';
+import { RedisClient } from 'redis';
 
-const client: RedisClient = createClient();
 
 export class RedisStorage<T> implements IStorage<T> {
-    constructor (private uuid: string, private recordRequests: boolean) {
+    constructor (private uuid: string, private recordRequests: boolean, private client: RedisClient) {
     }
 
     private reqestsCount = 0;
@@ -30,7 +29,7 @@ export class RedisStorage<T> implements IStorage<T> {
         this.nonSaved[currentIndex] = requestToRecord;
 
         return Q.Promise(done => {
-            client.hset(this.uuid, `${currentIndex}`, JSON.stringify(requestToRecord), () => {
+            this.client.hset(this.uuid, `${currentIndex}`, JSON.stringify(requestToRecord), () => {
                 delete this.nonSaved[currentIndex];
                 done();
             });
@@ -52,7 +51,7 @@ export class RedisStorage<T> implements IStorage<T> {
                 }
             });
 
-            client.hgetall(this.uuid, (err, replies) => {
+            this.client.hgetall(this.uuid, (err, replies) => {
                 if (!replies) {
                     done([]);
                 }
@@ -71,6 +70,6 @@ export class RedisStorage<T> implements IStorage<T> {
     }
 
     clean (): void {
-        client.del(this.uuid);
+        this.client.del(this.uuid);
     }
 }

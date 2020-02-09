@@ -10,6 +10,8 @@ import * as helpers from '../util/helpers';
 import * as exceptions from '../util/errors';
 import * as compatibility from '../models/compatibility';
 import { IStubConfig } from '../models/stubs/IStubConfig';
+import * as Validator from '../models/dryRunValidator';
+import { StorageCreator } from '../models/storage/StorageCreator';
 
 
 function queryBoolean (query: ParsedUrlQuery, key: string) {
@@ -32,12 +34,14 @@ export class ImposterController {
      * Creates the imposter controller
      * @param {Object} protocols - the protocol implementations supported by mountebank
      * @param {Object} imposters - The map of ports to imposters
+     * @param {StorageCreator} storageCreator - StorageCreator for adding persistance
      * @param {Object} logger - The logger
      * @param {Boolean} allowInjection - Whether injection is allowed or not
      */
     public constructor (
         private protocols: {[key: string]: IProtocolFactory},
         private imposters: { [key: string]: IImposter },
+        private storageCreator: StorageCreator,
         private logger?: ILogger,
         private allowInjection?: boolean) {
 
@@ -253,13 +257,13 @@ export class ImposterController {
                     console.log(repr);
                 }
 
-                const validator = require('../models/dryRunValidator').create({
+                const validator = Validator.create({
                     testRequest: Protocol.testRequest,
                     testProxyResponse: Protocol.testProxyResponse,
                     additionalValidation: Protocol.validate,
                     allowInjection: this.allowInjection
-                });
-                return validator.validate(repr, this.logger);
+                }, this.storageCreator);
+                return validator.validate(repr, this.logger!);
             });
     }
 

@@ -1,13 +1,20 @@
-const assert = require('assert');
+import { StorageCreator } from '../../src/models/storage/StorageCreator';
 import { ResponseResolver } from '../../src/models/responseResolver';
 import { StubRepository } from '../../src/models/stubs/StubRepository';
-const helpers = require('../../src/util/helpers');
-const mock = require('../mock').mock;
 import * as Q from 'q';
-const Logger = require('../fakes/fakeLogger');
 import * as util from 'util';
 
+const assert = require('assert');
+const helpers = require('../../src/util/helpers');
+const mock = require('../mock').mock;
+const Logger = require('../fakes/fakeLogger');
+
 describe('responseResolver', function () {
+    let storageCreator: StorageCreator;
+
+    beforeEach(() => {
+        storageCreator = new StorageCreator(false);
+    });
 
     function cleanedProxyResponse (response: any) {
         if (helpers.defined(response.is) && helpers.defined(response.is._proxyResponseTime)) {
@@ -34,7 +41,7 @@ describe('responseResolver', function () {
         let stubs: StubRepository;
 
         beforeEach(() => {
-            stubs = new StubRepository('utf8', true);
+            stubs = new StubRepository('utf8', storageCreator, true);
         });
 
         it('should resolve "is" without transformation', function () {
@@ -960,7 +967,7 @@ describe('responseResolver', function () {
         });
 
         it('should allow injection request state across calls to resolve', function () {
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = (request: any, state: any) => {
@@ -980,7 +987,7 @@ describe('responseResolver', function () {
         });
 
         it('should allow injection imposter state across calls to resolve', function () {
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const mockedLogger = Logger.create();
             const imposterState = { foo: 'bar', counter: 0 };
@@ -1003,7 +1010,7 @@ describe('responseResolver', function () {
         it('should allow wait behavior', function () {
             const start = Date.now();
 
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const responseConfig: any = {
@@ -1024,7 +1031,7 @@ describe('responseResolver', function () {
         it('should allow wait behavior based on a function', function () {
             const start = Date.now();
 
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = () => 50;
@@ -1044,7 +1051,7 @@ describe('responseResolver', function () {
         });
 
         it('should reject the promise when the wait function fails', function () {
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = () => {
@@ -1064,7 +1071,7 @@ describe('responseResolver', function () {
         });
 
         it('should allow asynchronous injection', function () {
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const fn = (request: any, state: any, logger: any, callback: any) => {
                 setTimeout(() => {
@@ -1080,7 +1087,7 @@ describe('responseResolver', function () {
         });
 
         it('should not be able to change state through inject', function () {
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = (request: any) => {
@@ -1096,7 +1103,7 @@ describe('responseResolver', function () {
         });
 
         it('should not run injection during dry run validation', function () {
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const fn = () => {
@@ -1111,7 +1118,7 @@ describe('responseResolver', function () {
         });
 
         it('should throw error if multiple response types given', function () {
-            stubs = new StubRepository('utf8');
+            stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, {} as any);
             const logger = Logger.create();
             const responseConfig: any = { is: 'value', proxy: { to: 'http://www.google.com' } };
@@ -1150,7 +1157,7 @@ describe('responseResolver', function () {
         }
 
         it('should error if called with invalid proxyResolutionKey', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
 
@@ -1167,7 +1174,7 @@ describe('responseResolver', function () {
         });
 
         it('should save new response in front of proxy for "proxyOnce" mode', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const responseConfig = { proxy: { to: 'where', mode: 'proxyOnce' } };
@@ -1190,7 +1197,7 @@ describe('responseResolver', function () {
         });
 
         it('should save new response after proxy for "proxyAlways" mode', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const responseConfig: any = { proxy: { to: 'where', mode: 'proxyAlways' } };
@@ -1216,7 +1223,7 @@ describe('responseResolver', function () {
             const decorateFunc = (request: any, response: any) => {
                 response.data += '-DECORATED';
             };
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const proxyResponse = {
@@ -1243,7 +1250,7 @@ describe('responseResolver', function () {
         });
 
         it('should add wait behavior based on the proxy resolution time', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const proxyResponse = { proxy: { to: 'where', mode: 'proxyOnce', addWaitBehavior: true } };
@@ -1269,7 +1276,7 @@ describe('responseResolver', function () {
         });
 
         it('should support recording the match', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const request = { key: 'REQUEST' };
@@ -1295,7 +1302,7 @@ describe('responseResolver', function () {
         });
 
         it('should avoid race conditions when recording the match', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const request = { key: 'REQUEST' };
@@ -1324,7 +1331,7 @@ describe('responseResolver', function () {
         });
 
         it('should not resolve the same proxyResolutionKey twice', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const resolver = new ResponseResolver(stubs, null, 'CALLBACK-URL');
             const logger = Logger.create();
             const proxyResponse = { proxy: { to: 'where' } };

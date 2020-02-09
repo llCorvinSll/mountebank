@@ -18,8 +18,8 @@ import { ImposterPrinter } from './imposterPrinter';
 import { IStubRepository } from '../stubs/IStubRepository';
 import * as _ from 'lodash';
 import { IStorage } from '../storage/IStorage';
-import { RedisStorage } from '../storage/RedisStorage';
 import * as uuidv4 from 'uuid/v4';
+import { StorageCreator } from '../storage/StorageCreator';
 
 /**
  * An imposter represents a protocol listening on a socket.  Most imposter
@@ -61,6 +61,7 @@ export class Imposter implements IImposter {
         protected creationRequest: IImposterConfig,
         protected baseLogger: ILogger,
         protected config: IProtocolLoadOptions,
+        protected storageCreator: StorageCreator,
         protected isAllowedConnection: IpValidator) {
         compatibility.upcast(this.creationRequest);
 
@@ -71,7 +72,7 @@ export class Imposter implements IImposter {
         //If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
         const recordRequests = Boolean(config.recordRequests) || Boolean(creationRequest.recordRequests);
 
-        this.requestsStorage = new RedisStorage(this.uuid, recordRequests);
+        this.requestsStorage = this.storageCreator.createStorage(this.uuid, recordRequests);
     }
 
     private readonly uuid: string;

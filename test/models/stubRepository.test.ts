@@ -1,13 +1,20 @@
 import { StubRepository } from '../../src/models/stubs/StubRepository';
+import { StorageCreator } from '../../src/models/storage/StorageCreator';
 
 describe('stubRepository', function () {
     function jsonWithoutFunctions (obj: any) {
         return JSON.parse(JSON.stringify(obj));
     }
 
+    let storageCreator: StorageCreator;
+
+    beforeEach(() => {
+        storageCreator = new StorageCreator(false);
+    });
+
     describe('#addStub', function () {
         it('should add new stub in front of passed in response', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
             const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
 
@@ -27,7 +34,7 @@ describe('stubRepository', function () {
 
     describe('#overwriteStubs', function () {
         it('should overwrite entire list', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
             const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
             const thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
@@ -46,7 +53,7 @@ describe('stubRepository', function () {
 
     describe('#overwriteStubAtIndex', function () {
         it('should overwrite single stub', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
             const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
             const thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
@@ -66,7 +73,7 @@ describe('stubRepository', function () {
 
     describe('#deleteeStubAtIndex', function () {
         it('should overwrite single stub', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const firstStub = { responses: [{ is: 'first' }, { is: 'second' }] };
             const secondStub = { responses: [{ is: 'third' }, { is: 'fourth' }] };
             const thirdStub = { responses: [{ is: 'fifth' }, { is: 'sixth' }] };
@@ -87,7 +94,7 @@ describe('stubRepository', function () {
 
     describe('#stubs', function () {
         it('should not allow changing state in stubRepository', function () {
-            const stubs = new StubRepository('utf8', true);
+            const stubs = new StubRepository('utf8', storageCreator, true);
             const stub = { responses: [] };
 
             stubs.addStub(stub);
@@ -97,7 +104,7 @@ describe('stubRepository', function () {
         });
 
         it('should support adding responses', function () {
-            const stubs = new StubRepository('utf8', true);
+            const stubs = new StubRepository('utf8', storageCreator, true);
             const stub = { responses: [] };
 
             stubs.addStub(stub);
@@ -109,7 +116,7 @@ describe('stubRepository', function () {
 
     describe('#getResponseFor', function () {
         it('should return default response if no match', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const logger: any = { debug: jest.fn() };
 
             const responseConfig = stubs.getResponseFor({ field: 'value' }, logger, {});
@@ -118,7 +125,7 @@ describe('stubRepository', function () {
         });
 
         it('should always match if no predicate', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const logger: any = { debug: jest.fn() };
             const stub = { responses: [{ is: 'first stub' }] };
 
@@ -129,7 +136,7 @@ describe('stubRepository', function () {
         });
 
         it('should return first match', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const logger: any = { debug: jest.fn() };
             const firstStub = { predicates: [{ equals: { field: '1' } }], responses: [{ is: 'first stub' }] };
             const secondStub = { predicates: [{ equals: { field: '2' } }], responses: [{ is: 'second stub' }] };
@@ -144,7 +151,7 @@ describe('stubRepository', function () {
         });
 
         it('should return responses in order, looping around', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const logger: any = { debug: jest.fn() };
             const stub = { responses: [{ is: 'first response' }, { is: 'second response' }] };
 
@@ -156,7 +163,7 @@ describe('stubRepository', function () {
         });
 
         it('should support recording matches', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const logger: any = { debug: jest.fn() };
             const matchingRequest = { field: 'value' };
             const mismatchingRequest = { field: 'other' };
@@ -173,7 +180,7 @@ describe('stubRepository', function () {
         });
 
         it('should only record match once for given response', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const logger: any = { debug: jest.fn() };
             const stub = { responses: [{ is: 'response' }] };
 
@@ -189,7 +196,7 @@ describe('stubRepository', function () {
         });
 
         it('should repeat a response and continue looping', function () {
-            const stubs = new StubRepository('utf8');
+            const stubs = new StubRepository('utf8', storageCreator);
             const logger: any = { debug: jest.fn() };
             const stub: any = {
                 responses: [

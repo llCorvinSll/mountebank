@@ -18,6 +18,7 @@ import * as helpers from '../util/helpers';
 import { IStubRepository } from './stubs/IStubRepository';
 import * as combinators from '../util/combinators';
 import * as behaviors from './behaviors/behaviors';
+import { StorageCreator } from './storage/StorageCreator';
 
 
     interface IDryRunValidatorOptions {
@@ -34,9 +35,10 @@ import * as behaviors from './behaviors/behaviors';
  * @param {Object} options.testProxyResponse - The protocol-specific fake response from a proxy call
  * @param {boolean} options.allowInjection - Whether JavaScript injection is allowed or not
  * @param {function} options.additionalValidation - A function that performs protocol-specific validation
+ * @param {StorageCreator} storageCreator - A function that performs protocol-specific validation
  * @returns {Object}
  */
-export function create (options: IDryRunValidatorOptions) {
+export function create (options: IDryRunValidatorOptions, storageCreator: StorageCreator) {
     function stubForResponse (originalStub: IStubConfig, response: IResponse, withPredicates: boolean) {
         //Each dry run only validates the first response, so we
         //explode the number of stubs to dry run each response separately
@@ -62,7 +64,7 @@ export function create (options: IDryRunValidatorOptions) {
         const stubsToValidate = stubsToValidateWithPredicates.concat(stubsToValidateWithoutPredicates);
 
         return stubsToValidate.map(stubToValidate => {
-            const stubRepository: IStubRepository = new StubRepository(encoding);
+            const stubRepository: IStubRepository = new StubRepository(encoding, storageCreator);
             stubRepository.addStub(stubToValidate);
             return stubRepository;
         });

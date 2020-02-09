@@ -1,12 +1,19 @@
 import { Imposter } from '../../src/models/imposters/imposter';
 import * as Q from 'q';
 import { IImposter } from '../../src/models/imposters/IImposter';
+import { StorageCreator } from '../../src/models/storage/StorageCreator';
 const FakeLogger = require('../fakes/fakeLogger');
 
 function allow () { return true; }
 function deny () { return false; }
 
 describe('imposter', function () {
+    let storageCreator: StorageCreator;
+
+    beforeEach(() => {
+        storageCreator = new StorageCreator(false);
+    });
+
     describe('#create', function () {
         let Protocol: any;
         let metadata: any;
@@ -41,7 +48,7 @@ describe('imposter', function () {
         it('should return url', function () {
             server.port = 3535;
 
-            return new Imposter(Protocol, {}, logger, {}, allow).init().then(imposter => {
+            return new Imposter(Protocol, {}, logger, {}, storageCreator, allow).init().then(imposter => {
                 expect(imposter.url).toEqual('/imposters/3535');
             });
         });
@@ -49,7 +56,7 @@ describe('imposter', function () {
         it('should return trimmed down JSON for lists', function () {
             server.port = 3535;
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON({ list: true }))
                 .then(imposter => {
@@ -68,7 +75,7 @@ describe('imposter', function () {
         it('should not display imposter level recordRequests from the global parameter', function () {
             server.port = 3535;
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, { recordRequests: true }, allow)
+            return new Imposter(Protocol, { protocol: 'test' }, logger, { recordRequests: true }, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON())
                 .then(imposter => {
@@ -94,7 +101,7 @@ describe('imposter', function () {
                 recordRequests: true
             };
 
-            return new Imposter(Protocol, request, logger, { recordRequests: false }, allow)
+            return new Imposter(Protocol, request, logger, { recordRequests: false }, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON())
                 .then(imposter => {
@@ -116,7 +123,7 @@ describe('imposter', function () {
         it('should return full JSON representation by default', function () {
             server.port = 3535;
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON())
                 .then(imposter => {
@@ -139,7 +146,7 @@ describe('imposter', function () {
             server.port = 3535;
             metadata.key = 'value';
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON())
                 .then(imposter => {
@@ -163,7 +170,7 @@ describe('imposter', function () {
             server.port = 3535;
             metadata.key = 'value';
 
-            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, allow)
+            return new Imposter(Protocol, { protocol: 'test' }, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON({ replayable: true }))
                 .then(imposter => {
@@ -178,7 +185,7 @@ describe('imposter', function () {
         });
 
         it('should create protocol server on provided port with options', function () {
-            return new Imposter(Protocol, { key: 'value' } as any, logger, {}, allow).init().then(() => {
+            return new Imposter(Protocol, { key: 'value' } as any, logger, {}, storageCreator, allow).init().then(() => {
                 expect(Protocol.createServer.mock.calls[0][0]).toEqual({ key: 'value' });
             });
         });
@@ -187,7 +194,7 @@ describe('imposter', function () {
             const request: any = {
                 stubs: [{ responses: ['FIRST'] }, { responses: ['SECOND'] }]
             };
-            return new Imposter(Protocol, request, logger, {}, allow)
+            return new Imposter(Protocol, request, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON())
                 .then(imposter => {
@@ -220,7 +227,7 @@ describe('imposter', function () {
                 ]
             };
 
-            return new Imposter(Protocol, request, logger, {}, allow)
+            return new Imposter(Protocol, request, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON({ replayable: true }))
                 .then(imposter => {
@@ -241,7 +248,7 @@ describe('imposter', function () {
                 stubs: [{ responses: [{ is: { body: 'body', _proxyResponseTime: 3 } }] }]
             };
 
-            return new Imposter(Protocol, request, logger, {}, allow)
+            return new Imposter(Protocol, request, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON({ replayable: true }))
                 .then(imposter => {
@@ -271,7 +278,7 @@ describe('imposter', function () {
                     }
                 ]
             };
-            return new Imposter(Protocol, request, logger, {}, allow)
+            return new Imposter(Protocol, request, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON({ removeProxies: true }))
                 .then(imposter => {
@@ -310,7 +317,7 @@ describe('imposter', function () {
                 ]
             };
 
-            return new Imposter(Protocol, request, logger, {}, allow)
+            return new Imposter(Protocol, request, logger, {}, storageCreator, allow)
                 .init()
                 .then(imposter => imposter.getJSON({ removeProxies: true }))
                 .then(imposter => {
@@ -330,7 +337,7 @@ describe('imposter', function () {
             server.stubs.getResponseFor = jest.fn().mockReturnValue('RESPONSE CONFIG');
             server.resolver.resolve = jest.fn().mockReturnValue(Q({ is: 'RESPONSE' }));
 
-            return new Imposter(Protocol, {}, logger, {}, allow).init().then(imposter =>
+            return new Imposter(Protocol, {}, logger, {}, storageCreator, allow).init().then(imposter =>
                 imposter.getResponseFor({})
             ).then(response => {
                 expect(response).toEqual({ is: 'RESPONSE' });
@@ -342,7 +349,7 @@ describe('imposter', function () {
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
-            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: false }, allow)
+            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: false }, storageCreator, allow)
                 .init()
                 .then(imp => {
                     imposter = imp;
@@ -359,7 +366,7 @@ describe('imposter', function () {
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
-            return new Imposter(Protocol, { recordRequests: true }, logger, { recordRequests: false }, allow)
+            return new Imposter(Protocol, { recordRequests: true }, logger, { recordRequests: false }, storageCreator, allow)
                 .init()
                 .then(imp => {
                     imposter = imp;
@@ -377,7 +384,7 @@ describe('imposter', function () {
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
-            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: true }, allow)
+            return new Imposter(Protocol, { recordRequests: false }, logger, { recordRequests: true }, storageCreator, allow)
                 .init()
                 .then(imp => {
                     imposter = imp;
@@ -395,7 +402,7 @@ describe('imposter', function () {
             server.resolver.resolve = jest.fn().mockReturnValue(Q({}));
             let imposter: IImposter;
 
-            return new Imposter(Protocol, {}, logger, { recordRequests: true }, allow).init().then(imp => {
+            return new Imposter(Protocol, {}, logger, { recordRequests: true }, storageCreator, allow).init().then(imp => {
                 imposter = imp;
                 return imposter.getResponseFor({ request: 1 });
             })
@@ -407,7 +414,7 @@ describe('imposter', function () {
         });
 
         it('responseFor should return error if ip check denied', function () {
-            return new Imposter(Protocol, {}, logger, {}, deny).init().then(imposter =>
+            return new Imposter(Protocol, {}, logger, {}, storageCreator, deny).init().then(imposter =>
                 imposter.getResponseFor({})
             ).then(response => {
                 expect(response).toEqual({ blocked: true, code: 'unauthorized ip address' });

@@ -7,7 +7,8 @@ import { ParsedUrlQuery } from 'querystring';
 import * as Q from 'q';
 import * as helpers from '../util/helpers';
 import * as url from 'url';
-
+import * as Validator from '../models/dryRunValidator';
+import { StorageCreator } from '../models/storage/StorageCreator';
 
 const queryIsFalse = (query: ParsedUrlQuery, key: string) => !helpers.defined(query[key]) || (query[key] as string).toLowerCase() !== 'false';
 const queryBoolean = (query: ParsedUrlQuery, key: string) => helpers.defined(query[key]) && (query[key] as string).toLowerCase() === 'true';
@@ -29,6 +30,7 @@ export class ImpostersController {
     public constructor (
         private protocols: {[key: string]: IProtocolFactory},
         private imposters: { [key: string]: IImposter },
+        private storageCreator: StorageCreator,
         private logger: ILogger | undefined,
         private allowInjection: boolean) {
     }
@@ -231,13 +233,13 @@ export class ImpostersController {
         }
         else {
             const Protocol = this.protocols[request.protocol!];
-            const validator = require('../models/dryRunValidator').create({
+            const validator = Validator.create({
                 testRequest: Protocol.testRequest,
                 testProxyResponse: Protocol.testProxyResponse,
                 additionalValidation: Protocol.validate,
                 allowInjection: this.allowInjection
-            });
-            return validator.validate(request, this.logger);
+            }, this.storageCreator);
+            return validator.validate(request, this.logger!);
         }
     }
 

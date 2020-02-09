@@ -1,5 +1,3 @@
-
-
 import * as Q from 'q';
 import { ILogger } from '../util/scopedLogger';
 import {
@@ -13,6 +11,7 @@ import { IImposterConfig, IpValidator } from './imposters/IImposter';
 import { Imposter } from './imposters/imposter';
 import { ResponseResolver } from './responseResolver';
 import { StubRepository } from './stubs/StubRepository';
+import { StorageCreator } from './storage/StorageCreator';
 
 
 export interface IProtocolLoadOptions {
@@ -33,12 +32,13 @@ export function load (
     builtInProtocols: IProtocolMap,
     customProtocols: IProtocolMap,
     options: IProtocolLoadOptions,
+    storageCreator: StorageCreator,
     isAllowedConnection?: IpValidator,
     mbLogger?: ILogger): {[key: string]: IProtocolFactory} {
     function inProcessCreate (createProtocol: ServerImplCreatorFunction): ServerCreatorFunction {
         return (creationRequest, logger: ILogger, responseFn) =>
             createProtocol(creationRequest, logger, responseFn!).then(server => {
-                const stubs = new StubRepository(server.encoding || 'utf8');
+                const stubs = new StubRepository(server.encoding || 'utf8', storageCreator);
                 const resolver = new ResponseResolver(stubs, server.proxy);
 
                 return Q({
@@ -120,7 +120,7 @@ export function load (
                 const callbackURL = options.callbackURLTemplate!.replace(':port', String(serverPort));
                 const encoding = metadata.encoding || 'utf8';
 
-                const stubs = new StubRepository(encoding);
+                const stubs = new StubRepository(encoding, storageCreator);
                 const resolver = new ResponseResolver(stubs, undefined, callbackURL);
 
                 delete metadata.encoding;
@@ -166,7 +166,7 @@ export function load (
     }
 
     function createImposter (Protocol: IProtocolFactory, creationRequest: IImposterConfig) {
-        return new Imposter(Protocol, creationRequest, mbLogger!.baseLogger, options, isAllowedConnection!).init();
+        return new Imposter(Protocol, creationRequest, mbLogger!.baseLogger, options, storageCreator, isAllowedConnection!).init();
     }
 
     const result: {[key: string]: IProtocolFactory} = {};

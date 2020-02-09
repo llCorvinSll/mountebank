@@ -3,8 +3,15 @@ const FakeLogger = require('../fakes/fakeLogger');
 import * as fs from 'fs';
 import * as Q from 'q';
 import * as loader from '../../src/models/protocols';
+import { StorageCreator } from '../../src/models/storage/StorageCreator';
 
 describe('protocols', function () {
+    let storageCreator: StorageCreator;
+
+    beforeEach(() => {
+        storageCreator = new StorageCreator(false);
+    });
+
     describe('#load', function () {
         let config: any;
 
@@ -14,14 +21,14 @@ describe('protocols', function () {
 
         it('should return only builtins if no customProtocols passed in', function () {
             const builtIns: any = { proto: { create: jest.fn() } };
-            const protocols = loader.load(builtIns, {}, config);
+            const protocols = loader.load(builtIns, {}, config, storageCreator);
             expect(Object.keys(protocols)).toEqual(['proto']);
         });
 
         describe('#outOfProcessCreate', function () {
             it('should error if invalid command passed', function () {
                 const customProtocols: any = { test: { createCommand: 'no-such-command' } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({}, logger).then(() => {
@@ -41,7 +48,7 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({}, logger).then(server => {
@@ -56,7 +63,7 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({ port: 3000 }, logger).then(server => {
@@ -69,7 +76,7 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({}, logger).then(server => {
@@ -82,7 +89,7 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
 
                 return protocols.test.createServer!({}, logger).then(server => {
@@ -101,7 +108,7 @@ describe('protocols', function () {
                 fs.writeFileSync('protocol-test.js', `const fn = ${fn.toString()}; fn();`);
 
                 const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
 
                 //Sleep to allow the log statements to finish
@@ -119,7 +126,7 @@ describe('protocols', function () {
 
                 config.callbackURLTemplate = 'CALLBACK-URL';
                 const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
                 const creationRequest = { port: 3000 };
 
@@ -140,7 +147,7 @@ describe('protocols', function () {
 
                 config.callbackURLTemplate = 'CALLBACK-URL';
                 const customProtocols: any = { test: { createCommand: `${process.execPath} ./protocol-test.js` } };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
                 const creationRequest = { port: 3000, defaultResponse: { key: 'default' } };
 
@@ -167,7 +174,7 @@ describe('protocols', function () {
                         customProtocolFields: ['key1', 'key3']
                     }
                 };
-                const protocols = loader.load({}, customProtocols, config);
+                const protocols = loader.load({}, customProtocols, config, storageCreator);
                 const logger = FakeLogger.create();
                 const creationRequest = {
                     protocol: 'test',

@@ -16,6 +16,7 @@ import { IpValidator } from './models/imposters/IImposter';
 import { IProtocolFactory } from './models/IProtocol';
 import { ImpostersController } from './controllers/impostersController';
 import { ImposterController } from './controllers/imposterController';
+import { StorageCreator } from './models/storage/StorageCreator';
 const thisPackage = require('../package.json');
 const releases = require('../releases.json');
 
@@ -138,7 +139,7 @@ function loadCustomProtocols (protofile: string, logger: ILogger) {
     }
 }
 
-function loadProtocols (options: IMountebankOptions, baseURL: string, logger: ILogger, isAllowedConnection: IpValidator): {[key: string]: IProtocolFactory} {
+function loadProtocols (options: IMountebankOptions, baseURL: string, storageCreator: StorageCreator, logger: ILogger, isAllowedConnection: IpValidator): {[key: string]: IProtocolFactory} {
     const builtInProtocols = {
         tcp: require('./models/tcp/tcpServer'),
         http: require('./models/http/httpServer'),
@@ -155,7 +156,7 @@ function loadProtocols (options: IMountebankOptions, baseURL: string, logger: IL
         host: options.host
     };
 
-    return require('./models/protocols').load(builtInProtocols, customProtocols, config, isAllowedConnection, logger);
+    return require('./models/protocols').load(builtInProtocols, customProtocols, config, storageCreator, isAllowedConnection, logger);
 }
 
 /**
@@ -171,11 +172,14 @@ export function create (options: IMountebankOptions) {
     const baseURL = `http://${hostname}:${options.port}`;
     const logger = createLogger(options);
     const isAllowedConnection = createIPVerification(options);
-    const protocols = loadProtocols(options, baseURL, logger, isAllowedConnection);
+
+    const storageCreator = new StorageCreator(true);
+
+    const protocols = loadProtocols(options, baseURL, storageCreator, logger, isAllowedConnection);
     const impostersController = new ImpostersController(
-        protocols, imposters, logger, options.allowInjection);
+        protocols, imposters, storageCreator, logger, options.allowInjection);
     const imposterController = new ImposterController(
-        protocols, imposters, logger, options.allowInjection);
+        protocols, imposters, storageCreator, logger, options.allowInjection);
     const validateImposterExists = middleware.createImposterValidator(imposters);
 
     const homeController = require('./controllers/homeController').create(releases);
