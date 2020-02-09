@@ -3,7 +3,7 @@ import { ResponseResolver } from '../../src/models/responseResolver';
 import { StubRepository } from '../../src/models/stubs/StubRepository';
 const helpers = require('../../src/util/helpers');
 const mock = require('../mock').mock;
-const Q = require('q');
+import * as Q from 'q';
 const Logger = require('../fakes/fakeLogger');
 import * as util from 'util';
 
@@ -161,7 +161,7 @@ describe('responseResolver', function () {
             }
 
             const proxy = { to: proxyReturn };
-            const resolver = new ResponseResolver(stubs, proxy);
+            const resolver = new ResponseResolver(stubs, proxy as any);
             const logger = Logger.create();
             const request = {};
 
@@ -1133,16 +1133,20 @@ describe('responseResolver', function () {
             return response;
         }
 
-        function matches (stubs: any) {
-            const matchList = stubs.stubs().map((stub: any) => stub.matches || []);
-            matchList.forEach((matchesForOneStub: any) => {
-                matchesForOneStub.forEach((match: any) => {
-                    if (match.timestamp) {
-                        match.timestamp = 'NOW';
-                    }
+        function matches (stubs: StubRepository): Q.Promise<any> {
+            const matchPromise = stubs.stubs().map(stub => stub.getMatches!());
+
+            return Q.all(matchPromise).then(stubsList => {
+                stubsList.forEach((matchesForOneStub: any) => {
+                    matchesForOneStub.forEach((match: any) => {
+                        if (match.timestamp) {
+                            match.timestamp = 'NOW';
+                        }
+                    });
                 });
+
+                return stubsList;
             });
-            return matchList;
         }
 
         it('should error if called with invalid proxyResolutionKey', function () {
@@ -1280,7 +1284,10 @@ describe('responseResolver', function () {
                 return resolver.resolveProxy({ data: 'RESPONSE' } as any, proxyResolutionKey, logger);
             }).then(response => {
                 response.recordMatch!();
-                assert.deepEqual(matches(stubs), [
+
+                return matches(stubs);
+            }).then(mtch => {
+                assert.deepEqual(mtch, [
                     [],
                     [{ timestamp: 'NOW', request: { key: 'REQUEST' }, response: { data: 'RESPONSE' } }]
                 ]);
@@ -1306,7 +1313,10 @@ describe('responseResolver', function () {
                 return resolver.resolveProxy({ data: 'RESPONSE' } as any, proxyResolutionKey, logger);
             }).then(response => {
                 response.recordMatch!();
-                assert.deepEqual(matches(stubs), [
+
+                return matches(stubs);
+            }).then(mtch => {
+                assert.deepEqual(mtch, [
                     [{ timestamp: 'NOW', request: { key: 'REQUEST-1' }, response: { data: 'RESPONSE' } }],
                     []
                 ]);

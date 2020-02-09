@@ -50,6 +50,7 @@ export class ImposterController {
      * @memberOf module:controllers/imposterController#
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
+     * @return {Q.Promise} - promise
      */
     public get: AsincMethod = (request: Request, response: Response) => {
         const isHtml = request.header('Content-Type') === 'text/html';
@@ -169,7 +170,7 @@ export class ImposterController {
         const imposter = this.imposters[request.params.id];
         const protoRequest = request.body.request;
 
-        return imposter.getResponseFor(protoRequest).done(protoResponse => {
+        imposter.getResponseFor(protoRequest).done(protoResponse => {
             response.send(protoResponse);
             return true;
         });
@@ -192,7 +193,7 @@ export class ImposterController {
         const proxyResolutionKey = request.params.proxyResolutionKey;
         const proxyResponse = request.body.proxyResponse;
 
-        return imposter.getProxyResponseFor(proxyResponse, proxyResolutionKey).done(protoResponse => {
+        imposter.getProxyResponseFor(proxyResponse, proxyResolutionKey).done(protoResponse => {
             response.send(protoResponse);
             return true;
         });
@@ -226,7 +227,7 @@ export class ImposterController {
                         imposter.stubRepository.overwriteStubs(newStubs);
                         return imposter.getJSON()
                             .then(json => response.send(json))
-                            .then(_ => true);
+                            .then(() => true);
                     }
                     else {
                         this.respondWithValidationErrors(response, result.errors);
@@ -306,7 +307,7 @@ export class ImposterController {
                     imposter.stubRepository.overwriteStubAtIndex(request.params.stubIndex, newStub);
                     return imposter.getJSON()
                         .then(json => response.send(json))
-                        .then(_ => true);
+                        .then(() => true);
                 }
                 else {
                     this.respondWithValidationErrors(response, result.errors);
@@ -353,7 +354,7 @@ export class ImposterController {
                         imposter.stubRepository.addStubAtIndex(index, newStub);
                         return imposter.getJSON()
                             .then(json => response.send(json))
-                            .then(_ => true);
+                            .then(() => true);
                     }
                     else {
                         this.respondWithValidationErrors(response, result.errors);
@@ -387,7 +388,7 @@ export class ImposterController {
             imposter.stubRepository.deleteStubAtIndex(request.params.stubIndex);
             return imposter.getJSON()
                 .then(json => response.send(json))
-                .then(_ => true);
+                .then(() => true);
         }
     }
 

@@ -39,6 +39,7 @@ export class ImpostersController {
      * @memberOf module:controllers/impostersController#
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
+     * @return {Q.Promise}
      */
     public get = (request: Request, response: Response) => {
         const isHtml = request.header('Content-Type') === 'text/html';
@@ -89,7 +90,7 @@ export class ImpostersController {
                         response.statusCode = 201;
                         return imposter.getJSON()
                             .then(json => response.send(json))
-                            .then(_ => true);
+                            .then(() => true);
                     }, error => {
                         this.respondWithCreationError(response, error);
                     });
@@ -173,7 +174,7 @@ export class ImpostersController {
                             });
                             response.send({ imposters: items });
                         })
-                        .then(_ => true);
+                        .then(() => true);
                 }, error => {
                     this.respondWithCreationError(response, error);
                 });

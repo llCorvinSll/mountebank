@@ -165,10 +165,11 @@ describe('stubRepository', function () {
             stubs.addStub(stub);
             stubs.getResponseFor(matchingRequest, logger, {}).recordMatch!('MATCHED');
             stubs.getResponseFor(mismatchingRequest, logger, {}).recordMatch!('MISMATCHED');
-            const matches = stubs.stubs()[0].matches!;
-            matches.forEach((match: any) => { match.timestamp = 'NOW'; });
+            return stubs.stubs()[0].getMatches!().then(matches => {
+                matches.forEach((match: any) => { match.timestamp = 'NOW'; });
 
-            expect(matches).toEqual([{ request: matchingRequest, response: 'MATCHED', timestamp: 'NOW' }]);
+                expect(matches).toEqual([{ request: matchingRequest, response: 'MATCHED', timestamp: 'NOW' }]);
+            });
         });
 
         it('should only record match once for given response', function () {
@@ -180,10 +181,11 @@ describe('stubRepository', function () {
             const responseConfig = stubs.getResponseFor({}, logger, {});
             responseConfig.recordMatch!('FIRST');
             responseConfig.recordMatch!('SECOND');
-            const matches = stubs.stubs()[0].matches!;
-            matches.forEach((match: any) => { match.timestamp = 'NOW'; });
+            return stubs.stubs()[0].getMatches!().then(matches => {
+                matches.forEach((match: any) => { match.timestamp = 'NOW'; });
 
-            expect(matches).toEqual([{ request: {}, response: 'FIRST', timestamp: 'NOW' }]);
+                expect(matches).toEqual([{ request: {}, response: 'FIRST', timestamp: 'NOW' }]);
+            });
         });
 
         it('should repeat a response and continue looping', function () {

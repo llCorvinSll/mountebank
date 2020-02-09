@@ -210,6 +210,7 @@ export class ResponseResolver implements IResolver {
     private inject (request: IServerRequestData, fn: string, logger: ILogger, imposterState: unknown) {
         //eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         //@ts-ignore
+        //eslint-disable-next-line @typescript-eslint/no-unused-vars
         const injectState: any = this.injectState;
         const deferred = Q.defer();
         const config: any = {

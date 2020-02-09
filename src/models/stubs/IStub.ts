@@ -9,6 +9,7 @@ export interface IStub {
     statefulResponses: IMountebankResponse[];
     addResponse?: (resp: IResponse) => void;
     recordMatch?: (responce?: any) => void;
+    getMatches?: () => Q.Promise<unknown[]>;
 
     matchesStorage?: IStorage<unknown>;
 

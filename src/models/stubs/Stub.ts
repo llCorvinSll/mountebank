@@ -37,6 +37,10 @@ export class Stub implements IStub {
         this.matchesStorage.saveRequest(response);
     }
 
+    public getMatches () {
+        return this.matchesStorage.getRequests();
+    }
+
     private repeatTransform (responses: IMountebankResponse[]): IMountebankResponse[] {
         if (!responses) {
             return [];

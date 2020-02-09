@@ -20,7 +20,8 @@ describe('imposter', function () {
             server = {
                 stubs: {
                     addStub: (stub: any) => { stubs.push(stub); },
-                    stubs: () => stubs
+                    stubs: () => stubs,
+                    getJSON: () => Q.resolve(stubs)
                 },
                 resolver: jest.fn(),
                 port: 3535,

@@ -87,7 +87,8 @@ export function predicatesFor (this: void, request: IServerRequestData, matchers
 
     matchers.forEach((matcher: Readonly<IPredicateGenerator>) => {
         if (matcher.inject) {
-            //eslint-disable-next-line no-unused-vars,@typescript-eslint/ban-ts-ignore
+
+            //eslint-disable-next-line @typescript-eslint/ban-ts-ignore,@typescript-eslint/no-unused-vars
             //@ts-ignore
             const config = { request, logger };
             const injected = `(${matcher.inject})(config);`;
