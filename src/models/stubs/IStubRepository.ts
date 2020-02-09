@@ -33,4 +33,6 @@ export interface IStubRepository {
     addNewResponse(responseConfig: IMountebankResponse, request: IServerRequestData, response: IMountebankResponse, pathes: string[], logger: ILogger): void;
 
     getJSON(options?: IImposterPrintOptions): Q.Promise<IStub[]>;
+
+    stop(): void;
 }

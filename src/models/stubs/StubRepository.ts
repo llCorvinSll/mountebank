@@ -283,4 +283,8 @@ export class StubRepository implements IStubRepository {
     public getJSON (options?: IImposterPrintOptions): Q.Promise<IStub[]> {
         return Q.all(this._stubs.map(s => s.getJSON(options)));
     }
+
+    public stop (): void {
+        this._stubs.forEach(s => s.matchesStorage.clean());
+    }
 }

@@ -71,6 +71,6 @@ export class RedisStorage<T> implements IStorage<T> {
     }
 
     clean (): void {
-        // client.del(this.uuid);
+        client.del(this.uuid);
     }
 }
