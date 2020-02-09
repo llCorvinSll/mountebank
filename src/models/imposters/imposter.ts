@@ -17,8 +17,8 @@ import * as compatibility from '../compatibility';
 import { ImposterPrinter } from './imposterPrinter';
 import { IStubRepository } from '../stubs/IStubRepository';
 import * as _ from 'lodash';
-import { IRequestsStorage } from '../storage/IRequestsStorage';
-import { RedisRequestsStorage } from '../storage/RedisRequestsStorage';
+import { IStorage } from '../storage/IStorage';
+import { RedisStorage } from '../storage/RedisStorage';
 import * as uuidv4 from 'uuid/v4';
 
 /**
@@ -71,7 +71,7 @@ export class Imposter implements IImposter {
         //If the CLI --mock flag is passed, we record even if the imposter level recordRequests = false
         const recordRequests = Boolean(config.recordRequests) || Boolean(creationRequest.recordRequests);
 
-        this.requestsStorage = new RedisRequestsStorage(this.uuid, recordRequests);
+        this.requestsStorage = new RedisStorage(this.uuid, recordRequests);
     }
 
     private readonly uuid: string;
@@ -80,7 +80,7 @@ export class Imposter implements IImposter {
     private resolver: IResolver;
     private domain: Domain;
     private server: IServer;
-    private requestsStorage: IRequestsStorage;
+    private requestsStorage: IStorage<IServerRequestData>;
 
     private imposterState = {};
     public protocol: string;

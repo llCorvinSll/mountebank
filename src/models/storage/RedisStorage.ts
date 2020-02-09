@@ -1,5 +1,4 @@
-import { IRequestsStorage } from './IRequestsStorage';
-import { IServerRequestData } from '../IProtocol';
+import { IStorage } from './IStorage';
 import * as Q from 'q';
 import * as helpers from '../../util/helpers';
 import { RedisClient, createClient } from 'redis';
@@ -7,18 +6,18 @@ import { IHashMap } from '../../util/types';
 
 const client: RedisClient = createClient();
 
-export class RedisRequestsStorage implements IRequestsStorage {
+export class RedisStorage<T> implements IStorage<T> {
     constructor (private uuid: string, private recordRequests: boolean) {
     }
 
     private reqestsCount = 0;
-    private nonSaved: IHashMap<IServerRequestData> = {};
+    private nonSaved: IHashMap<T> = {};
 
     getCount (): number {
         return this.reqestsCount;
     }
 
-    saveRequest (request: IServerRequestData): Q.Promise<void> {
+    saveRequest (request: T): Q.Promise<void> {
         this.reqestsCount += 1;
 
         if (!this.recordRequests) {
@@ -27,7 +26,7 @@ export class RedisRequestsStorage implements IRequestsStorage {
 
         const currentIndex = this.reqestsCount - 1;
         const requestToRecord = helpers.clone(request);
-        requestToRecord.timestamp = new Date().toJSON();
+        (requestToRecord as any).timestamp = new Date().toJSON();
         this.nonSaved[currentIndex] = requestToRecord;
 
         return Q.Promise(done => {
@@ -38,9 +37,9 @@ export class RedisRequestsStorage implements IRequestsStorage {
         });
     }
 
-    getRequests (): Q.Promise<IServerRequestData[]> {
+    getRequests (): Q.Promise<T[]> {
         return Q.Promise(done => {
-            const result: IServerRequestData[] = [];
+            const result: T[] = [];
 
             if (!this.recordRequests) {
                 done([]);

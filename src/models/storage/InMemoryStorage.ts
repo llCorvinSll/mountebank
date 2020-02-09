@@ -1,21 +1,20 @@
-import { IServerRequestData } from '../IProtocol';
 import * as Q from 'q';
 import * as helpers from '../../util/helpers';
-import { IRequestsStorage } from './IRequestsStorage';
+import { IStorage } from './IStorage';
 
 
-export class RequestsStorage implements IRequestsStorage {
-    constructor (private uuid: string, private recordRequests: boolean) {
+export class InMemoryStorage<T> implements IStorage<T> {
+    constructor (private recordRequests: boolean) {
     }
 
     private reqestsCount = 0;
-    private requests: IServerRequestData[] = [];
+    private requests: T[] = [];
 
     getCount (): number {
         return this.reqestsCount;
     }
 
-    saveRequest (request: IServerRequestData): Q.Promise<void> {
+    saveRequest (request: T): Q.Promise<void> {
         this.reqestsCount += 1;
 
         if (!this.recordRequests) {
@@ -24,7 +23,7 @@ export class RequestsStorage implements IRequestsStorage {
 
         return Q.Promise(done => {
             const recordedRequest = helpers.clone(request);
-            recordedRequest.timestamp = new Date().toJSON();
+            (recordedRequest as any).timestamp = new Date().toJSON();
             this.requests.push(recordedRequest);
             done();
         });
@@ -32,7 +31,7 @@ export class RequestsStorage implements IRequestsStorage {
 
     }
 
-    getRequests (): Q.Promise<IServerRequestData[]> {
+    getRequests (): Q.Promise<T[]> {
         return Q.resolve(this.requests);
     }
 
