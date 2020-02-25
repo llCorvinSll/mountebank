@@ -16,7 +16,7 @@ import { IpValidator } from './models/imposters/IImposter';
 import { IProtocolFactory } from './models/IProtocol';
 import { ImpostersController } from './controllers/impostersController';
 import { ImposterController } from './controllers/imposterController';
-import { StorageCreator } from './models/storage/StorageCreator';
+import { StorageCreator, IStorageConfig } from './models/storage/StorageCreator';
 const thisPackage = require('../package.json');
 const releases = require('../releases.json');
 
@@ -173,7 +173,15 @@ export function create (options: IMountebankOptions) {
     const logger = createLogger(options);
     const isAllowedConnection = createIPVerification(options);
 
-    const storageCreator = new StorageCreator(true);
+    let storageConfig:IStorageConfig = {};
+
+    if (options.storageConfig) {
+
+        const contents = fs.readFileSync(options.storageConfig, 'utf8');
+        storageConfig = JSON.parse(contents);
+    }
+
+    const storageCreator = new StorageCreator(storageConfig);
 
     const protocols = loadProtocols(options, baseURL, storageCreator, logger, isAllowedConnection);
     const impostersController = new ImpostersController(

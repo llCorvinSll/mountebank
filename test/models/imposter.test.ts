@@ -11,7 +11,7 @@ describe('imposter', function () {
     let storageCreator: StorageCreator;
 
     beforeEach(() => {
-        storageCreator = new StorageCreator(false);
+        storageCreator = new StorageCreator();
     });
 
     describe('#create', function () {

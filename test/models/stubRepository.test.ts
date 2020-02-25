@@ -9,7 +9,7 @@ describe('stubRepository', function () {
     let storageCreator: StorageCreator;
 
     beforeEach(() => {
-        storageCreator = new StorageCreator(false);
+        storageCreator = new StorageCreator();
     });
 
     describe('#addStub', function () {

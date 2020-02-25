@@ -9,7 +9,7 @@ describe('protocols', function () {
     let storageCreator: StorageCreator;
 
     beforeEach(() => {
-        storageCreator = new StorageCreator(false);
+        storageCreator = new StorageCreator();
     });
 
     describe('#load', function () {

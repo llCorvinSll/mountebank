@@ -4,10 +4,17 @@ import { InMemoryStorage } from './InMemoryStorage';
 import { RedisClient, createClient } from 'redis';
 
 
+export interface IStorageConfig {
+    use_redis?: boolean;
+    host?: string;
+}
+
 export class StorageCreator {
-    constructor (private useRedis: boolean) {
-        if (useRedis) {
-            this.redisClient = createClient();
+    constructor (private config: IStorageConfig = {}) {
+        if (this.config.use_redis) {
+            this.redisClient = createClient({
+                host: config.host
+            });
         }
     }
 
@@ -15,7 +22,7 @@ export class StorageCreator {
 
     createStorage<T> (uuid: string, recordRequests: boolean): IStorage<T> {
 
-        if (this.useRedis) {
+        if (this.config.use_redis) {
             return new RedisStorage<T>(uuid, recordRequests, this.redisClient);
         }
 

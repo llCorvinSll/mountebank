@@ -10,7 +10,7 @@ describe('ImposterController', function () {
 
     beforeEach(() => {
         response = new FakeResponse();
-        storageCreator = new StorageCreator(false);
+        storageCreator = new StorageCreator();
     });
 
     describe('#get', function () {

@@ -1,5 +1,3 @@
-
-
 import { IImposter } from './imposters/IImposter';
 
 export interface IMountebankOptions {
@@ -17,6 +15,7 @@ export interface IMountebankOptions {
     protofile: string;
     mock: boolean;
     debug: boolean;
+    storageConfig?: string;
 }
 
 export interface IRelease {

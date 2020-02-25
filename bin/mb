@@ -389,6 +389,10 @@ const options = {
         default: false,
         type: 'boolean',
         global: false
+    },
+    storageConfig: {
+        default: "",
+        type: 'string'
     }
 };
 const startOptions = {
@@ -406,7 +410,8 @@ const startOptions = {
     mock: options.mock,
     debug: options.debug,
     heroku: options.heroku,
-    protofile: options.protofile
+    protofile: options.protofile,
+    storageConfig: options.storageConfig
 };
 
 const argv = yargs

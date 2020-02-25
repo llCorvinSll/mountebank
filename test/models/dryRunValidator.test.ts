@@ -8,7 +8,7 @@ describe('dryRunValidator', function () {
 
     beforeEach(() => {
         testRequest = { requestFrom: '', path: '/', query: {}, method: 'GET', headers: {}, body: '' };
-        storageCreator = new StorageCreator(false);
+        storageCreator = new StorageCreator();
     });
 
     describe('#validate', function () {
